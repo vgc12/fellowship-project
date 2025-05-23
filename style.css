@@ -1,0 +1,156 @@
+:root {
+    --text_color: #cdc5b4;
+    --background: #364652;
+    --container_background: #475b6b;
+    --drop_shadow: #81a4c0;
+}
+
+.center {
+    text-align: center;
+    margin: 0 auto;
+}
+
+.center-justify {
+    justify-items: center;
+}
+
+.title {
+    border-bottom: 2px var(--text_color) solid;
+}
+
+.container {
+    width: 75%;
+    border: 2px solid;
+    border-color: var(--text_color);
+    border-radius: 12px;
+    padding-bottom: 20px;
+    background-color: var(--container_background);
+    position: relative;
+ 
+}
+
+h1,
+p,
+li,
+h2 {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #cdc5b4;
+}
+
+a {
+    list-style-type: none;
+
+    text-align: right;
+
+    color: var(--text_color);
+    text-decoration: none;
+    font-size: 2rem;
+    padding: 4px;
+
+    text-align: center;
+}
+
+a:hover {
+    background-color: var(--background);
+}
+
+.dropdown-icon {
+    display: none;
+}
+header {
+    padding: 5vh 5vw;
+    position: sticky;
+    top: 0;
+    box-shadow: 0 2px 15px var(--drop_shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--text_color);
+    border-radius: 12px;
+    background-color: var(--background);
+    z-index: 1;
+}
+
+.navbar{
+    display: flex;
+}
+
+.navbar > a {
+    margin: 7px;
+    padding: 7px;
+    border: 4px solid;
+    border-radius: 30px;
+    border-color: var(--text_color);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    width: 95%;
+    gap: 4px 4px;
+}
+
+.grid > div {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text_color);
+    border: 2px solid var(--text_color);
+    text-align: center;
+    background-color: var(--background);
+    border-radius: 6px;
+}
+
+.grid > div:hover {
+    box-shadow: inset 0 0px 30px var(--drop_shadow);
+}
+html {
+    background-color: #364652;
+}
+
+.summary{
+    width: 50%;
+}
+
+
+@media screen and (max-width: 600px) {
+    header {
+        flex-direction: column;
+    }
+
+    .navbar {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .navbar > a {
+        border-bottom: 4px solid var(--text_color);
+    }
+    .navbar > a:last-child {
+        border-bottom: 0;
+    }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+    .dropdown-content {
+        display: none;
+       
+        background-color: var(--background);
+        padding: 12px 16px;
+       
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: flex;
+    }
+
+    .dropdown-icon {
+        display: inline;
+    }
+
+    .summary{
+        width: 95%;
+    }
+   
+}
