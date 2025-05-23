@@ -19,14 +19,13 @@
 }
 
 .container {
-    width: 75%;
+    width: 99%;
     border: 2px solid;
     border-color: var(--text_color);
     border-radius: 12px;
     padding-bottom: 20px;
     background-color: var(--container_background);
     position: relative;
- 
 }
 
 h1,
@@ -35,23 +34,22 @@ li,
 h2 {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: #cdc5b4;
+    text-wrap: pretty;
 }
 
 a {
     list-style-type: none;
-
     text-align: right;
-
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: var(--text_color);
     text-decoration: none;
     font-size: 2rem;
     padding: 4px;
-
     text-align: center;
 }
 
 a:hover {
-    background-color: var(--background);
+    background-color: var(--container_background);
 }
 
 .dropdown-icon {
@@ -66,13 +64,17 @@ header {
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid var(--text_color);
-    border-radius: 12px;
+    border-radius: 0px 0px 12px 12px;
     background-color: var(--background);
     z-index: 1;
 }
 
-.navbar{
+.navbar {
     display: flex;
+}
+
+body{
+    margin-top: 0;
 }
 
 .navbar > a {
@@ -106,14 +108,16 @@ html {
     background-color: #364652;
 }
 
-.summary{
+.summary {
     width: 50%;
 }
 
-
 @media screen and (max-width: 600px) {
     header {
-        flex-direction: column;
+        display: flex;
+        flex-direction: row;
+        align-items: start;
+        text-align: center;
     }
 
     .navbar {
@@ -131,14 +135,13 @@ html {
     .dropdown {
         position: relative;
         display: inline-block;
-        width: 100%;
+        
     }
     .dropdown-content {
         display: none;
-       
+
         background-color: var(--background);
         padding: 12px 16px;
-       
     }
 
     .dropdown:hover .dropdown-content {
@@ -149,8 +152,7 @@ html {
         display: inline;
     }
 
-    .summary{
+    .summary {
         width: 95%;
     }
-   
 }
