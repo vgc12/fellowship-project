@@ -11,12 +11,12 @@
 <header>
     <h1>Zaid Abuisba</h1>
 
-    <div class="dropdown" >
-    <div class="dropdown-icon-wrap" >
-            <span class="dropdown-icon"><i class="fa-regular fa-square-caret-down"></i></span>
-    </div>
-        <div class="dropdown-content">
-            <nav class="navbar center">
+    <div class="dropdown ">
+        <div class="dropdown-icon-wrap">
+            <span class="dropdown-icon"><i class="fa-regular fa-square-caret-down fa-xl"></i></span>
+        </div>
+        <div class="dropdown-content ">
+            <nav class="navbar">
                 <a href="index.php" target="_self">Home</a>
                 <a href="about.php" target="_self">About Me</a>
                 <a href="projects.php" target="_self">Projects</a>

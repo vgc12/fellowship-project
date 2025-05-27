@@ -48,7 +48,7 @@ a {
 }
 
 a:hover {
-    background-color: var(--container_background);
+    box-shadow: inset 0 0 30px var(--drop_shadow);
 }
 
 .dropdown-icon {
@@ -125,19 +125,25 @@ html {
         display: flex;
         flex-direction: column;
         text-align: center;
+        width: 100%;
+        align-items: center;
     }
+
+
 
     .navbar > a {
         border-bottom: 4px solid var(--text_color);
-
+        width: 100%;
     }
-    
+
     .dropdown {
         position: relative;
         display: inline-block;
         width: 100%;
 
     }
+
+
 
 
     .dropdown-content {
@@ -153,19 +159,24 @@ html {
     }
 
     .dropdown-icon {
-        display: inline;
+
         width: 15vw;
+        color: var(--background);
+        display: table-cell;
+        vertical-align: middle;
     }
 
     .dropdown-icon-wrap{
         width: 100%;
-        height: auto;
-        border: 2px solid var(--text_color);
-
+        height: 50px;
+        border: 2px solid var(--container_background);
+        border-radius: 20px;
+        background-color: var(--text_color);
+        display: table;
     }
 
     .dropdown-icon-wrap:hover {
-        box-shadow: inset 0 0 30px var(--drop_shadow);
+        box-shadow: inset 0 0 10px var(--drop_shadow);
     }
 
 
