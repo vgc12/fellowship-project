@@ -39,13 +39,12 @@ h2 {
 
 a {
     list-style-type: none;
-    text-align: right;
+    text-align: center;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: var(--text_color);
     text-decoration: none;
     font-size: 2rem;
     padding: 4px;
-    text-align: center;
 }
 
 a:hover {
@@ -55,6 +54,7 @@ a:hover {
 .dropdown-icon {
     display: none;
 }
+
 header {
     padding: 5vh 5vw;
     position: sticky;
@@ -64,7 +64,7 @@ header {
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid var(--text_color);
-    border-radius: 0px 0px 12px 12px;
+    border-radius: 0 0 12px 12px;
     background-color: var(--background);
     z-index: 1;
 }
@@ -73,7 +73,7 @@ header {
     display: flex;
 }
 
-body{
+body {
     margin-top: 0;
 }
 
@@ -102,8 +102,9 @@ body{
 }
 
 .grid > div:hover {
-    box-shadow: inset 0 0px 30px var(--drop_shadow);
+    box-shadow: inset 0 0 30px var(--drop_shadow);
 }
+
 html {
     background-color: #364652;
 }
@@ -115,28 +116,30 @@ html {
 @media screen and (max-width: 600px) {
     header {
         display: flex;
-        flex-direction: row;
-        align-items: start;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
     }
 
     .navbar {
         display: flex;
         flex-direction: column;
+        text-align: center;
     }
 
     .navbar > a {
         border-bottom: 4px solid var(--text_color);
-    }
-    .navbar > a:last-child {
-        border-bottom: 0;
-    }
 
+    }
+    
     .dropdown {
         position: relative;
         display: inline-block;
-        
+        width: 100%;
+
     }
+
+
     .dropdown-content {
         display: none;
 
@@ -146,11 +149,25 @@ html {
 
     .dropdown:hover .dropdown-content {
         display: flex;
+
     }
 
     .dropdown-icon {
         display: inline;
+        width: 15vw;
     }
+
+    .dropdown-icon-wrap{
+        width: 100%;
+        height: auto;
+        border: 2px solid var(--text_color);
+
+    }
+
+    .dropdown-icon-wrap:hover {
+        box-shadow: inset 0 0 30px var(--drop_shadow);
+    }
+
 
     .summary {
         width: 95%;
