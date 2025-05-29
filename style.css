@@ -101,16 +101,19 @@ body {
     border-radius: 6px;
 }
 
-.grid > div:hover {
-    box-shadow: inset 0 0 30px var(--drop_shadow);
-}
 
 html {
     background-color: #364652;
 }
 
 .summary {
-    width: 50%;
+    width: 95%;
+}
+
+.games{
+    display: flex;
+    flex-direction: column;
+    
 }
 
 @media screen and (max-width: 600px) {

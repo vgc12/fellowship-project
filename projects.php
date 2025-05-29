@@ -1,37 +1,19 @@
-<!DOCTYPE html>
-<head>
-    <meta charset="utf-8" />
-    <title>Projects</title>
-    <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-    
-    <div>
-        <header>
-            <h1>Zaid Abuisba</h1>
-            <nav class="navbar">
-                <ul>
-                    <li>
-                        <a href="index.html" target="_self">Home</a>
-                    </li>
-                    <li>
-                        <a href="about.html" target="_self">About Me</a>
-                    </li>
-                    <li>
-                        <a href="projects.html" target="_self">Projects</a>
-                    </li>
-                </ul>
-            </nav>
-        </header>
-    </div>
-    
-    <h1><strong>Projects</strong></h1>
+<?php
 
-    <h2>Web Projects</h2>
+include("include/init.php");
+echoHeader("Projects");
 
-    <h2>Desktop Projects</h2>
+$projects = getProjects();
 
-    <h2>Game Projects</h2>
+$gridItems = [];
+foreach ($projects as $project){
 
+    $projectName = $project['project_name'];
+   array_push( $gridItems, getParagraph($project['project_description'], $projectName). "<img src='assets/img/picture". $project["project_id"].".gif'></img>");
+}
 
-</body>
+echoGrid("Game Development Projects", $gridItems);
+
+echoFooter();
+
+?>
