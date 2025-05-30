@@ -11,7 +11,6 @@ $opt = array(
     PDO::ATTR_EMULATE_PREPARES   => false,
 );
 $pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $opt);
-
 //Note this is a homemade function that wraps around the default PHP/MySQL PDO
 //to make it a bit easier to make database calls. It assumes there's only one database
 //connection
@@ -19,7 +18,7 @@ $pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $opt);
 //should be array('Email'=>'test@fake.com')
 //read this for help with PDOs: https://phpdelusions.net/pdo
 //Other note: if we need to specify the data type, check this out: http://php.net/manual/en/pdostatement.bindvalue.php
-function dbQuery($query, $values=array()){
+function db_query($query, $values=array()){
     global $pdo;
 
     //
