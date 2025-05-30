@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 function debug_output($array){
 

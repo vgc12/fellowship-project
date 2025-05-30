@@ -1,6 +1,5 @@
 <?php
 include ('include/init.php');
-
 echoHeader("Home");
 
 echoParagraph("As a passionate student software developer from St. Louis

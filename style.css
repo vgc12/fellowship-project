@@ -74,7 +74,7 @@ header {
 }
 
 body {
-    margin-top: 0;
+    margin: 0;
 }
 
 .navbar > a {
@@ -83,13 +83,15 @@ body {
     border: 4px solid;
     border-radius: 30px;
     border-color: var(--text_color);
+    background-color: var(--container_background);
 }
 
 .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     width: 95%;
     gap: 4px 4px;
+
 }
 
 .grid > div {
@@ -99,6 +101,7 @@ body {
     text-align: center;
     background-color: var(--background);
     border-radius: 6px;
+
 }
 
 
@@ -113,8 +116,17 @@ html {
 .games{
     display: flex;
     flex-direction: column;
-    
 }
+
+img {
+    width: 95%;
+    margin: 5px;
+    max-width: 400px;
+    border: 2px solid var(--text_color);
+    border-radius: 4px;
+}
+
+
 
 @media screen and (max-width: 600px) {
     header {
@@ -122,6 +134,7 @@ html {
         flex-direction: column;
         align-items: center;
         text-align: center;
+
     }
 
     .navbar {
@@ -131,7 +144,6 @@ html {
         width: 100%;
         align-items: center;
     }
-
 
 
     .navbar > a {

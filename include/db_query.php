@@ -11,7 +11,6 @@ $opt = array(
     PDO::ATTR_EMULATE_PREPARES   => false,
 );
 $pdo = new PDO($dsn, DB_USERNAME, DB_PASSWORD, $opt);
-
 //Note this is a homemade function that wraps around the default PHP/MySQL PDO
 //to make it a bit easier to make database calls. It assumes there's only one database
 //connection

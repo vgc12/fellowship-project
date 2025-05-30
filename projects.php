@@ -3,7 +3,8 @@
 include("include/init.php");
 echoHeader("Projects");
 
-$projects = getProjects();
+$gameProjects = getProjects();
+
 
 $gridItems = [];
 foreach ($projects as $project){
