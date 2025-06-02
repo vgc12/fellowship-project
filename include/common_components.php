@@ -25,6 +25,7 @@ $header = "
             <nav class='navbar center'>
                 <a href='index.php' target='_self'>Home</a>
                 <a href='about.php' target='_self'>About Me</a>
+                <a href='comments.php' target='_self'>Comments</a>
                 <a href='projects.php' target='_self'>Projects</a>
             </nav>
         </div>
