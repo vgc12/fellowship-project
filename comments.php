@@ -1,27 +1,46 @@
 <?php
 include ("include/init.php");
 echoHeader("Comments");
+$comments = getComments();
+echo "<div class=''><div class='comments-container center center-justify'>";
+foreach ($comments as $comment){
+    $name = $comment['name'];
+    $content = $comment['content'];
+    echo "<div class='comment'>
+            <div class='summary'>".$name."</div>". "
+            <textarea readonly class='comment-content'>" .$content."</textarea>
+        </div>";
+}
+
+function insert_comment($name, $comment){
+    $now = date_create();
+    $dateTimeString = date_format($now, "Y-m-d H:i:s");
+
+}
+
 
 ?>
-    <div class="">
-    <div class="comments-container center center-justify">
+
 
     <form class="comment-form">
         <div>
-            <label for="name">Enter your name
-                <input type="text" name="name">
-            </label>
+            <label for="name">Enter your name </label>
+                <div>
+                    <input type="text" name="name">
+                </div>
+
         </div>
         <div >
            <div <label >Enter text here
-            </label></div>
-            <textarea class="comment-content" name="content"></textarea>
+            </label>
+            </div>
+            <textarea class="comment-text" name="content"></textarea>
         </div>
         <div>
             <input type="submit" value="Submit">
         </div>
     </form>
     </div>
-    </div>
+</div>
 <?php
 echoFooter();
