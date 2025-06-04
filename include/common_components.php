@@ -11,17 +11,23 @@ $header = "
         <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css'
          integrity='sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=='
           crossorigin='anonymous' referrerpolicy='no-referrer' />
+          <script src='./include/dropdown.js' type='module' defer></script>
     </head>
     <body>
     <header>
     <h1>Zaid Abuisba</h1>
-    <div class='dropdown' >
-        <div class='dropdown-icon-wrap' >
+    <div class='dropdown'>
+        <div id='dropdown-button' class='dropdown-icon-wrap' >
+        
           <span class='dropdown-icon'>
+          
             <i class='fa-regular fa-square-caret-down'></i>
+   
           </span>
+         
+       
         </div>
-        <div class='dropdown-content'>
+        <div id='dropdown-content' class='dropdown-content none-display'>
             <nav class='navbar center'>
                 <a href='index.php' target='_self'>Home</a>
                 <a href='about.php' target='_self'>About Me</a>
