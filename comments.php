@@ -7,8 +7,8 @@ foreach ($comments as $comment){
     $name = $comment['name'];
     $content = $comment['content'];
     echo "<div class='comment'>
-            <div class='summary'>".$name."</div>". "
-            <textarea readonly class='comment-content'>" .$content."</textarea>
+            <div class='comment-name'>".$name."</div>". "
+            <div  class='comment-content'>" .$content."</div>
         </div>";
 }
 
