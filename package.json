@@ -12,6 +12,7 @@
     "@webgpu/types": "^0.1.61",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
+    "vite-plugin-string": "^1.2.3",
     "wgpu-matrix": "^3.4.0"
   },
   "dependencies": {
