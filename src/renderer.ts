@@ -1,10 +1,11 @@
 ﻿import vertexShader from './default.vert.wgsl';
 import fragmentShader from './default.frag.wgsl';
-import {Cube} from "./cube.ts";
+
 import {ShaderBuilder} from "./shader.ts";
+import {MeshBuilder} from "./mesh.ts";
 
 
-export class Renderer{
+export class Renderer {
     Canvas: HTMLCanvasElement;
     Context: GPUCanvasContext;
 
@@ -18,11 +19,10 @@ export class Renderer{
     }
 
 
-    async initialize(){
+    async initialize() {
         if (!navigator.gpu) {
             console.error("WebGPU is not supported. Please enable it in your browser settings.");
         }
-
 
 
         this.Context = this.Canvas.getContext('webgpu') as GPUCanvasContext;
@@ -43,14 +43,33 @@ export class Renderer{
             alphaMode: "premultiplied"
         })
 
+        const meshBuilder = new MeshBuilder(this.Device);
+        const mesh = meshBuilder
+            .setVertices(new Float32Array([
+                0.0, 0.5, 0.0,
+                -0.5, -0.5, 0.0,
+                0.5, -0.5, 0.0,
+            ]))
+            .setVertexBufferLayout({
+                arrayStride: 12,
+                attributes: [
+                    {
+                        shaderLocation: 0,
+                        format: "float32x3",
+                        offset: 0
+                    }
+                ]
+            }).build()
+
+
 
         const shaderBuilder = new ShaderBuilder(this.Device);
         const shader = shaderBuilder
             .setVertexCode(vertexShader, "main")
+            .addVertexBufferLayout(mesh.VertexBufferLayout)
             .setFragmentCode(fragmentShader, "main")
             .addColorFormat(this.Format)
             .build();
-
 
 
         /* Configure Pipeline
@@ -71,21 +90,12 @@ export class Renderer{
             }
         })
 
-        const vertexBufferDescriptor : GPUBufferDescriptor = {
-            size: 3 * 4, // The size of the buffer in bytes (3 vertices * 4 bytes per vertex)
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, // The buffer will be used as a vertex buffer and can be copied to.
-            mappedAtCreation: true // The buffer will be mapped to memory when it is created.
-        }
-        const vertexBuffer : GPUBuffer = this.Device.createBuffer(vertexBufferDescriptor);
-// The vertex data to be written to the buffer
-        const cube : Cube = new Cube();
 
-        this.Device.queue.writeBuffer(vertexBuffer,0, cube.vertices);
 
 // The GPUCommandEncoder is used to record commands that will be executed by the GPU.
-        const commandEncoder : GPUCommandEncoder = this.Device.createCommandEncoder();
+        const commandEncoder: GPUCommandEncoder = this.Device.createCommandEncoder();
 // The GPUTextureView is used to specify the texture that will be rendered to.
-        const textureView : GPUTextureView = this.Context.getCurrentTexture().createView(
+        const textureView: GPUTextureView = this.Context.getCurrentTexture().createView(
             {
                 format: this.Format, // The format of the texture used by the canvas.
                 dimension: "2d", // The dimension of the texture (2D, 3D, cube, etc.)
@@ -99,7 +109,7 @@ export class Renderer{
             }
         );
 
-        const renderPassDescriptor : GPURenderPassDescriptor = {
+        const renderPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [{
                 view: textureView,
                 clearValue: [0.0, 0.0, 0.0, .7],
@@ -110,9 +120,10 @@ export class Renderer{
 
 // Begin a render pass
 // A render pass is a collection of commands that will be executed by the GPU to render graphics.
-        const passEncoder : GPURenderPassEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        const passEncoder: GPURenderPassEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline); // Set the pipeline to use for rendering
-        passEncoder.draw(3, 1, 0, 0); // Draw a triangle (3 vertices) (1 instance)
+        passEncoder.setVertexBuffer(0, mesh.VertexBuffer);
+        passEncoder.draw(mesh.VertexCount, 1, 0, 0); // Draw a triangle (3 vertices) (1 instance)
         passEncoder.end(); // End the render pass, this will execute the commands recorded in the pass encoder.
 
 // Submit the commands to the GPU for execution
