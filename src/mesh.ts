@@ -1,83 +1,86 @@
+
+import { WebGPUSingleton } from './webgpu-device.ts';
+
+
+
 export class Mesh  {
-    Device: GPUDevice
-    Vertices: Float32Array
-    VertexCount: number
-    VertexBuffer: GPUBuffer
-    Indices? : Uint16Array
-    IndexBuffer? : GPUBuffer
-    IndexBufferDescriptor? :GPUBufferDescriptor
-    VertexBufferLayout: GPUVertexBufferLayout
-    VertexBufferDescriptor: GPUBufferDescriptor
-
-
+  
+    vertices: Float32Array;
+    vertexCount: number;
+    vertexBuffer: GPUBuffer;
+    indices? : Uint16Array;
+    indexBuffer? : GPUBuffer;
+    indexBufferDescriptor? :GPUBufferDescriptor;
+    vertexBufferLayout: GPUVertexBufferLayout;
+    vertexBufferDescriptor: GPUBufferDescriptor;
+    
 }
 
 export class MeshBuilder {
-    private device: GPUDevice;
-    private vertices: Float32Array;
-    private indices?: Uint16Array;
-    private vertexBufferLayout?: GPUVertexBufferLayout;
 
-    clear(){
-        this.vertices = new Float32Array();
-        this.indices = new Uint16Array();
+    private _vertices: Float32Array;
+    private _indices?: Uint16Array;
+    private _vertexBufferLayout?: GPUVertexBufferLayout;
+
+    clear() {
+        this._vertices = new Float32Array();
+        this._indices = new Uint16Array();
     }
 
-    constructor(device: GPUDevice) {
-        this.device = device;
+    constructor() {
+       
         this.clear();
     }
 
     setVertices(vertices: Float32Array): MeshBuilder {
-        this.vertices = vertices;
+        this._vertices = vertices;
         return this;
     }
 
     setIndices(indices: Uint16Array): MeshBuilder {
-        this.indices = indices;
+        this._indices = indices;
         return this;
     }
 
     setVertexBufferLayout(layout: GPUVertexBufferLayout): MeshBuilder {
-        this.vertexBufferLayout = layout;
+        this._vertexBufferLayout = layout;
         return this;
     }
 
     build(): Mesh {
-        if (!this.vertices) {
-            throw new Error("Vertices must be provided");
+        if (!this._vertices) {
+            throw new Error('Vertices must be provided');
         }
-        if (!this.vertexBufferLayout) {
-            throw new Error("Vertex buffer layout must be provided");
+        if (!this._vertexBufferLayout) {
+            throw new Error('Vertex buffer layout must be provided');
         }
 
         // Create vertex buffer
-        const vertexBuffer = this.device.createBuffer({
-            size: this.vertices.byteLength,
+        const vertexBuffer = WebGPUSingleton.device.createBuffer({
+            size: this._vertices.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        this.device.queue.writeBuffer(vertexBuffer, 0, this.vertices);
+        WebGPUSingleton.device.queue.writeBuffer(vertexBuffer, 0, this._vertices);
 
         // Create index buffer if indices provided
         let indexBuffer: GPUBuffer | undefined;
-        if (this.indices) {
-            indexBuffer = this.device.createBuffer({
-                size: this.indices.byteLength,
+        if (this._indices) {
+            indexBuffer = WebGPUSingleton.device.createBuffer({
+                size: this._indices.byteLength,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
             });
-            this.device.queue.writeBuffer(indexBuffer, 0, this.indices);
+            WebGPUSingleton.device.queue.writeBuffer(indexBuffer, 0, this._indices);
         }
 
         const mesh = {
 
-            Indices: this.indices,
-            VertexBuffer: vertexBuffer,
-            VertexBufferLayout: this.vertexBufferLayout,
-            VertexCount: this.calculateVertexCount(),
-            Vertices: this.vertices,
-            VertexBufferDescriptor: vertexBuffer,
-            IndexBufferDescriptor: indexBuffer,
-            Device: this.device
+            indices: this._indices,
+            vertexBuffer: vertexBuffer,
+            vertexBufferLayout: this._vertexBufferLayout,
+            vertexCount: this.calculateVertexCount(),
+            vertices: this._vertices,
+            vertexBufferDescriptor: vertexBuffer,
+            indexBufferDescriptor: indexBuffer,
         };
         this.clear();
         return mesh;
@@ -95,7 +98,9 @@ export class MeshBuilder {
             taking the length of this (15) and dividing it by the stride (20 bytes / 4 bytes per number)
             would get me three vertices.
          */
-        return this.vertexBufferLayout?.arrayStride != null ? this.vertices.length / (this.vertexBufferLayout?.arrayStride / 4) : 0;
+        return this._vertexBufferLayout?.arrayStride != null
+            ? this._vertices.length / (this._vertexBufferLayout?.arrayStride / 4)
+            : 0;
     }
 
 

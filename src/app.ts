@@ -1,8 +1,8 @@
 ﻿
-import {Renderer} from "./renderer.ts";
+import { Renderer } from './renderer.ts';
 
-export class App{
-    canvas: HTMLCanvasElement
+export class App {
+    canvas: HTMLCanvasElement;
     renderer: Renderer;
 
 
@@ -12,7 +12,7 @@ export class App{
 
     }
 
-    async initialize(){
+    async initialize() {
         await this.renderer.initialize();
     }
 
