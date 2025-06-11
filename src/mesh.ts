@@ -10,9 +10,7 @@ export class Mesh  {
     vertexBuffer: GPUBuffer;
     indices? : Uint16Array;
     indexBuffer? : GPUBuffer;
-    indexBufferDescriptor? :GPUBufferDescriptor;
     vertexBufferLayout: GPUVertexBufferLayout;
-    vertexBufferDescriptor: GPUBufferDescriptor;
     
 }
 
@@ -80,7 +78,8 @@ export class MeshBuilder {
             vertexCount: this.calculateVertexCount(),
             vertices: this._vertices,
             vertexBufferDescriptor: vertexBuffer,
-            indexBufferDescriptor: indexBuffer,
+            indexBuffer: indexBuffer,
+
         };
         this.clear();
         return mesh;
@@ -95,7 +94,7 @@ export class MeshBuilder {
                 0, 1, 1, 1, 1,
                 1, 1, 1 -1, -1,
             ]
-            taking the length of this (15) and dividing it by the stride (20 bytes / 4 bytes per number)
+            taking the length of this (15) and dividing it by the stride / 4 (20 bytes / 4 bytes per number)
             would get me three vertices.
          */
         return this._vertexBufferLayout?.arrayStride != null

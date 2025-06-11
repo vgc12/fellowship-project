@@ -1,10 +1,15 @@
-struct VertexIn{
-    @location(0) position: vec3f,
-
+struct Transform{
+    model: mat4x4<f32>,
+    view: mat4x4<f32>,
+    projection: mat4x4<f32>
 }
 
-@vertex
-fn main(vertIn: VertexIn) -> @builtin(position) vec4f {
+@binding(0) @group(0) var<uniform> transform: Transform;
 
-  return vec4f(vertIn.position, 1.0);
+@vertex
+fn main(@location(0) vertexPosition: vec3f) -> @builtin(position) vec4f {
+
+  var pos: vec4f = transform.projection * transform.view * transform.model * vec4f(vertexPosition,1.0);
+
+  return pos;
 }

@@ -1,4 +1,4 @@
-import {App} from "./app.ts";
+import { App } from './app.ts';
 
 
 const canvas = document.getElementById('canvas-main') as HTMLCanvasElement;

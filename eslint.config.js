@@ -51,7 +51,11 @@ export default tseslint.config(
           selector: 'typeAlias',
           format: ['PascalCase'],
         },
-
+        {
+          selector: 'property',
+          modifiers: ['readonly', 'static'],
+          format: ['UPPER_CASE']
+        }
 
 
       ],
