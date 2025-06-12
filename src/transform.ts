@@ -1,4 +1,5 @@
 import {type Vec3, vec3} from 'wgpu-matrix';
+import {Deg2Rad} from "./math-util.ts";
 
 export class Transform {
     get up(): Float32Array<ArrayBufferLike> {
@@ -36,14 +37,15 @@ export class Transform {
 
     private updateDirectionVectors() {
 
-
-        const [pitch, yaw] = this.rotation;
+        
 
 
         vec3.set(
-            Math.sin(yaw) * Math.cos(pitch),
-                 -Math.sin(pitch),
-                  Math.cos(yaw) * Math.cos(pitch), this._forward
+            Math.sin(Deg2Rad(this.rotation[2])) * Math.cos(Deg2Rad(this.rotation[1])), //now x was y
+            Math.sin(Deg2Rad(this.rotation[1])), //was z now y
+            Math.cos(Deg2Rad(this.rotation[2])) * Math.cos(Deg2Rad(this.rotation[1])),this.forward
+
+
         );
         vec3.normalize(this._forward, this._forward);
 

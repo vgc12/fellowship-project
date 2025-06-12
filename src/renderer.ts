@@ -6,8 +6,9 @@ import {Mesh, MeshBuilder} from './mesh.ts';
 import { WebGPUSingleton } from './webgpu-device.ts';
 
 import {RenderableObject} from "./renderable-object.ts";
-import {Deg2Rad} from "./math-util.ts";
+
 import {Camera} from "./Camera.ts";
+
 
 
 
@@ -33,10 +34,6 @@ export class Renderer {
         this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
 
-        // Request a GPU adapter and device
-        // An adapter is a link between the browser and the GPU hardware.
-        // Allows for getting information about the GPU and creating a device to interact with it.
-        
         await WebGPUSingleton.initialize();
 
         this.format = navigator.gpu.getPreferredCanvasFormat();
@@ -49,34 +46,34 @@ export class Renderer {
 
 
         const camera = new Camera();
-        camera.transform.setPosition(0, 0, 5);
+        camera.transform.setPosition(0, 0, 0);
         camera.update();
 
         const meshBuilder = new MeshBuilder();
 
         const mesh : Mesh =  meshBuilder.setVertices(new Float32Array([
-                1,1,0,
-                0,1,0,
-                0,1,1,
-                1,1,1,
-                1,0,0,
-                1,0,1,
-                0,0,1,
-                0,0,0,
+            1,1,-1,
+            -1,1,-1,
+            -1,1,1,
+            1,1,1,
+            1,-1,-1,
+            1,-1,1,
+            -1,-1,1,
+            -1,-1,-1,
             ]),
         ).setIndices(new Uint16Array([
-            0,1,2, // top triangle
-            0,2,3, // top triangle
-            0,4,7, // back left triangle
-            0,7,1, // back left triangle
-            1,2,7, // back right triangle
-            2,6,7, // back right triangle
-            3,5,6, // front right triangle
-            3,6,2, // front right triangle
-            4,6,3, // front left triangle
-            0,3,4, // front left triangle
-            4,5,6, // bottom triangle
-            4,6,7,  // bottom triangle
+            0,1,2,
+            0,2,3,
+            0,4,7,
+            0,7,1,
+            1,2,7,
+            2,6,7,
+            3,5,6,
+            3,6,2,
+            4,6,3,
+            0,3,4,
+            4,5,6,
+            4,6,7,
         ])).setVertexBufferLayout({
             arrayStride: 12,
             attributes: [{
@@ -90,10 +87,10 @@ export class Renderer {
 
         const cube = new RenderableObject();
         cube.mesh = mesh;
-        //cube.transform.setPosition(0, 0, -5);
-        const rotation = Deg2Rad(45);
-        cube.transform.setRotation(rotation, rotation, 0);
-        cube.transform.setPosition(0,0,0);
+        const rotation = 33;
+        cube.transform.setRotation(rotation, 33, 33);
+        cube.transform.setPosition(0,0,10);
+        cube.transform.setScale(1,1,1)
         cube.update();
 
         const shaderBuilder = new ShaderBuilder();
@@ -114,7 +111,7 @@ export class Renderer {
         const uniformBuffer = WebGPUSingleton.device.createBuffer({
             label: "uniform buffer",
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-            size: 64 * 3 //3 matrix 4x4, so 4 bytes * 4 rows * 4 columns * 3
+            size: 64 * 3 //3 matrix 4x4, so 4 bytes * 4 rows * 4 columns * 3 matrices
         });
 
         const bindGroupLayout :GPUBindGroupLayout = WebGPUSingleton.device.createBindGroupLayout({
@@ -150,6 +147,12 @@ export class Renderer {
                 topology: 'triangle-list',
 
             },
+
+            depthStencil: {
+                depthWriteEnabled: true,
+                depthCompare: "less",
+                format: "depth24plus"
+            }
         });
 
 
@@ -171,36 +174,57 @@ export class Renderer {
                 arrayLayerCount: 1, // The number of array layers in the texture (1 for no array layers)
             },
         );
-        console.log(camera.viewMatrix);
-        console.log(camera.projectionMatrix);
-        console.log(cube.modelMatrix);
-     console.log("M × V × P:", cube.modelMatrix, camera.viewMatrix, camera.projectionMatrix);
 
+        // Write the uniform data to the uniform buffer.
         WebGPUSingleton.device.queue.writeBuffer(uniformBuffer, 0, cube.modelMatrix as ArrayBuffer);
         WebGPUSingleton.device.queue.writeBuffer(uniformBuffer, 64, camera.viewMatrix as ArrayBuffer);
         WebGPUSingleton.device.queue.writeBuffer(uniformBuffer, 128, camera.projectionMatrix as ArrayBuffer);
+
+        const windowDimensions = WebGPUSingleton.windowDimensions;
+
+        // Create a depth texture to be used for depth testing.
+        // Depth testing is a technique used to determine which objects are in front of others, so objects are rendered in the correct order.
+        const depthTexture = WebGPUSingleton.device.createTexture({
+            size: windowDimensions,
+            format: 'depth24plus',
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        })
+
+        // Create a render pass descriptor with a depth texture and a color attachment, this color attachment is the color of background of the canvas.
         const renderPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [{
-                view: textureView,
+                view: textureView, // The texture view that will be rendered to belonging to the canvas.
                 clearValue: [0.0, 0.0, 0.0, .7],
                 loadOp: 'clear', // Clear the canvas before rendering
                 storeOp: 'store', // Store the rendered image in the canvas
             }],
+            depthStencilAttachment: {
+                view: depthTexture.createView(),
+                depthClearValue: 1.0,
+                depthLoadOp: 'clear',
+                depthStoreOp: 'store'
+            }
         };
 
-// Begin a render pass
-// A render pass is a collection of commands that will be executed by the GPU to render graphics.
+        // Begin a render pass
+        // A render pass is a collection of commands that will be executed by the GPU to render graphics.
         const passEncoder: GPURenderPassEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        passEncoder.setPipeline(pipeline); // Set the pipeline to use for rendering
 
+        // Set the pipeline to use for rendering
+        passEncoder.setPipeline(pipeline);
+
+        // Set the index buffer to use for rendering
         passEncoder.setIndexBuffer(cube.mesh.indexBuffer as GPUBuffer, "uint16");
+        // Set the vertex buffer to use for rendering
         passEncoder.setVertexBuffer(0, cube.mesh.vertexBuffer);
+        // Set the bind group for the pipeline to be at location 0
         passEncoder.setBindGroup(0, bindGroup);
-        console.log(cube.mesh.vertexCount);
-        passEncoder.drawIndexed(12, 1, 0, 0,0); // Draw a triangle (3 vertices) (1 instance)
+
+        // Draw the indices. The index array length ends up being the proper amount of vertices needed to draw
+        passEncoder.drawIndexed(mesh.indices?.length ?? 0, 1);
         passEncoder.end(); // End the render pass, this will execute the commands recorded in the pass encoder.
 
-// Submit the commands to the GPU for execution
+        // Submit the commands to the GPU for execution
         WebGPUSingleton.device.queue.submit([commandEncoder.finish()]);
 
     }
