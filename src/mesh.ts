@@ -1,5 +1,5 @@
 
-import { WebGPUSingleton } from './webgpu-device.ts';
+import { $WGPU } from './webgpu-device.ts';
 
 
 
@@ -54,20 +54,20 @@ export class MeshBuilder {
         }
 
         // Create vertex buffer
-        const vertexBuffer = WebGPUSingleton.device.createBuffer({
+        const vertexBuffer = $WGPU.device.createBuffer({
             size: this._vertices.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        WebGPUSingleton.device.queue.writeBuffer(vertexBuffer, 0, this._vertices);
+        $WGPU.device.queue.writeBuffer(vertexBuffer, 0, this._vertices);
 
         // Create index buffer if indices provided
         let indexBuffer: GPUBuffer | undefined;
         if (this._indices) {
-            indexBuffer = WebGPUSingleton.device.createBuffer({
+            indexBuffer = $WGPU.device.createBuffer({
                 size: this._indices.byteLength,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
             });
-            WebGPUSingleton.device.queue.writeBuffer(indexBuffer, 0, this._indices);
+            $WGPU.device.queue.writeBuffer(indexBuffer, 0, this._indices);
         }
 
         const mesh = {

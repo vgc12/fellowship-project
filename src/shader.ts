@@ -1,4 +1,4 @@
-﻿import {WebGPUSingleton} from "./webgpu-device.ts";
+﻿import {$WGPU} from "./webgpu-device.ts";
 
 
 export type Shader = {
@@ -73,11 +73,11 @@ export class ShaderBuilder {
 
 
     build(): Shader {
-        this._fragmentModule = WebGPUSingleton.device.createShaderModule({
+        this._fragmentModule = $WGPU.device.createShaderModule({
             code: this._fragmentCode,
         });
 
-        this._vertexModule = WebGPUSingleton.device.createShaderModule({
+        this._vertexModule = $WGPU.device.createShaderModule({
             code: this._vertexCode,
         });
 

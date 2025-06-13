@@ -3,12 +3,9 @@ import fragmentShader from './default.frag.wgsl';
 
 import { ShaderBuilder } from './shader.ts';
 import {Mesh, MeshBuilder} from './mesh.ts';
-import { WebGPUSingleton } from './webgpu-device.ts';
+import { $WGPU }  from './webgpu-device.ts';
 
 import {RenderableObject} from "./renderable-object.ts";
-
-import {Camera} from "./Camera.ts";
-
 
 
 
@@ -18,7 +15,10 @@ export class Renderer {
     canvas: HTMLCanvasElement;
     context: GPUCanvasContext;
     format: GPUTextureFormat;
-
+    uniformBuffer: GPUBuffer;
+    bindGroup: GPUBindGroup;
+    pipeline: GPURenderPipeline;
+    storageBuffer: GPUBuffer;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -34,20 +34,17 @@ export class Renderer {
         this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
 
-        await WebGPUSingleton.initialize();
+        await $WGPU.initialize();
 
         this.format = navigator.gpu.getPreferredCanvasFormat();
 
         this.context.configure({
             format: this.format,
-            device: WebGPUSingleton.device,
+            device: $WGPU.device,
             alphaMode: 'premultiplied',
         });
 
 
-        const camera = new Camera();
-        camera.transform.setPosition(0, 0, 0);
-        camera.update();
 
         const meshBuilder = new MeshBuilder();
 
@@ -89,9 +86,9 @@ export class Renderer {
         cube.mesh = mesh;
         const rotation = 33;
         cube.transform.setRotation(rotation, 33, 33);
-        cube.transform.setPosition(0,0,10);
+        cube.transform.setPosition(0,0,.100);
         cube.transform.setScale(1,1,1)
-        cube.update();
+
 
         const shaderBuilder = new ShaderBuilder();
         const shader = shaderBuilder
@@ -108,36 +105,59 @@ export class Renderer {
          *  FRAGMENT: A fragment shader is a program that runs on the GPU and does some operation on each .
          * */
 
-        const uniformBuffer = WebGPUSingleton.device.createBuffer({
+        this.uniformBuffer = $WGPU.device.createBuffer({
             label: "uniform buffer",
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             size: 64 * 3 //3 matrix 4x4, so 4 bytes * 4 rows * 4 columns * 3 matrices
         });
 
-        const bindGroupLayout :GPUBindGroupLayout = WebGPUSingleton.device.createBindGroupLayout({
+        // Write the uniform data to the uniform buffer.
+        this.storageBuffer = $WGPU.device.createBuffer({
+            label: "storage buffer",
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+            size: 64 * 1024 // I can store 1024 matrices in this buffer, each matrix is 64 bytes (4x4 matrix)
+        });
+
+        const bindGroupLayout :GPUBindGroupLayout = $WGPU.device.createBindGroupLayout({
             entries: [{
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX,
                 buffer: {}
-            }
+            },
+                {
+                    binding : 1,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'read-only-storage',
+                        hasDynamicOffset: false
+                    }
+                }
             ]
         })
 
-        const bindGroup : GPUBindGroup = WebGPUSingleton.device.createBindGroup({
+        this.bindGroup = $WGPU.device.createBindGroup({
             layout: bindGroupLayout,
-            entries: [{
-                binding: 0,
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.uniformBuffer
+                    }
+            },
+            {
+                binding: 1,
                 resource: {
-                    buffer: uniformBuffer
+                    buffer: this.storageBuffer
                 }
-            }]
+            }
+            ]
         });
 
-        const pipelineLayout : GPUPipelineLayout = WebGPUSingleton.device.createPipelineLayout({
+        const pipelineLayout : GPUPipelineLayout = $WGPU.device.createPipelineLayout({
             bindGroupLayouts: [bindGroupLayout]
         });
 
-        const pipeline = await WebGPUSingleton.device.createRenderPipelineAsync({
+        this.pipeline = await $WGPU.device.createRenderPipelineAsync({
             vertex: shader.vertexState,
 
             fragment: shader.fragmentState,
@@ -158,9 +178,15 @@ export class Renderer {
 
 
 
-// The GPUCommandEncoder is used to record commands that will be executed by the GPU.
-        const commandEncoder: GPUCommandEncoder = WebGPUSingleton.device.createCommandEncoder();
-// The GPUTextureView is used to specify the texture that will be rendered to.
+
+
+    }
+
+    s = true
+    update() {
+        // The GPUCommandEncoder is used to record commands that will be executed by the GPU.
+        const commandEncoder: GPUCommandEncoder = $WGPU.device.createCommandEncoder();
+        // The GPUTextureView is used to specify the texture that will be rendered to.
         const textureView: GPUTextureView = this.context.getCurrentTexture().createView(
             {
                 format: this.format, // The format of the texture used by the canvas.
@@ -175,20 +201,36 @@ export class Renderer {
             },
         );
 
-        // Write the uniform data to the uniform buffer.
-        WebGPUSingleton.device.queue.writeBuffer(uniformBuffer, 0, cube.modelMatrix as ArrayBuffer);
-        WebGPUSingleton.device.queue.writeBuffer(uniformBuffer, 64, camera.viewMatrix as ArrayBuffer);
-        WebGPUSingleton.device.queue.writeBuffer(uniformBuffer, 128, camera.projectionMatrix as ArrayBuffer);
 
-        const windowDimensions = WebGPUSingleton.windowDimensions;
+        const modelMatrices = new Float32Array(16*1024);
+        for (let renderableIndex = 0; renderableIndex < $WGPU.renderables.length; renderableIndex++){
+
+            const renderable = $WGPU.renderables[renderableIndex];
+
+            for(let MATRIX_POSITION = 0; MATRIX_POSITION < renderable.modelMatrix.length; MATRIX_POSITION++){
+                modelMatrices[16 * renderableIndex + MATRIX_POSITION ] = renderable.modelMatrix[MATRIX_POSITION];
+            }
+        }
+
+        if(this.s){
+            console.log(modelMatrices);
+            this.s = false;
+        }
+
+        $WGPU.device.queue.writeBuffer(this.storageBuffer, 0, modelMatrices as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 0, $WGPU.camera.viewMatrix as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 64, $WGPU.camera.projectionMatrix as ArrayBuffer);
+
+        const windowDimensions = $WGPU.windowDimensions;
 
         // Create a depth texture to be used for depth testing.
         // Depth testing is a technique used to determine which objects are in front of others, so objects are rendered in the correct order.
-        const depthTexture = WebGPUSingleton.device.createTexture({
+        const depthTexture = $WGPU.device.createTexture({
             size: windowDimensions,
             format: 'depth24plus',
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
-        })
+        });
+       // console.log(modelMatrices);
 
         // Create a render pass descriptor with a depth texture and a color attachment, this color attachment is the color of background of the canvas.
         const renderPassDescriptor: GPURenderPassDescriptor = {
@@ -211,23 +253,41 @@ export class Renderer {
         const passEncoder: GPURenderPassEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
         // Set the pipeline to use for rendering
-        passEncoder.setPipeline(pipeline);
+        passEncoder.setPipeline(this.pipeline);
 
-        // Set the index buffer to use for rendering
-        passEncoder.setIndexBuffer(cube.mesh.indexBuffer as GPUBuffer, "uint16");
-        // Set the vertex buffer to use for rendering
-        passEncoder.setVertexBuffer(0, cube.mesh.vertexBuffer);
-        // Set the bind group for the pipeline to be at location 0
-        passEncoder.setBindGroup(0, bindGroup);
 
+        passEncoder.setBindGroup(0, this.bindGroup);
+
+        $WGPU.renderables.forEach((renderable) => {
+            if(renderable.mesh.indexBuffer != undefined){
+
+                passEncoder.setIndexBuffer(renderable.mesh.indexBuffer as GPUBuffer, "uint16");
+
+                passEncoder.setVertexBuffer(0, renderable.mesh.vertexBuffer);
+                passEncoder.drawIndexed(renderable.mesh.indices?.length ?? 0, 1);
+
+            }
+            else {
+
+                passEncoder.setVertexBuffer(0, renderable.mesh.vertexBuffer)
+                passEncoder.draw(renderable.mesh.vertexCount, 1,0,0);
+            }
+        });
+
+        passEncoder.end();
         // Draw the indices. The index array length ends up being the proper amount of vertices needed to draw
+        /*
+                // Set the index buffer to use for rendering
+                passEncoder.setIndexBuffer(cube.mesh.indexBuffer as GPUBuffer, "uint16");
+                // Set the vertex buffer to use for rendering
+                passEncoder.setVertexBuffer(0, cube.mesh.vertexBuffer);
+                // Set the bind group for the pipeline to be at location 0
+                passEncoder.setBindGroup(0, this.bindGroup);
+
         passEncoder.drawIndexed(mesh.indices?.length ?? 0, 1);
         passEncoder.end(); // End the render pass, this will execute the commands recorded in the pass encoder.
-
+ */
         // Submit the commands to the GPU for execution
-        WebGPUSingleton.device.queue.submit([commandEncoder.finish()]);
-
+        $WGPU.device.queue.submit([commandEncoder.finish()]);
     }
-
-
 }

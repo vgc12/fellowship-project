@@ -3,7 +3,7 @@ import {mat4, type Mat4, vec3} from "wgpu-matrix";
 import type {IObject} from "./IObject.ts";
 import { Transform } from "./transform.ts";
 import {Deg2Rad} from "./math-util.ts";
-import {WebGPUSingleton} from "./webgpu-device.ts";
+import {$WGPU} from "./webgpu-device.ts";
 
 export class Camera implements IObject {
 
@@ -21,6 +21,8 @@ export class Camera implements IObject {
 
         this.projectionMatrix = mat4.create();
 
+
+        $WGPU.addObject(this);
     }
 
 
@@ -40,7 +42,7 @@ export class Camera implements IObject {
         // it is calculated based on the camera's field of view, aspect ratio, and near/far planes
         this.projectionMatrix = mat4.perspective(
             Deg2Rad(this.fov/2),
-            WebGPUSingleton.windowDimensions.width / WebGPUSingleton.windowDimensions.height,
+            $WGPU.windowDimensions.width / $WGPU.windowDimensions.height,
             0.1,
             1000
         );

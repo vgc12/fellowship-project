@@ -1,4 +1,4 @@
-import {type Vec3, vec3} from 'wgpu-matrix';
+import {mat4, type Mat4, type Vec3, vec3} from 'wgpu-matrix';
 import {Deg2Rad} from "./math-util.ts";
 
 export class Transform {
@@ -37,8 +37,6 @@ export class Transform {
 
     private updateDirectionVectors() {
 
-        
-
 
         vec3.set(
             Math.sin(Deg2Rad(this.rotation[2])) * Math.cos(Deg2Rad(this.rotation[1])), //now x was y
@@ -61,6 +59,7 @@ export class Transform {
 
     setPosition(x: number = this.position[0], y: number = this.position[1], z: number = this.position[2]) {
         vec3.set(x, y, z, this.position);
+
     }
 
     setRotation(x: number = this.rotation[0], y: number = this.rotation[1], z: number = this.rotation[2]) {
@@ -70,5 +69,8 @@ export class Transform {
 
     setScale(x: number = this.scale[0], y: number = this.scale[1], z: number = this.scale[2]) {
         vec3.set(x, y, z, this.scale);
+
     }
+
+
 }

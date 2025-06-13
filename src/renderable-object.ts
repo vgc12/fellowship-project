@@ -4,6 +4,7 @@ import type {IRenderable} from "./IRenderable.ts";
 import  {Transform } from "./transform.ts";
 import {type Mat4, mat4} from "wgpu-matrix";
 import {Deg2Rad} from "./math-util.ts";
+import {$WGPU} from "./webgpu-device.ts";
 
 export class RenderableObject implements IObject, IRenderable {
     get mesh(): Mesh {
@@ -37,8 +38,11 @@ export class RenderableObject implements IObject, IRenderable {
         this._transform = new Transform();
         this._modelMatrix = mat4.identity();
 
+
         mat4.translate(this._modelMatrix, this._transform.position, this._modelMatrix);
         this._mesh = new Mesh();
+        $WGPU.addObject(this);
+        $WGPU.addRenderable(this);
     }
 
     update() {
