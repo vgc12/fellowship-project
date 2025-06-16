@@ -7,6 +7,9 @@ import {Camera} from "./Camera.ts";
 import type {IRenderable} from "./IRenderable.ts";
 
 class WebGPUSingleton {
+    get vertexBufferLayout(): GPUVertexBufferLayout | null {
+        return this._vertexBufferLayout;
+    }
 
     private static _instance: WebGPUSingleton;
     private _device: GPUDevice | null = null;
@@ -16,12 +19,14 @@ class WebGPUSingleton {
     private _objects: IObject[] = [];
     private _renderables: IRenderable[] = [];
     private _camera: Camera | null = null;
+    private _vertexBufferLayout : GPUVertexBufferLayout | null = null;
 
-    static getInstance(): WebGPUSingleton {
-        if (!WebGPUSingleton._instance) {
-            WebGPUSingleton._instance = new WebGPUSingleton();
+    static get Instance(): WebGPUSingleton {
+        if (!this._instance) {
+            this._instance = new WebGPUSingleton();
+
         }
-        return WebGPUSingleton._instance;
+        return this._instance;
     }
 
     async initialize(): Promise<void> {
@@ -35,10 +40,22 @@ class WebGPUSingleton {
             height: this._canvas.height
         }
 
+
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
         this._device = await this._adapter.requestDevice();
         this._camera = new Camera();
+        this._camera.name = "camera";
         this._camera.transform.setPosition(0, 0, 0);
+
+
+        this._vertexBufferLayout  = {
+            arrayStride: 12,
+            attributes: [{
+                shaderLocation: 0,
+                format: 'float32x3',
+                offset: 0,
+            }]
+        }
 
     }
     get device(): GPUDevice {
@@ -84,4 +101,4 @@ class WebGPUSingleton {
 }
 
 // A singleton that contains several common objects that are used throughout the project.
-export const $WGPU = WebGPUSingleton.getInstance();
+export const $WGPU = WebGPUSingleton.Instance;

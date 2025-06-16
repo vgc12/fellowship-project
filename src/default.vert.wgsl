@@ -5,7 +5,7 @@ struct Transform{
 
 struct VertexOut{
     @builtin(position) pos : vec4f,
-    @location(0) vertex_position: vec3f
+    @location(0) color: vec4f
 }
 
 struct ObjectData{
@@ -15,6 +15,7 @@ struct ObjectData{
 @binding(0) @group(0) var<uniform> transform: Transform;
 @binding(1) @group(0) var<storage,read> objects: ObjectData;
 
+
 @vertex
 fn main(@builtin(instance_index) v_index : u32, @location(0) vertexPosition: vec3f) -> VertexOut {
 
@@ -22,7 +23,11 @@ fn main(@builtin(instance_index) v_index : u32, @location(0) vertexPosition: vec
 
   output.pos = transform.projection * transform.view * objects.model[v_index] * vec4f(vertexPosition,1.0);
 
-  output.vertex_position = .4 * (output.pos.xyz + vec3(1.0, 1.0, 1.0));
+    var col = vertexPosition;
+
+  output.color = vec4f(col,1.0);
+
+
 
   return output;
 }

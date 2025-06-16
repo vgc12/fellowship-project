@@ -1,6 +1,12 @@
 ﻿
 import { Renderer } from './renderer.ts';
-import {$WGPU} from "./webgpu-device.ts";
+import {$WGPU} from "./webgpu-singleton.ts";
+import {RenderableObject} from "./renderable-object.ts";
+import {Mesh, MeshBuilder} from "./mesh.ts";
+import {$TIME} from "./time.ts";
+
+
+
 
 export class App {
     canvas: HTMLCanvasElement;
@@ -14,22 +20,81 @@ export class App {
     }
 
     async initialize() {
+        await $WGPU.initialize();
         await this.renderer.initialize();
+        await $TIME.initialize();
+
+        const meshBuilder = new MeshBuilder();
+
+        const mesh : Mesh =  meshBuilder.setVertices(new Float32Array([
+                1,1,-1, // yellow
+                -1,1,-1,
+                -1,1,1,
+                1,1,1, // 3 top yellow
+                1,-1,-1, // 4 red
+                1,-1,1, //5 pink
+                -1,-1,1, // 6 blue
+                -1,-1,-1, // 7 black
+            ]),
+        ).setIndices(new Uint16Array([
+            0,1,2,
+            0,2,3,
+            0,4,7,
+            0,7,1,
+            1,2,7,
+            2,6,7,
+            3,5,6,
+            3,6,2,
+            3,4,5,
+            0,3,4,
+            5,4,6,
+            4,6,7,
+
+        ])).build();
+
+        for(let i = 0; i < 10; i++) {
+           const obj = new RenderableObject();
+           obj.mesh = mesh;
+           obj.transform.setPosition(-15 +(i*3),0,18);
+
+        }
 
     }
 
+    rotation = 0;
+
+
+
+    p = 0
     run = async () => {
 
 
         $WGPU.objects.forEach(o => {
             o.update()
-
         });
+
+
+      //  console.log($TIME.deltaTime)
+        this.rotation =   (360) * $TIME.deltaTime ;
+
+
+        $WGPU.objects.forEach(o => {
+            if(o.name != "camera") {
+
+                o.transform.addRotation(0, this.rotation , this.rotation );
+            }
+        })
+
 
         this.renderer.update();
 
         requestAnimationFrame(this.run)
+      
+
+
     };
 
 
 }
+
+

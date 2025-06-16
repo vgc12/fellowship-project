@@ -1,4 +1,4 @@
-﻿import {$WGPU} from "./webgpu-device.ts";
+﻿import {$WGPU} from "./webgpu-singleton.ts";
 
 
 export type Shader = {

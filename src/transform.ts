@@ -1,4 +1,4 @@
-import {mat4, type Mat4, type Vec3, vec3} from 'wgpu-matrix';
+import { type Vec3, vec3} from 'wgpu-matrix';
 import {Deg2Rad} from "./math-util.ts";
 
 export class Transform {
@@ -55,6 +55,7 @@ export class Transform {
         vec3.normalize(this._up, this._up);
 
 
+
     }
 
     setPosition(x: number = this.position[0], y: number = this.position[1], z: number = this.position[2]) {
@@ -72,5 +73,10 @@ export class Transform {
 
     }
 
+
+    addRotation(x:number = 0, y:number = 0, z:number = 0) {
+        vec3.add(vec3.create(x, y, z), this.rotation, this.rotation);
+        this.updateDirectionVectors();
+    }
 
 }

@@ -1,5 +1,5 @@
 
-import { $WGPU } from './webgpu-device.ts';
+import { $WGPU } from './webgpu-singleton.ts';
 
 
 
@@ -10,15 +10,13 @@ export class Mesh  {
     vertexBuffer: GPUBuffer;
     indices? : Uint16Array;
     indexBuffer? : GPUBuffer;
-    vertexBufferLayout: GPUVertexBufferLayout;
-    
+
 }
 
 export class MeshBuilder {
 
     private _vertices: Float32Array;
     private _indices?: Uint16Array;
-    private _vertexBufferLayout?: GPUVertexBufferLayout;
 
     clear() {
         this._vertices = new Float32Array();
@@ -40,18 +38,13 @@ export class MeshBuilder {
         return this;
     }
 
-    setVertexBufferLayout(layout: GPUVertexBufferLayout): MeshBuilder {
-        this._vertexBufferLayout = layout;
-        return this;
-    }
+
 
     build(): Mesh {
         if (!this._vertices) {
             throw new Error('Vertices must be provided');
         }
-        if (!this._vertexBufferLayout) {
-            throw new Error('Vertex buffer layout must be provided');
-        }
+
 
         // Create vertex buffer
         const vertexBuffer = $WGPU.device.createBuffer({
@@ -74,7 +67,7 @@ export class MeshBuilder {
 
             indices: this._indices,
             vertexBuffer: vertexBuffer,
-            vertexBufferLayout: this._vertexBufferLayout,
+            vertexBufferLayout: $WGPU.vertexBufferLayout,
             vertexCount: this.calculateVertexCount(),
             vertices: this._vertices,
             vertexBufferDescriptor: vertexBuffer,
@@ -97,8 +90,8 @@ export class MeshBuilder {
             taking the length of this (15) and dividing it by the stride / 4 (20 bytes / 4 bytes per number)
             would get me three vertices.
          */
-        return this._vertexBufferLayout?.arrayStride != null
-            ? this._vertices.length / (this._vertexBufferLayout?.arrayStride / 4)
+        return $WGPU.vertexBufferLayout?.arrayStride != null
+            ? this._vertices.length / ($WGPU.vertexBufferLayout?.arrayStride / 4)
             : 0;
     }
 

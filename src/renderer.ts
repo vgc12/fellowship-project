@@ -2,10 +2,8 @@
 import fragmentShader from './default.frag.wgsl';
 
 import { ShaderBuilder } from './shader.ts';
-import {Mesh, MeshBuilder} from './mesh.ts';
-import { $WGPU }  from './webgpu-device.ts';
 
-import {RenderableObject} from "./renderable-object.ts";
+import { $WGPU }  from './webgpu-singleton.ts';
 
 
 
@@ -34,7 +32,7 @@ export class Renderer {
         this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
 
-        await $WGPU.initialize();
+
 
         this.format = navigator.gpu.getPreferredCanvasFormat();
 
@@ -45,55 +43,10 @@ export class Renderer {
         });
 
 
-
-        const meshBuilder = new MeshBuilder();
-
-        const mesh : Mesh =  meshBuilder.setVertices(new Float32Array([
-            1,1,-1,
-            -1,1,-1,
-            -1,1,1,
-            1,1,1,
-            1,-1,-1,
-            1,-1,1,
-            -1,-1,1,
-            -1,-1,-1,
-            ]),
-        ).setIndices(new Uint16Array([
-            0,1,2,
-            0,2,3,
-            0,4,7,
-            0,7,1,
-            1,2,7,
-            2,6,7,
-            3,5,6,
-            3,6,2,
-            4,6,3,
-            0,3,4,
-            4,5,6,
-            4,6,7,
-        ])).setVertexBufferLayout({
-            arrayStride: 12,
-            attributes: [{
-                shaderLocation: 0,
-                format: 'float32x3',
-                offset: 0,
-            }],
-        }).build();
-
-
-
-        const cube = new RenderableObject();
-        cube.mesh = mesh;
-        const rotation = 33;
-        cube.transform.setRotation(rotation, 33, 33);
-        cube.transform.setPosition(0,0,.100);
-        cube.transform.setScale(1,1,1)
-
-
         const shaderBuilder = new ShaderBuilder();
         const shader = shaderBuilder
             .setVertexCode(vertexShader, 'main')
-            .addVertexBufferLayout(cube.mesh.vertexBufferLayout)
+            .addVertexBufferLayout($WGPU.vertexBufferLayout as GPUVertexBufferLayout)
             .setFragmentCode(fragmentShader, 'main')
             .addColorFormat(this.format)
             .build();
@@ -124,21 +77,21 @@ export class Renderer {
                 visibility: GPUShaderStage.VERTEX,
                 buffer: {}
             },
-                {
-                    binding : 1,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: {
-                        type: 'read-only-storage',
-                        hasDynamicOffset: false
-                    }
+            {
+                binding : 1,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: 'read-only-storage',
+                    hasDynamicOffset: false
                 }
+            }
             ]
         })
 
         this.bindGroup = $WGPU.device.createBindGroup({
             layout: bindGroupLayout,
             entries: [
-                {
+            {
                     binding: 0,
                     resource: {
                         buffer: this.uniformBuffer
@@ -182,7 +135,6 @@ export class Renderer {
 
     }
 
-    s = true
     update() {
         // The GPUCommandEncoder is used to record commands that will be executed by the GPU.
         const commandEncoder: GPUCommandEncoder = $WGPU.device.createCommandEncoder();
@@ -203,19 +155,25 @@ export class Renderer {
 
 
         const modelMatrices = new Float32Array(16*1024);
+
+
         for (let renderableIndex = 0; renderableIndex < $WGPU.renderables.length; renderableIndex++){
 
             const renderable = $WGPU.renderables[renderableIndex];
 
+
+
             for(let MATRIX_POSITION = 0; MATRIX_POSITION < renderable.modelMatrix.length; MATRIX_POSITION++){
+
                 modelMatrices[16 * renderableIndex + MATRIX_POSITION ] = renderable.modelMatrix[MATRIX_POSITION];
+
             }
+
+
         }
 
-        if(this.s){
-            console.log(modelMatrices);
-            this.s = false;
-        }
+
+
 
         $WGPU.device.queue.writeBuffer(this.storageBuffer, 0, modelMatrices as ArrayBuffer);
         $WGPU.device.queue.writeBuffer(this.uniformBuffer, 0, $WGPU.camera.viewMatrix as ArrayBuffer);
@@ -258,13 +216,14 @@ export class Renderer {
 
         passEncoder.setBindGroup(0, this.bindGroup);
 
+        let objectsDrawn = 0;
         $WGPU.renderables.forEach((renderable) => {
             if(renderable.mesh.indexBuffer != undefined){
 
                 passEncoder.setIndexBuffer(renderable.mesh.indexBuffer as GPUBuffer, "uint16");
-
+                
                 passEncoder.setVertexBuffer(0, renderable.mesh.vertexBuffer);
-                passEncoder.drawIndexed(renderable.mesh.indices?.length ?? 0, 1);
+                passEncoder.drawIndexed(renderable.mesh.indices?.length ?? 0, 1,0,0, objectsDrawn);
 
             }
             else {
@@ -272,6 +231,7 @@ export class Renderer {
                 passEncoder.setVertexBuffer(0, renderable.mesh.vertexBuffer)
                 passEncoder.draw(renderable.mesh.vertexCount, 1,0,0);
             }
+            objectsDrawn++;
         });
 
         passEncoder.end();

@@ -4,7 +4,7 @@ import type {IRenderable} from "./IRenderable.ts";
 import  {Transform } from "./transform.ts";
 import {type Mat4, mat4} from "wgpu-matrix";
 import {Deg2Rad} from "./math-util.ts";
-import {$WGPU} from "./webgpu-device.ts";
+import {$WGPU} from "./webgpu-singleton.ts";
 
 export class RenderableObject implements IObject, IRenderable {
     get mesh(): Mesh {
@@ -43,9 +43,12 @@ export class RenderableObject implements IObject, IRenderable {
         this._mesh = new Mesh();
         $WGPU.addObject(this);
         $WGPU.addRenderable(this);
+
+
     }
 
     update() {
+        this._modelMatrix = mat4.identity();
 
          // Update the transformation matrix based on the transform's position, rotation, and scale
          mat4.translate(this._modelMatrix,  this.transform.position, this._modelMatrix);
