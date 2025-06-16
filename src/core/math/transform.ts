@@ -73,8 +73,15 @@ export class Transform {
 
     }
 
+    addScale(x: number = 0, y: number = 0, z: number = 0) {
+        vec3.add(vec3.create(x, y, z), this.scale, this.scale);
+    }
 
-    addRotation(x:number = 0, y:number = 0, z:number = 0) {
+    move(x: number = 0, y: number = 0, z: number = 0) {
+        vec3.add(vec3.create(x, y, z), this.position, this.position);
+    }
+
+    rotate(x:number = 0, y:number = 0, z:number = 0) {
         vec3.add(vec3.create(x, y, z), this.rotation, this.rotation);
         this.updateDirectionVectors();
     }

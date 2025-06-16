@@ -1,5 +1,5 @@
 
-import { $WGPU } from './webgpu-singleton.ts';
+import { $WGPU } from '../../core/webgpu/webgpu-singleton.ts';
 
 
 

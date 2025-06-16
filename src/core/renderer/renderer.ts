@@ -1,9 +1,10 @@
-﻿import vertexShader from './default.vert.wgsl';
-import fragmentShader from './default.frag.wgsl';
+﻿import vertexShader from '../../graphics/shaders/default.vert.wgsl';
+import fragmentShader from '../../graphics/shaders/default.frag.wgsl';
 
-import {type Shader, ShaderBuilder} from './shader.ts';
+import {type Shader} from '../../graphics/shader-utils/shader.ts';
 
-import { $WGPU }  from './webgpu-singleton.ts';
+import { $WGPU }  from '../webgpu/webgpu-singleton.ts';
+import {ShaderBuilder} from "../../graphics/shader-utils/shader-builder.ts";
 
 
 

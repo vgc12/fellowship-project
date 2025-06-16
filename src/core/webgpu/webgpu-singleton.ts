@@ -2,9 +2,9 @@
 // This is a singleton of things that are commonly used throughout the whole project
 // Neither the device nor adapter should need multiple instances to be made as this isnt made to handle multiple GPU's
 
-import type {IObject} from "./IObject.ts";
-import {Camera} from "./Camera.ts";
-import type {IRenderable} from "./IRenderable.ts";
+import type {IObject} from "../../scene/IObject.ts";
+import {Camera} from "../../scene/Camera.ts";
+import type {IRenderable} from "../../scene/IRenderable.ts";
 
 class WebGPUSingleton {
 

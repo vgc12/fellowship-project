@@ -1,10 +1,10 @@
-import  {Mesh } from "./mesh.ts";
+import  {Mesh } from "../graphics/3d/mesh.ts";
 import type {IObject} from "./IObject.ts";
 import type {IRenderable} from "./IRenderable.ts";
-import  {Transform } from "./transform.ts";
+import  {Transform } from "../core/math/transform.ts";
 import {type Mat4, mat4} from "wgpu-matrix";
-import {Deg2Rad} from "./math-util.ts";
-import {$WGPU} from "./webgpu-singleton.ts";
+import {Deg2Rad} from "../core/math/math-util.ts";
+import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 export class RenderableObject implements IObject, IRenderable {
     get mesh(): Mesh {

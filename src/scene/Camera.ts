@@ -1,9 +1,9 @@
 
 import {mat4, type Mat4, vec3} from "wgpu-matrix";
 import type {IObject} from "./IObject.ts";
-import { Transform } from "./transform.ts";
-import {Deg2Rad} from "./math-util.ts";
-import {$WGPU} from "./webgpu-singleton.ts";
+import { Transform } from "../core/math/transform.ts";
+import {Deg2Rad} from "../core/math/math-util.ts";
+import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 export class Camera implements IObject {
 

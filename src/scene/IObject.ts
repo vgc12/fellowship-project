@@ -1,4 +1,4 @@
-import {Transform} from './transform.ts';
+import {Transform} from '../core/math/transform.ts';
 
 export interface IObject {
     name: string;

@@ -1,9 +1,9 @@
 ﻿
-import { Renderer } from './renderer.ts';
-import {$WGPU} from "./webgpu-singleton.ts";
-import {RenderableObject} from "./renderable-object.ts";
-import {Mesh, MeshBuilder} from "./mesh.ts";
-import {$TIME} from "./time.ts";
+import { Renderer } from '../core/renderer/renderer.ts';
+import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
+import {RenderableObject} from "../scene/renderable-object.ts";
+import {Mesh, MeshBuilder} from "../graphics/3d/mesh.ts";
+import {$TIME} from "../utils/time.ts";
 
 
 
@@ -64,7 +64,6 @@ export class App {
 
     run = async () => {
 
-
         $WGPU.objects.forEach(o => {
             o.update()
         });
@@ -75,7 +74,7 @@ export class App {
         $WGPU.objects.forEach(o => {
             if(o.name != "camera") {
 
-                o.transform.addRotation(0, rotation * Math.random(), rotation * Math.random());
+                o.transform.rotate(0, rotation * Math.random(), rotation * Math.random());
             }
         })
 

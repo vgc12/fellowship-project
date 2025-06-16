@@ -1,22 +1,8 @@
-﻿import {$WGPU} from "./webgpu-singleton.ts";
-
-
-export type Shader = {
-
-    vertexCode: string;
-    fragmentCode: string
-
-    vertexModule: GPUShaderModule;
-    fragmentModule: GPUShaderModule
-
-    vertexState: GPUVertexState;
-    fragmentState: GPUFragmentState;
-
-}
+import {$WGPU} from "../../core/webgpu/webgpu-singleton.ts";
+import type {Shader} from "./shader.ts";
 
 export class ShaderBuilder {
 
-    
 
     private _vertexCode: string;
     private _fragmentCode: string;
@@ -32,10 +18,10 @@ export class ShaderBuilder {
 
     private _colorTargetStates: GPUColorTargetState[];
 
-    private _bufferLayouts : GPUVertexBufferLayout[];
+    private _bufferLayouts: GPUVertexBufferLayout[];
 
     constructor() {
-        
+
         this.clear();
     }
 
@@ -46,19 +32,18 @@ export class ShaderBuilder {
         this._colorTargetStates = [];
     }
 
-    addVertexBufferLayout(vertexBuffer: GPUVertexBufferLayout)
-    {
+    addVertexBufferLayout(vertexBuffer: GPUVertexBufferLayout) {
         this._bufferLayouts.push(vertexBuffer);
         return this;
     }
 
-    setVertexCode(vertexShaderCode : string, entryPoint: string) {
-       this._vertexCode = vertexShaderCode;
-       this._vertexEntryPoint = entryPoint;
+    setVertexCode(vertexShaderCode: string, entryPoint: string) {
+        this._vertexCode = vertexShaderCode;
+        this._vertexEntryPoint = entryPoint;
         return this;
     }
 
-    setFragmentCode(fragmentShaderCode :string, entryPoint: string) {
+    setFragmentCode(fragmentShaderCode: string, entryPoint: string) {
         this._fragmentCode = fragmentShaderCode;
         this._fragmentEntryPoint = entryPoint;
         return this;
@@ -93,8 +78,8 @@ export class ShaderBuilder {
             targets: this._colorTargetStates,
         };
 
-        const shader : Shader = {
-            vertexCode : this._vertexCode,
+        const shader: Shader = {
+            vertexCode: this._vertexCode,
             fragmentCode: this._fragmentCode,
             vertexModule: this._vertexModule,
             fragmentModule: this._fragmentModule,
@@ -105,7 +90,6 @@ export class ShaderBuilder {
         this.clear();
 
         return shader;
-
 
 
     }
