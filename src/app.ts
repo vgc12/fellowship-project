@@ -14,7 +14,7 @@ export class App {
 
 
     constructor(canvas: HTMLCanvasElement) {
-        this.renderer = new Renderer(canvas);
+        this.renderer = new Renderer();
         this.canvas = canvas;
 
     }
@@ -55,17 +55,13 @@ export class App {
         for(let i = 0; i < 10; i++) {
            const obj = new RenderableObject();
            obj.mesh = mesh;
-           obj.transform.setPosition(-15 +(i*3),0,18);
+           // this is just an arbitrary position that allows you to see each cube with a good distance between them
+           obj.transform.setPosition(-18 +(i*4),0,25);
 
         }
 
     }
 
-    rotation = 0;
-
-
-
-    p = 0
     run = async () => {
 
 
@@ -74,14 +70,12 @@ export class App {
         });
 
 
-      //  console.log($TIME.deltaTime)
-        this.rotation =   (360) * $TIME.deltaTime ;
-
+        const rotation =   2*(360) * $TIME.deltaTime % 360 ;
 
         $WGPU.objects.forEach(o => {
             if(o.name != "camera") {
 
-                o.transform.addRotation(0, this.rotation , this.rotation );
+                o.transform.addRotation(0, rotation * Math.random(), rotation * Math.random());
             }
         })
 

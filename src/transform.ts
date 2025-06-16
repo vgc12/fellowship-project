@@ -15,9 +15,9 @@ export class Transform {
     rotation: Vec3;
     scale: Vec3;
 
-    private _forward: Vec3;
-    private _right: Vec3;
-    private _up: Vec3;
+    private readonly _forward: Vec3;
+    private readonly _right: Vec3;
+    private readonly _up: Vec3;
 
     static readonly WORLD_UP: Vec3 = vec3.create(0, 1, 0);
     static readonly WORLD_RIGHT: Vec3 = vec3.create(1, 0, 0);

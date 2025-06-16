@@ -7,9 +7,6 @@ import {Camera} from "./Camera.ts";
 import type {IRenderable} from "./IRenderable.ts";
 
 class WebGPUSingleton {
-    get vertexBufferLayout(): GPUVertexBufferLayout | null {
-        return this._vertexBufferLayout;
-    }
 
     private static _instance: WebGPUSingleton;
     private _device: GPUDevice | null = null;
@@ -20,6 +17,21 @@ class WebGPUSingleton {
     private _renderables: IRenderable[] = [];
     private _camera: Camera | null = null;
     private _vertexBufferLayout : GPUVertexBufferLayout | null = null;
+    private _format: GPUTextureFormat;
+    private _context: GPUCanvasContext;
+
+
+    get format(): GPUTextureFormat {
+        return this._format;
+    }
+    get context(): GPUCanvasContext {
+        return this._context;
+    }
+    get vertexBufferLayout(): GPUVertexBufferLayout | null {
+        return this._vertexBufferLayout;
+    }
+
+
 
     static get Instance(): WebGPUSingleton {
         if (!this._instance) {
@@ -29,35 +41,7 @@ class WebGPUSingleton {
         return this._instance;
     }
 
-    async initialize(): Promise<void> {
-        if (this._device) return;
-        // Request a GPU adapter and device
-        // An adapter is a link between the browser and the GPU hardware.
-        // Allows for getting information about the GPU and creating a device to interact with it.
-        this._canvas = document.getElementById('canvas-main') as HTMLCanvasElement;
-        this._windowDimensions = {
-            width: this._canvas.width,
-            height: this._canvas.height
-        }
 
-
-        this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
-        this._device = await this._adapter.requestDevice();
-        this._camera = new Camera();
-        this._camera.name = "camera";
-        this._camera.transform.setPosition(0, 0, 0);
-
-
-        this._vertexBufferLayout  = {
-            arrayStride: 12,
-            attributes: [{
-                shaderLocation: 0,
-                format: 'float32x3',
-                offset: 0,
-            }]
-        }
-
-    }
     get device(): GPUDevice {
         if (!this._device) throw new Error('Device not initialized');
         return this._device;
@@ -91,6 +75,47 @@ class WebGPUSingleton {
     get renderables(): IRenderable[] {
         return this._renderables;
     }
+
+    async initialize(): Promise<void> {
+        if (this._device) return;
+        // Request a GPU adapter and device
+        // An adapter is a link between the browser and the GPU hardware.
+        // Allows for getting information about the GPU and creating a device to interact with it.
+        this._canvas = document.getElementById('canvas-main') as HTMLCanvasElement;
+        this._windowDimensions = {
+            width: this._canvas.width,
+            height: this._canvas.height
+        }
+
+
+        this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
+        this._device = await this._adapter.requestDevice();
+        this._camera = new Camera();
+        this._camera.name = "camera";
+        this._camera.transform.setPosition(0, 0, 0);
+        this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
+
+
+        this._format = navigator.gpu.getPreferredCanvasFormat();
+
+        this.context.configure({
+            format: this.format,
+            device: $WGPU.device,
+            alphaMode: 'premultiplied',
+        });
+
+
+        this._vertexBufferLayout  = {
+            arrayStride: 12,
+            attributes: [{
+                shaderLocation: 0,
+                format: 'float32x3',
+                offset: 0,
+            }]
+        }
+
+    }
+
     addObject(object: IObject) {
         this._objects.push(object);
     }

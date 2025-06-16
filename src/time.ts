@@ -5,33 +5,36 @@ export class Time {
 
     private static _instance: Time | undefined;
 
-    private _lastFrameTime: number;
-    private _deltaTime: number;
+    private _lastFrameTime: number = 0;
+    private _deltaTime: number = 0;
 
     static get Instance() {
         if (!this._instance) {
             this._instance = new Time();
-            this._instance.initialize();
+
         }
         return this._instance;
     }
 
 
     async initialize() {
+
         this._deltaTime = 0;
         this._lastFrameTime = 0;
-        requestAnimationFrame(this.update);
+        requestAnimationFrame(this.update)
+
     }
 
-    private update = async () => {
-        const currentTime = performance.now();
-        this._deltaTime = (currentTime - this._lastFrameTime) / 1000;
-        //console.log(`Current Time ${currentTime} delta time ${this.deltaTime} last frame time ${this._lastFrameTime}`)
+     update = async () => {
+
+        const currentTime = performance.now() / 1000;
+
+        this._deltaTime = (currentTime - this._lastFrameTime) ;
+
         this._lastFrameTime = currentTime;
 
-       // console.log(performance.now()/1000)
-
         requestAnimationFrame(this.update)
+
     }
 
 }
