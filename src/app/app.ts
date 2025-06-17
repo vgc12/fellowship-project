@@ -4,6 +4,7 @@ import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 import {RenderableObject} from "../scene/renderable-object.ts";
 import {Mesh, MeshBuilder} from "../graphics/3d/mesh.ts";
 import {$TIME} from "../utils/time.ts";
+import {OBJLoader} from "../graphics/3d/obj-loader.ts";
 
 
 
@@ -23,7 +24,9 @@ export class App {
         await $WGPU.initialize();
         await this.renderer.initialize();
         await $TIME.initialize();
+        const loader = new OBJLoader();
 
+        /*
         const meshBuilder = new MeshBuilder();
 
         const mesh : Mesh =  meshBuilder.setVertices(new Float32Array([
@@ -59,6 +62,8 @@ export class App {
            obj.transform.setPosition(-18 +(i*4),0,25);
 
         }
+        */
+
 
     }
 
@@ -71,12 +76,14 @@ export class App {
 
         const rotation =   2*(360) * $TIME.deltaTime % 360 ;
 
+
         $WGPU.objects.forEach(o => {
             if(o.name != "camera") {
-
-                o.transform.rotate(0, rotation * Math.random(), rotation * Math.random());
+                o.transform.rotate(0, rotation ,0 );
             }
         })
+
+
 
 
         this.renderer.update();
