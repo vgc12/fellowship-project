@@ -1,11 +1,7 @@
-
-// Check if WebGPU is supported
-if (!navigator.gpu) {
-    console.error("WebGPU is not supported. Please enable it in your browser settings.");
-}
-else {
-    console.log("WebGPU is supported.");
-}
+import { App } from './app.ts';
 
 
+const canvas = document.getElementById('canvas-main') as HTMLCanvasElement;
+const app = new App(canvas);
+await app.initialize();
 
