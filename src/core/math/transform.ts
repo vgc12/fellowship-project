@@ -1,89 +1,92 @@
-import { type Vec3, vec3} from 'wgpu-matrix';
+import {vec3} from 'wgpu-matrix';
 import {Deg2Rad} from "./math-util.ts";
+import {Vector3} from "./vector3.ts";
+
 
 export class Transform {
-    get up(): Float32Array<ArrayBufferLike> {
+    get up(): Vector3 {
         return this._up;
     }
-    get right(): Float32Array<ArrayBufferLike> {
+    get right(): Vector3 {
         return this._right;
     }
-    get forward(): Float32Array<ArrayBufferLike> {
+    get forward(): Vector3 {
         return this._forward;
     }
-    position: Vec3;
-    rotation: Vec3;
-    scale: Vec3;
 
-    private readonly _forward: Vec3;
-    private readonly _right: Vec3;
-    private readonly _up: Vec3;
+    position: Vector3
+    rotation: Vector3
+    scale: Vector3
 
-    static readonly WORLD_UP: Vec3 = vec3.create(0, 1, 0);
-    static readonly WORLD_RIGHT: Vec3 = vec3.create(1, 0, 0);
-    static readonly WORLD_FORWARD: Vec3 = vec3.create(0, 0, 1);
+    private  _forward: Vector3;
+    private  _right: Vector3;
+    private  _up: Vector3;
+
+
 
 
     constructor() {
-        this.position = vec3.create(0, 0, 0);
-        this.rotation = vec3.create(0, 0, 0);
-        this.scale = vec3.create(1, 1, 1);
+        this.position = new Vector3(0,0,0);
 
-        this._forward = vec3.create(0, 0, 1);
-        this._right = vec3.create(1, 0, 0);
-        this._up = vec3.create(0, 1, 0);
-        this.updateDirectionVectors();
-    }
+        this.rotation = new Vector3(0, 0, 0, this.updateDirectionVectors);
 
-    private updateDirectionVectors() {
+        this.scale = new Vector3(1, 1, 1);
 
-
-        vec3.set(
-            Math.sin(Deg2Rad(this.rotation[2])) * Math.cos(Deg2Rad(this.rotation[1])), //now x was y
-            Math.sin(Deg2Rad(this.rotation[1])), //was z now y
-            Math.cos(Deg2Rad(this.rotation[2])) * Math.cos(Deg2Rad(this.rotation[1])),this.forward
-
-
-        );
-        vec3.normalize(this._forward, this._forward);
-
-
-        vec3.cross(this._forward, Transform.WORLD_UP, this._right);
-        vec3.normalize(this._right, this._right);
-
-        vec3.cross(this._right, this._forward, this._up);
-        vec3.normalize(this._up, this._up);
-
-
+        this._forward = new Vector3(0, 0, 1);
+        this._right = new Vector3(1, 0, 0);
+        this._up = new Vector3(0, 1, 0);
 
     }
 
-    setPosition(x: number = this.position[0], y: number = this.position[1], z: number = this.position[2]) {
-        vec3.set(x, y, z, this.position);
+    private updateDirectionVectors = () => {
+
+
+        this._forward.set(
+            Math.sin(Deg2Rad(this.rotation.z)) * Math.cos(Deg2Rad(this.rotation.y)),
+            Math.sin(Deg2Rad(this.rotation.y)), 
+            Math.cos(Deg2Rad(this.rotation.z)) * Math.cos(Deg2Rad(this.rotation.y))
+        )
+
+
+
+        this._right.setFromArray(vec3.cross(this._forward.toArray, Vector3.WORLD_UP.toArray));
+
+
+        this._up.setFromArray(vec3.cross(this._right.toArray, this._forward.toArray));
+
 
     }
 
-    setRotation(x: number = this.rotation[0], y: number = this.rotation[1], z: number = this.rotation[2]) {
-        vec3.set(x, y, z, this.rotation);
+    setPosition(x: number = this.position.x, y: number = this.position.y, z: number = this.position.z) {
+        this.position.set(x, y, z);
+
+    }
+
+
+
+    setRotation(x: number = this.rotation.x, y: number = this.rotation.y, z: number = this.rotation.z) {
+        this.rotation.set(x, y, z);
         this.updateDirectionVectors()
     }
 
-    setScale(x: number = this.scale[0], y: number = this.scale[1], z: number = this.scale[2]) {
-        vec3.set(x, y, z, this.scale);
+    setScale(x: number = this.scale.x, y: number = this.scale.y, z: number = this.scale.z) {
+        this.scale.set(x, y, z);
 
     }
 
     addScale(x: number = 0, y: number = 0, z: number = 0) {
-        vec3.add(vec3.create(x, y, z), this.scale, this.scale);
+
+        this.scale.x += x;
+        this.scale.y += y;
+        this.scale.z += z;
     }
 
     move(x: number = 0, y: number = 0, z: number = 0) {
-        vec3.add(vec3.create(x, y, z), this.position, this.position);
+        this.position.add(x, y, z);
     }
 
     rotate(x:number = 0, y:number = 0, z:number = 0) {
-        vec3.add(vec3.create(x, y, z), this.rotation, this.rotation);
-        this.updateDirectionVectors();
+       this.rotation.add(x, y, z);
     }
 
 }

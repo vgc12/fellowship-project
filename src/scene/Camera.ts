@@ -30,12 +30,12 @@ export class Camera implements IObject {
     update(){
 
         this.viewMatrix = mat4.create();
-        const target = vec3.add(this.transform.position, this.transform.forward);
+        const target = vec3.add(this.transform.position.toArray, this.transform.forward.toArray);
 
         // update the view matrix to look at the target position
         // the view matrix holds the camera's position and orientation in the world
         // this is used to translate the world coordinates to camera coordinates
-        this.viewMatrix = mat4.lookAt(this.viewMatrix, target,  this.transform.up);
+        this.viewMatrix = mat4.lookAt(this.viewMatrix, target,  this.transform.up.toArray);
 
         // Update the projection matrix based on the camera's field of view and aspect ratio
         // the projection matrix is used to project the 3D coordinates into 2D screen coordinates

@@ -1,15 +1,16 @@
 ﻿
 import { Renderer } from '../core/renderer/renderer.ts';
 import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
-import {RenderableObject} from "../scene/renderable-object.ts";
-import {Mesh, MeshBuilder} from "../graphics/3d/mesh.ts";
+
 import {$TIME} from "../utils/time.ts";
+import {RenderableObject} from "../scene/renderable-object.ts";
+import {type Mesh, MeshBuilder} from "../graphics/3d/mesh.ts";
 import {OBJLoader} from "../graphics/3d/obj-loader.ts";
 
 
 
 
-export class App {
+export class Scene {
     canvas: HTMLCanvasElement;
     renderer: Renderer;
 
@@ -24,9 +25,10 @@ export class App {
         await $WGPU.initialize();
         await this.renderer.initialize();
         await $TIME.initialize();
+
         const loader = new OBJLoader();
 
-        /*
+
         const meshBuilder = new MeshBuilder();
 
         const mesh : Mesh =  meshBuilder.setVertices(new Float32Array([
@@ -62,7 +64,6 @@ export class App {
            obj.transform.setPosition(-18 +(i*4),0,25);
 
         }
-        */
 
 
     }

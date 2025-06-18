@@ -30,7 +30,6 @@ export class Renderer {
 
 
 
-
         const shaderBuilder = new ShaderBuilder();
         const shader = shaderBuilder
             .setVertexCode(vertexShader, 'main')

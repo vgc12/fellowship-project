@@ -1,3 +1,23 @@
-.canvas{
+canvas{
   margin: 0 auto;
+
 }
+
+#app{
+  display: flex;
+}
+
+form{
+  width: 100%;
+  margin: 10px ;
+  display: block;
+}
+
+li{
+  list-style: none;
+}
+
+input{
+  width: 10%;
+}
+
