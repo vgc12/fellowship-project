@@ -24,7 +24,7 @@ export class Scene {
     async initialize() {
         await $WGPU.initialize();
         await this.renderer.initialize();
-        await $TIME.initialize();
+        $TIME.initialize();
 
         const loader = new OBJLoader();
 
@@ -68,7 +68,7 @@ export class Scene {
 
     }
 
-    run = async () => {
+    run = () => {
 
         $WGPU.objects.forEach(o => {
             o.update()

@@ -17,7 +17,7 @@ export class Time {
     }
 
 
-    async initialize() {
+    initialize() {
 
         this._deltaTime = 0;
         this._lastFrameTime = 0;
@@ -25,7 +25,7 @@ export class Time {
 
     }
 
-     update = async () => {
+     update = () => {
 
         const currentTime = performance.now() / 1000;
 
