@@ -7,4 +7,4 @@ const app = new App(canvas);
 await app.initialize();
 
 
-await app.run();
+app.run();

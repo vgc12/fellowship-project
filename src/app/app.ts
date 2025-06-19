@@ -22,7 +22,7 @@ export class App {
     async initialize() {
         await $WGPU.initialize();
         await this.renderer.initialize();
-        await $TIME.initialize();
+        $TIME.initialize();
 
         const meshBuilder = new MeshBuilder();
 
@@ -62,7 +62,7 @@ export class App {
 
     }
 
-    run = async () => {
+    run = () => {
 
         $WGPU.objects.forEach(o => {
             o.update()

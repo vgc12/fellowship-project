@@ -76,7 +76,7 @@ class WebGPUSingleton {
         return this._renderables;
     }
 
-    async initialize(): Promise<void> {
+    async initialize(){
         if (this._device) return;
         // Request a GPU adapter and device
         // An adapter is a link between the browser and the GPU hardware.
