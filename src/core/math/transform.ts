@@ -28,8 +28,8 @@ export class Transform {
     constructor() {
         this.position = new Vector3(0,0,0);
 
-        this.rotation = new Vector3(0, 0, 0, this.updateDirectionVectors);
-
+        this.rotation = new Vector3(0, 0, 0);
+        this.rotation.onChange = this.onRotationChanged;
         this.scale = new Vector3(1, 1, 1);
 
         this._forward = new Vector3(0, 0, 1);
@@ -38,7 +38,10 @@ export class Transform {
 
     }
 
-    private updateDirectionVectors = () => {
+
+
+
+    private updateDirectionVectors() {
 
 
         this._forward.set(
@@ -46,7 +49,6 @@ export class Transform {
             Math.sin(Deg2Rad(this.rotation.y)), 
             Math.cos(Deg2Rad(this.rotation.z)) * Math.cos(Deg2Rad(this.rotation.y))
         )
-
 
 
         this._right.setFromArray(vec3.cross(this._forward.toArray, Vector3.WORLD_UP.toArray));
@@ -57,29 +59,7 @@ export class Transform {
 
     }
 
-    setPosition(x: number = this.position.x, y: number = this.position.y, z: number = this.position.z) {
-        this.position.set(x, y, z);
 
-    }
-
-
-
-    setRotation(x: number = this.rotation.x, y: number = this.rotation.y, z: number = this.rotation.z) {
-        this.rotation.set(x, y, z);
-        this.updateDirectionVectors()
-    }
-
-    setScale(x: number = this.scale.x, y: number = this.scale.y, z: number = this.scale.z) {
-        this.scale.set(x, y, z);
-
-    }
-
-    addScale(x: number = 0, y: number = 0, z: number = 0) {
-
-        this.scale.x += x;
-        this.scale.y += y;
-        this.scale.z += z;
-    }
 
     move(x: number = 0, y: number = 0, z: number = 0) {
         this.position.add(x, y, z);
@@ -89,4 +69,8 @@ export class Transform {
        this.rotation.add(x, y, z);
     }
 
+    private onRotationChanged = ()=>{
+
+        this.updateDirectionVectors();
+    }
 }

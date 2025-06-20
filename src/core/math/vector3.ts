@@ -1,6 +1,9 @@
 // I decided to write my own vector 3 as a response to it just working better with react
 // Also im changing things to make it feel better to program with compared to the wgpu-matrix library
 export class Vector3 {
+    set onChange(onChange: (x: number, y: number, z: number) => void){
+        this._onChange = onChange;
+    }
 
 
     private _x: number = 0;
@@ -23,6 +26,9 @@ export class Vector3 {
         this._x = x;
         this._y = y;
         this._z = z;
+
+
+
         this.flagRecalculations();
         this._onChange = onChange;
     }
@@ -109,6 +115,10 @@ export class Vector3 {
     }
 
     get normalized(): Vector3 {
+        if(!this._normalized) {
+            this._normalized = new Vector3(this._x, this._y, this._z);
+        }
+
         if (this._recalculateNormalization) {
             this._normalized.set(this._x / this.magnitude,
                 this._y / this.magnitude,

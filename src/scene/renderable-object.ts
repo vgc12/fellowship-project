@@ -7,6 +7,9 @@ import {Deg2Rad} from "../core/math/math-util.ts";
 import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 export class RenderableObject implements IObject, IRenderable {
+    get guid(): string {
+        return this._guid;
+    }
     get mesh(): Mesh {
         return this._mesh;
     }
@@ -37,7 +40,7 @@ export class RenderableObject implements IObject, IRenderable {
         this._name = '';
         this._transform = new Transform();
         this._modelMatrix = mat4.identity();
-
+        this._guid = crypto.randomUUID();
 
         mat4.translate(this._modelMatrix, this._transform.position.toArray, this._modelMatrix);
         this._mesh = new Mesh();
@@ -46,6 +49,8 @@ export class RenderableObject implements IObject, IRenderable {
 
 
     }
+
+    private _guid: string;
 
     update() {
         this._modelMatrix = mat4.identity();

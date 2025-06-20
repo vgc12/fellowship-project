@@ -13,14 +13,15 @@ export class Renderer {
 
 
     uniformBuffer: GPUBuffer;
-    bindGroup: GPUBindGroup;
-    bindGroupLayout: GPUBindGroupLayout;
+    frameBindGroup: GPUBindGroup;
+    frameBindGroupLayout: GPUBindGroupLayout;
     pipeline: GPURenderPipeline;
     storageBuffer: GPUBuffer;
     passEncoder: GPURenderPassEncoder;
     commandEncoder: GPUCommandEncoder;
     textureView: GPUTextureView;
     depthTexture: GPUTexture;
+    textureBindGroupLayout: GPUBindGroupLayout;
 
 
     async initialize() {
@@ -54,7 +55,7 @@ export class Renderer {
 
     private async setupShaderPipeline(shader: Shader) {
         const pipelineLayout: GPUPipelineLayout = $WGPU.device.createPipelineLayout({
-            bindGroupLayouts: [this.bindGroupLayout]
+            bindGroupLayouts: [this.frameBindGroupLayout]
         });
 
         this.pipeline = await $WGPU.device.createRenderPipelineAsync({
@@ -93,7 +94,7 @@ export class Renderer {
     }
 
     private setUpBindGroups() {
-        this.bindGroupLayout= $WGPU.device.createBindGroupLayout({
+        this.frameBindGroupLayout= $WGPU.device.createBindGroupLayout({
             entries: [{
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX,
@@ -110,8 +111,24 @@ export class Renderer {
             ]
         })
 
-        this.bindGroup = $WGPU.device.createBindGroup({
-            layout: this.bindGroupLayout,
+        /*
+
+        this.textureBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: {}
+            },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: {}
+                }
+            ]
+        })
+*/
+        this.frameBindGroup = $WGPU.device.createBindGroup({
+            layout: this.frameBindGroupLayout,
             entries: [
                 {
                     binding: 0,
@@ -127,6 +144,8 @@ export class Renderer {
                 }
             ]
         });
+
+
 
     }
 
@@ -214,7 +233,7 @@ export class Renderer {
         this.passEncoder.setPipeline(this.pipeline);
 
 
-        this.passEncoder.setBindGroup(0, this.bindGroup);
+        this.passEncoder.setBindGroup(0, this.frameBindGroup);
 
         let objectsDrawn = 0;
         $WGPU.renderables.forEach((renderable) => {

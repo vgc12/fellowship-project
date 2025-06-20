@@ -3,8 +3,6 @@ import { Renderer } from '../core/renderer/renderer.ts';
 import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 import {$TIME} from "../utils/time.ts";
-import {RenderableObject} from "../scene/renderable-object.ts";
-import {type Mesh, MeshBuilder} from "../graphics/3d/mesh.ts";
 import {OBJLoader} from "../graphics/3d/obj-loader.ts";
 
 
@@ -26,8 +24,9 @@ export class Scene {
         await this.renderer.initialize();
         $TIME.initialize();
 
-        const loader = new OBJLoader();
 
+        const loader = new OBJLoader();
+/*
 
         const meshBuilder = new MeshBuilder();
 
@@ -61,10 +60,10 @@ export class Scene {
            const obj = new RenderableObject();
            obj.mesh = mesh;
            // this is just an arbitrary position that allows you to see each cube with a good distance between them
-           obj.transform.setPosition(-18 +(i*4),0,25);
+           obj.transform.position.set(-18 +(i*4),0,25);
 
         }
-
+*/
 
     }
 
@@ -80,7 +79,7 @@ export class Scene {
 
         $WGPU.objects.forEach(o => {
             if(o.name != "camera") {
-                o.transform.rotate(0, rotation ,0 );
+                //o.transform.rotate(0, rotation ,0 );
             }
         })
 

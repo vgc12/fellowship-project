@@ -5,7 +5,9 @@ struct Transform{
 
 struct VertexOut{
     @builtin(position) pos : vec4f,
-    @location(0) color: vec4f
+    @location(0) texCoord : vec2f,
+    @location(1) color: vec4f
+
 }
 
 struct ObjectData{
@@ -16,18 +18,18 @@ struct ObjectData{
 @binding(1) @group(0) var<storage,read> objects: ObjectData;
 
 
+
 @vertex
-fn main(@builtin(instance_index) v_index : u32, @location(0) vertexPosition: vec3f) -> VertexOut {
+fn main(@builtin(instance_index) i_index: u32, @location(0) vertexPosition: vec3f,
+ @location(1) uv : vec2f) -> VertexOut {
 
   var output : VertexOut;
 
-  output.pos = transform.projection * transform.view * objects.model[v_index] * vec4f(vertexPosition,1.0);
+  output.pos = transform.projection * transform.view * objects.model[i_index] * vec4f(vertexPosition,1.0);
 
-    var col = vertexPosition;
+  var col = vertexPosition;
 
-  output.color = vec4f(col,1.0);
-
-
+  output.color = vec4(col,1);
 
   return output;
 }

@@ -1,4 +1,4 @@
-import type IVector3InputProps from "./scene-object.tsx";
+import {NumericScrubber} from "@/components/ui/number-scrubber.tsx";
 
 interface IVector3InputProps{
     label: string;
@@ -11,16 +11,18 @@ export function Vector3InputComponent({label, values, onChange}: IVector3InputPr
     return (
         <div>
             <label>{label}</label>
-            <div>
+            <div className={"flex"}>
                 {['X', 'Y', 'Z'].map((axis, index) => (
-                    <div key={axis}>
+                    <span key={index}  >
                         <label>{axis}</label>
-                        <input
-                            type="number"
+                        <NumericScrubber
+                            step={.1}
+                            min={Number.NEGATIVE_INFINITY}
+                            max={Number.POSITIVE_INFINITY}
                             value={values[index]}
-                            onChange={(e) => onChange(e.target.valueAsNumber, axis)}
-                        />
-                    </div>
+                            onChange={(e) => onChange(e, axis)}></NumericScrubber>
+
+                    </span>
                 ))}
             </div>
         </div>

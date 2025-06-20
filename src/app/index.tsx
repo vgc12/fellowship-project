@@ -1,72 +1,43 @@
-import {useEffect, useRef, useState} from 'react';
 import ReactDOM from 'react-dom/client';
-import { Scene } from './scene.ts';
-import FileUploadComponent from "./file-upload-component.tsx";
-import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
-import IVector3InputProps from './scene-object.tsx';
-import type {IObject} from "../scene/IObject.ts";
 
-function useWGPUObjects() {
-    const [objects, setObjects] = useState($WGPU.objects);
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    const refreshObjects = () => {
-        setObjects([...$WGPU.objects]);
-        setRefreshTrigger(prev => prev + 1);
+import {SceneObjectListComponent} from "../components/ui/scene-object-list-component.tsx";
+import {CanvasComponent} from "./canvas-component.tsx";
+import {Input} from "@/components/ui/input.tsx";
+
+import {type ChangeEvent, useEffect, useState} from "react";
+import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
+
+
+function App () {
+    const [loadedFiles, setLoadedFiles] = useState<File[]>([]);
+    const handleOnChange = async (e: ChangeEvent<HTMLInputElement>) =>{
+        if (e.target.files) {
+            for (const file of e.target.files) {
+                if (loadedFiles.includes(file)) continue;
+
+                if (file.name.endsWith('.obj')) {
+                    await OBJLoader.loadMeshes(file);
+                    setLoadedFiles([...loadedFiles, file]);
+                }
+            }
+        }
     }
 
-    return {objects, refreshObjects};
-}
-
-
-function CanvasComponent() {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    useEffect(() => {
-        const initializeScene = async () => {
-            // This runs AFTER the component has rendered
-            if (canvasRef.current) {
-                const app = new Scene(canvasRef.current);
-                await app.initialize();
-                await app.run();
-            }
-        };
-
-        initializeScene();
-    }, []);
-
-    return (
+    return (<div id='app' className={"flex m-4"}>
+        <CanvasComponent />
         <div>
-            <canvas ref={canvasRef} width={1200} height={600} id="canvas-main" />
+
+            <SceneObjectListComponent />
+            <Input type={"file"} id="file-input" multiple onChange={(e) => handleOnChange(e)} />
         </div>
-    );
+    </div>);
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
-    <div>
-        <CanvasComponent />
-        <FileUploadComponent name="file-input"/>
-        <ModelListComponent  />
-    </div>
-    );
+    <App />
+);
 
 
 
-function ModelListComponent() {
-    const {objects, refreshObjects} = useWGPUObjects();
-
-    // Optional: Auto-refresh every few seconds
-    useEffect(() => {
-        const interval = setInterval(refreshObjects, 0);
-        return () => clearInterval(interval);
-    }, []);
-
-    return (
-       <div>
-           {objects.map(o => {
-               return <IVector3InputProps object={o}></IVector3InputProps>
-           })}
-       </div>
-    )
-}

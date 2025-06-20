@@ -12,6 +12,7 @@ export class Camera implements IObject {
     viewMatrix: Mat4;
     projectionMatrix: Mat4;
     fov: number = 90;
+    guid: string;
 
     constructor() {
 
@@ -21,21 +22,37 @@ export class Camera implements IObject {
 
         this.projectionMatrix = mat4.create();
 
+        this.guid= crypto.randomUUID();
+
 
         $WGPU.addObject(this);
     }
 
+    move(forwards_amount: number, rights_amount: number){
+        const vec = vec3.create();
+        vec3.addScaled(
+            this.transform.position.toArray, this.transform.forward.normalized.toArray,
+            forwards_amount, vec
+        );
 
+        vec3.addScaled(
+            this.transform.position.toArray, this.transform.right.normalized.toArray,
+             rights_amount, vec
+        );
+
+        this.transform.position.set(vec[0], vec[1], vec[2]);
+
+    }
 
     update(){
 
         this.viewMatrix = mat4.create();
-        const target = vec3.add(this.transform.position.toArray, this.transform.forward.toArray);
+        const target = vec3.add(this.transform.position.toArray, this.transform.forward.normalized.toArray);
 
         // update the view matrix to look at the target position
         // the view matrix holds the camera's position and orientation in the world
         // this is used to translate the world coordinates to camera coordinates
-        this.viewMatrix = mat4.lookAt(this.viewMatrix, target,  this.transform.up.toArray);
+        this.viewMatrix = mat4.lookAt(this.transform.position.toArray, target,  this.transform.up.normalized.toArray);
 
         // Update the projection matrix based on the camera's field of view and aspect ratio
         // the projection matrix is used to project the 3D coordinates into 2D screen coordinates

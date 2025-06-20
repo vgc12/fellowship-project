@@ -1,44 +1,19 @@
 import { MeshBuilder} from "./mesh.ts";
-import {RenderableObject} from "../../scene/renderable-object.ts";
+import {RenderableObject} from "@/scene/renderable-object.ts";
 
 export class OBJLoader {
 
     uploadInput: HTMLInputElement;
-    private _loadedFiles : File[] = [];
+
 
     constructor() {
-        console.log(document.getElementById('file-input') as HTMLInputElement);
 
         this.uploadInput = document.getElementById('file-input') as HTMLInputElement;
-        this.uploadInput.onchange = this.onFileUploaded;
+        // this.uploadInput.onchange = this.onFileUploaded;
     }
 
 
-   onFileUploaded = async () =>{
-
-        console.log(this.uploadInput)
-        console.log(this.uploadInput.files);
-        if(this.uploadInput.files === null) return;
-
-
-
-       for (let i = 0; i <  this.uploadInput.files.length; i++){
-           const file = this.uploadInput.files[i];
-           
-           if(this._loadedFiles.includes(file)) continue;
-           
-           
-           if(file.name.endsWith('.obj')) {
-               this._loadedFiles.push(file);
-               await this.loadMeshes(file);
-           }
-       }
-
-
-
-   }
-
-    async loadMeshes(file: File) {
+    static async loadMeshes(file: File) {
         const fileContents = await file.text();
 
         const lines = fileContents.split('\n');
@@ -49,24 +24,35 @@ export class OBJLoader {
 
         const vertices : number[] = [];
         const indices : number[] = [];
-
+        const uvs : number[] = [];
+        let name : string = ""
         for (let i = 0; i < lines.length; i++){
             const line = lines[i];
+
+            if(line.startsWith('o ')){
+                name = line.substring(2);
+            }
+
             if(i+1 == lines.length || (line.startsWith('o ') && vertices.length > 0)) {
                 const mesh = meshBuilder.
-                setVertices(new Float32Array(vertices))
-                    .setIndices(new Uint16Array(indices))
+                setVertices(vertices)
+                    .setIndices(indices)
+                    .setUVCoords(uvs)
                     .build();
 
                 const renderableObject = new RenderableObject();
                 renderableObject.mesh = mesh;
-                renderableObject.transform.setPosition(0,2,10);
+                renderableObject.transform.position.set(0,0,0);
+                renderableObject.name = name
                 vertices.length = 0;
                 indices.length = 0;
             }
             else if(line.startsWith('v ')) {
 
                 vertices.push(...this.processVertex(line))
+            }
+            else if (line.startsWith('vt')){
+                uvs.push(...this.processUV(line))
             }
             else if(line.startsWith('f ')) {
                 indices.push(...this.processFace(line));
@@ -75,7 +61,7 @@ export class OBJLoader {
 
     }
 
-    processVertex(vertex: string) {
+    static processVertex(vertex: string) {
 
         const vertexParts = vertex.split(' ').slice(1);
 
@@ -83,7 +69,7 @@ export class OBJLoader {
         return [parseFloat(vertexParts[0]), parseFloat(vertexParts[1]),parseFloat(vertexParts[2])];
     }
 
-    processFace(face: string): number[] {
+    static processFace(face: string): number[] {
         const faceParts = face.split(' ').slice(1); // Remove 'f' part
         const indices: number[] = [];
 
@@ -119,4 +105,9 @@ export class OBJLoader {
     }
 
 
+    static processUV(line: string) {
+        const uvParts = line.split(' ').slice(1);
+
+        return [parseFloat(uvParts[0]), parseFloat(uvParts[1])];
+    }
 }

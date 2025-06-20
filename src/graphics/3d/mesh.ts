@@ -1,26 +1,28 @@
 
-import { $WGPU } from '../../core/webgpu/webgpu-singleton.ts';
-
-
+import { $WGPU } from '@/core/webgpu/webgpu-singleton.ts';
 
 export class Mesh  {
   
-    vertices: Float32Array;
+    vertices: Float32Array
     vertexCount: number;
     vertexBuffer: GPUBuffer;
-    indices? : Uint16Array;
+    indices? : Uint16Array
     indexBuffer? : GPUBuffer;
+    uv: Float32Array
 
 }
 
 export class MeshBuilder {
 
-    private _vertices: Float32Array;
-    private _indices?: Uint16Array;
+    private _vertices: Float32Array
+    private _indices?: Uint16Array
+    private _uvCoords: Float32Array
+    private _fullBufferData : Float32Array
 
     clear() {
-        this._vertices = new Float32Array();
+        this._vertices =  new Float32Array();
         this._indices = new Uint16Array();
+        this._uvCoords = new Float32Array();
     }
 
     constructor() {
@@ -28,16 +30,21 @@ export class MeshBuilder {
         this.clear();
     }
 
-    setVertices(vertices: Float32Array): MeshBuilder {
-        this._vertices = vertices;
+    setVertices(vertices: number[]): MeshBuilder {
+        this._vertices = new Float32Array(vertices);
         return this;
     }
 
-    setIndices(indices: Uint16Array): MeshBuilder {
-        this._indices = indices;
+    setIndices(indices: number[]): MeshBuilder {
+        this._indices = new Uint16Array( indices);
+
         return this;
     }
 
+    setUVCoords(uvs: number[]){
+        this._uvCoords = new Float32Array(uvs);
+        return this;
+    }
 
 
     build(): Mesh {
@@ -45,17 +52,33 @@ export class MeshBuilder {
             throw new Error('Vertices must be provided');
         }
 
+        if(!this._uvCoords){
+            console.warn("Warning: uv coordinates not provided. this will default to 1,1 for each coordinate resulting in unexpected behavior");
+        }
+
+        this._fullBufferData = new Float32Array()
+
+        const bufferData : number[] = []
+        const vertexCount = this._vertices.length / (3);
+
+        for(let i = 0; i < vertexCount; i++){
+            bufferData.push(this._vertices[3*i], this._vertices[3*i+1], this._vertices[3*i+2], this._uvCoords[2*i], this._uvCoords[2*i+1]);
+        }
+        this._fullBufferData = new Float32Array(bufferData);
 
         // Create vertex buffer
         const vertexBuffer = $WGPU.device.createBuffer({
-            size: this._vertices.byteLength,
+            size: this._fullBufferData.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        $WGPU.device.queue.writeBuffer(vertexBuffer, 0, this._vertices);
+        $WGPU.device.queue.writeBuffer(vertexBuffer, 0, this._fullBufferData);
+
 
         // Create index buffer if indices provided
         let indexBuffer: GPUBuffer | undefined;
+        console.log(this._indices)
         if (this._indices) {
+
             indexBuffer = $WGPU.device.createBuffer({
                 size: this._indices.byteLength,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
@@ -72,6 +95,7 @@ export class MeshBuilder {
             vertices: this._vertices,
             vertexBufferDescriptor: vertexBuffer,
             indexBuffer: indexBuffer,
+            uv: this._uvCoords
 
         };
         this.clear();
@@ -91,7 +115,7 @@ export class MeshBuilder {
             would get me three vertices.
          */
         return $WGPU.vertexBufferLayout?.arrayStride != null
-            ? this._vertices.length / ($WGPU.vertexBufferLayout?.arrayStride / 4)
+            ? this._fullBufferData.length / ($WGPU.vertexBufferLayout?.arrayStride / 4)
             : 0;
     }
 

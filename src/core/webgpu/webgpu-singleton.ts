@@ -91,8 +91,8 @@ class WebGPUSingleton {
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
         this._device = await this._adapter.requestDevice();
         this._camera = new Camera();
-        this._camera.name = "camera";
-        this._camera.transform.setPosition(0, 0, 0);
+        this._camera.name = "Camera";
+        this._camera.transform.position.set(0,0,0)
         this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
 
@@ -106,11 +106,16 @@ class WebGPUSingleton {
 
 
         this._vertexBufferLayout  = {
-            arrayStride: 12,
+            arrayStride: 20,
             attributes: [{
                 shaderLocation: 0,
                 format: 'float32x3',
                 offset: 0,
+            },
+            {
+                shaderLocation: 1,
+                format: 'float32x2',
+                offset: 12
             }]
         }
 
