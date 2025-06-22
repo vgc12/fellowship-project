@@ -28,6 +28,8 @@ export class Camera implements IObject {
         $WGPU.addObject(this);
     }
 
+
+
     move(forwards_amount: number, rights_amount: number){
         const vec = vec3.create();
         vec3.addScaled(
@@ -48,11 +50,16 @@ export class Camera implements IObject {
 
         this.viewMatrix = mat4.create();
         const target = vec3.add(this.transform.position.toArray, this.transform.forward.normalized.toArray);
+        this.viewMatrix = mat4.rotateX(this.viewMatrix, Deg2Rad(this.transform.rotation.x));
+        this.viewMatrix = mat4.rotateY(this.viewMatrix, Deg2Rad(this.transform.rotation.y));
+        this.viewMatrix = mat4.rotateZ(this.viewMatrix, Deg2Rad(this.transform.rotation.z));
 
         // update the view matrix to look at the target position
         // the view matrix holds the camera's position and orientation in the world
         // this is used to translate the world coordinates to camera coordinates
         this.viewMatrix = mat4.lookAt(this.transform.position.toArray, target,  this.transform.up.normalized.toArray);
+
+
 
         // Update the projection matrix based on the camera's field of view and aspect ratio
         // the projection matrix is used to project the 3D coordinates into 2D screen coordinates

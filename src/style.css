@@ -8,13 +8,14 @@ canvas{
 
 }
 
-
-
-
 li{
   list-style: none;
 }
 
+object-textures{
+  width: 256px;
+  height: 256px;
+}
 
 
 
@@ -140,3 +141,6 @@ li{
 
 }
 
+html{
+  background : #222831;
+}

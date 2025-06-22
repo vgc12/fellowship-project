@@ -36,6 +36,7 @@ export class RenderableObject implements IObject, IRenderable {
     private _modelMatrix: Mat4
     private _mesh: Mesh;
 
+
     constructor() {
         this._name = '';
         this._transform = new Transform();
@@ -50,6 +51,8 @@ export class RenderableObject implements IObject, IRenderable {
 
     }
 
+    children: IObject[];
+
     private _guid: string;
 
     update() {
@@ -63,5 +66,7 @@ export class RenderableObject implements IObject, IRenderable {
          mat4.rotateZ(this._modelMatrix, Deg2Rad(this.transform.rotation.z), this._modelMatrix )
          // Apply scaling
          mat4.scale(this._modelMatrix, this.transform.scale.toArray, this._modelMatrix)
+
+
     }
 }

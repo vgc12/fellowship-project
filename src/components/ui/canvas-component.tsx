@@ -1,5 +1,5 @@
 import {useEffect, useRef} from "react";
-import {Scene} from "./scene.ts";
+import {Scene} from "../../app/scene.ts";
 
 export function CanvasComponent() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,8 +18,8 @@ export function CanvasComponent() {
     }, []);
 
     return (
-        <div className={"mr-4"}>
-            <canvas ref={canvasRef} width={1200} height={600} id="canvas-main"/>
+        <div className={"mr-4 "}>
+            <canvas className={""} ref={canvasRef} width={1200} height={600} id="canvas-main"/>
         </div>
     );
 }
