@@ -7,6 +7,7 @@ import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 export class Camera implements IObject {
 
+
     name: string;
     transform: Transform;
     viewMatrix: Mat4;
@@ -48,11 +49,8 @@ export class Camera implements IObject {
 
     update(){
 
-        this.viewMatrix = mat4.create();
+
         const target = vec3.add(this.transform.position.toArray, this.transform.forward.normalized.toArray);
-        this.viewMatrix = mat4.rotateX(this.viewMatrix, Deg2Rad(this.transform.rotation.x));
-        this.viewMatrix = mat4.rotateY(this.viewMatrix, Deg2Rad(this.transform.rotation.y));
-        this.viewMatrix = mat4.rotateZ(this.viewMatrix, Deg2Rad(this.transform.rotation.z));
 
         // update the view matrix to look at the target position
         // the view matrix holds the camera's position and orientation in the world
@@ -73,3 +71,4 @@ export class Camera implements IObject {
         );
     }
 }
+

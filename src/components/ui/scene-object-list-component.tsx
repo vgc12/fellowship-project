@@ -1,7 +1,8 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import SceneObject from "./scene-object.tsx";
-import {useState} from "react";
+import {type JSX, useState} from "react";
 import type {IObject} from "@/scene/IObject.ts";
+import {CameraComponent} from "@/components/ui/camera-component.tsx";
 
 
 export function SceneObjectListComponent() {
@@ -11,7 +12,16 @@ export function SceneObjectListComponent() {
     const buttonClicked = (o: IObject) =>{
         setSelectedObject(o);
     }
-    const component = selectedObject == null? <></> : <SceneObject key={selectedObject.guid} object={selectedObject}/>;
+    let component: JSX.Element;
+
+    if (selectedObject == null) {
+        component = <></>;
+    }else if(selectedObject.guid == $WGPU.mainCamera.guid){
+        component = <CameraComponent key={selectedObject.guid} object={selectedObject}></CameraComponent>
+    }
+    else {
+        component = <SceneObject key={selectedObject.guid} object={selectedObject}/>;
+    }
     return (
         <div className={" bg-gray-800 text-white p-4 mb-8 rounded-md text-center flex flex-col " }>
             {component}

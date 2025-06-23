@@ -152,8 +152,8 @@ export class Renderer {
     private writeBindGroupBuffers() {
         const modelMatrices = this.createModelMatrixArray();
         $WGPU.device.queue.writeBuffer(this.storageBuffer, 0, modelMatrices as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 0, $WGPU.camera.viewMatrix as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 64, $WGPU.camera.projectionMatrix as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 0, $WGPU.mainCamera.viewMatrix as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 64, $WGPU.mainCamera.projectionMatrix as ArrayBuffer);
     }
 
 // Puts every value of the model matrix from each object to be drawn into one array

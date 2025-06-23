@@ -15,7 +15,7 @@ class WebGPUSingleton {
     private _windowDimensions = { width: 0, height: 0 };
     private _objects: IObject[] = [];
     private _renderables: IRenderable[] = [];
-    private _camera: Camera | null = null;
+    private _mainCamera: Camera | null = null;
     private _vertexBufferLayout : GPUVertexBufferLayout | null = null;
     private _format: GPUTextureFormat;
     private _context: GPUCanvasContext;
@@ -54,9 +54,9 @@ class WebGPUSingleton {
         return this._windowDimensions;
     }
 
-    get camera(): Camera {
-        if (!this._camera) throw new Error('Camera not initialized');
-        return this._camera;
+    get mainCamera(): Camera {
+        if (!this._mainCamera) throw new Error('Camera not initialized');
+        return this._mainCamera;
     }
 
     get canvas(): HTMLCanvasElement {
@@ -90,9 +90,9 @@ class WebGPUSingleton {
 
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
         this._device = await this._adapter.requestDevice();
-        this._camera = new Camera();
-        this._camera.name = "Camera";
-        this._camera.transform.position.set(0,0,0)
+        this._mainCamera = new Camera();
+        this._mainCamera.name = "Camera";
+        this._mainCamera.transform.position.set(0,0,0)
         this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
 
