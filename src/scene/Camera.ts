@@ -25,8 +25,8 @@ export class Camera implements IObject {
 
         this.guid= crypto.randomUUID();
 
-
         $WGPU.addObject(this);
+
     }
 
 

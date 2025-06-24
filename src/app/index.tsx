@@ -1,8 +1,8 @@
 import ReactDOM from 'react-dom/client';
 
 
-import {SceneObjectListComponent} from "../components/ui/scene-object-list-component.tsx";
-import {CanvasComponent} from "../components/ui/canvas-component.tsx";
+import {SceneObjectListComponent} from "../components/scene-object-list-component.tsx";
+import {CanvasComponent} from "../components/canvas-component.tsx";
 
 import {type ChangeEvent, useState, useCallback} from "react";
 import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
@@ -31,12 +31,12 @@ function App () {
 
 
             <SceneObjectListComponent  />
-            <div className={"text-center"}>
+            <div className={"text-center p-4"}>
                 <label   className={`
                     text-white bg-gray-700 hover:bg-gray-500 focus:outline-none 
                     focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm 
-                    px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 
-                    dark:focus:ring-gray-700 dark:border-gray-700
+                    px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 
+                    dark:focus:ring-gray-700 dark:border-gray-700 m-4
                 `} htmlFor="file-input">Load Model</label>
                 <input  
                 style={{display: "none"}}

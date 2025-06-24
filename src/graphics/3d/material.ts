@@ -1,109 +1,95 @@
+import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
 
 
 export class Material {
+    static default: Material;
 
-    texture: GPUTexture;
-    view: GPUTextureView;
-    sampler: GPUSampler;
-    bindGroup: GPUBindGroup;
+    get bindGroup(): GPUBindGroup {
+        return this._bindGroup;
+    }
+    get view(): GPUTextureView {
+        return this._view;
+    }
+    get imageFile(): File {
+        return this._imageFile;
+    }
+    async setImageFile(value: File) {
+        this._imageFile = value;
+        await this.initialize();
+    }
 
-    async initialize(file: File, device: GPUDevice, name: string, bindGroupLayout: GPUBindGroupLayout) {
+    get imageBitmap(): ImageBitmap {
+        return this._imageBitmap;
+    }
+
+    private _texture: GPUTexture;
+    private _view: GPUTextureView;
+    private _sampler: GPUSampler;
+    private _bindGroup: GPUBindGroup;
+    private _imageFile: File;
+    private _imageBitmap: ImageBitmap;
 
 
+    async initialize() {
+        const imageBitmap = await createImageBitmap(this._imageFile)
+        this._imageBitmap = imageBitmap;
 
-        let mipLevels = 0;
-
-        let width = 0;
-        let height = 0;
-
-
-
-        while(true){
-            const url: string = "dist/img/" + name + "/" + name + "_" + mipLevels.toString() + ".png";
-            const response = await fetch(url);
-
-
-            if(!response.ok){
-                break;
-            }
-
-            if (mipLevels == 0){
-                const blob = await response.blob();
-                const imageBitmap = await createImageBitmap(blob);
-                width = imageBitmap.width;
-                height = imageBitmap.height;
-                imageBitmap.close();
-            }
-
-            mipLevels++;
-        }
         const textureDescriptor : GPUTextureDescriptor = {
             size: {
-                width: width,
-                height: height,
+                width: imageBitmap.width,
+                height: imageBitmap.height,
             },
+
             format: navigator.gpu.getPreferredCanvasFormat(),
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
         }
 
-        this.texture = device.createTexture(textureDescriptor);
+        this._texture = $WGPU.device.createTexture(textureDescriptor);
 
-        for(let i = 0; i < mipLevels; i++) {
-            const url: string = "dist/img/" + name + "/" + name + "_" + i.toString() + ".png";
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const imageBitmap = await createImageBitmap(blob);
-
-            await this.loadImageBitmap(device, imageBitmap, i);
-            imageBitmap.close();
-        }
-
+        this.loadImageBitmap( imageBitmap, 0);
 
         const viewDescriptor: GPUTextureViewDescriptor = {
             format: navigator.gpu.getPreferredCanvasFormat(),
             aspect: "all",
             dimension: "2d",
-            baseMipLevel: 0,
-            baseArrayLayer: 0,
-            mipLevelCount: 1,
-            arrayLayerCount: 1,
         }
-        this.view = this.texture.createView(viewDescriptor);
+        this._view = this._texture.createView(viewDescriptor);
 
         const samplerDescriptor: GPUSamplerDescriptor = {
-            addressModeU: "clamp-to-edge",
-            addressModeV: "clamp-to-edge",
+            addressModeU: "mirror-repeat",
+            addressModeV: "mirror-repeat",
             magFilter: "linear",
             minFilter: "linear",
             mipmapFilter: "linear",
             maxAnisotropy: 16
         }
 
-        this.sampler = device.createSampler(samplerDescriptor);
+        this._sampler = $WGPU.device.createSampler(samplerDescriptor);
 
-        this.bindGroup = device.createBindGroup({
-            layout: bindGroupLayout,
+        this._bindGroup = $WGPU.device.createBindGroup({
+            layout: $WGPU.textureBindGroupLayout,
             entries: [
                 {
                     binding: 0,
-                    resource: this.view
+                    resource: this._view
                 },
                 {
                     binding: 1,
-                    resource: this.sampler
+                    resource: this._sampler
                 }
             ]
         })
+
     }
 
-    async loadImageBitmap(device: GPUDevice, imageBitmap: ImageBitmap, mipLevel: number) {
 
+   loadImageBitmap( imageBitmap: ImageBitmap, mipLevel: number) {
 
-        device.queue.copyExternalImageToTexture(
+        $WGPU.device.queue.copyExternalImageToTexture(
             {source: imageBitmap},
             {
-                texture: this.texture,
+                texture: this._texture,
                 mipLevel: mipLevel
             },
             {width: imageBitmap.width, height: imageBitmap.height}

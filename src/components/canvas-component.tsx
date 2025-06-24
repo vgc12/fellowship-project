@@ -1,5 +1,5 @@
 import {useEffect, useRef} from "react";
-import {Scene} from "../../app/scene.ts";
+import {Scene} from "../app/scene.ts";
 
 export function CanvasComponent() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -8,9 +8,9 @@ export function CanvasComponent() {
         const initializeScene = async () => {
             // This runs AFTER the component has rendered
             if (canvasRef.current) {
-                const app = new Scene(canvasRef.current);
+                const app = new Scene();
                 await app.initialize();
-                await app.run();
+                app.run();
             }
         };
 

@@ -1,9 +1,18 @@
 import { MeshBuilder} from "./mesh.ts";
 import {RenderableObject} from "@/scene/renderable-object.ts";
+import {vec2, type Vec2, vec3, type Vec3} from "wgpu-matrix";
+
+
 
 export class OBJLoader {
 
     uploadInput: HTMLInputElement;
+
+    private static _vertices: Vec3[] = [];
+    private static _uvs: Vec2[] = [];
+    private static _result: number[] = [];
+    private static _indices : number[] = [];
+
 
 
     constructor() {
@@ -20,94 +29,118 @@ export class OBJLoader {
 
         const meshBuilder = new MeshBuilder();
 
-
-
-        const vertices : number[] = [];
-        const indices : number[] = [];
-        const uvs : number[] = [];
         let name : string = ""
+
         for (let i = 0; i < lines.length; i++){
+
+
             const line = lines[i];
+
+
 
             if(line.startsWith('o ')){
                 name = line.substring(2);
             }
 
-            if(i+1 == lines.length || (line.startsWith('o ') && vertices.length > 0)) {
-                const mesh = meshBuilder.
-                setVertices(vertices)
-                    .setIndices(indices)
-                    .setUVCoords(uvs)
+            if(i+1 == lines.length || (line.startsWith('o ') && this._vertices.length > 0)) {
+
+
+
+                console.log(this._indices.length/3)
+                const mesh = meshBuilder
+                    .setVertices(this._result)
+                    //.setIndices(this._indices)
                     .build();
+
 
                 const renderableObject = new RenderableObject();
                 renderableObject.mesh = mesh;
-                renderableObject.transform.position.set(0,0,0);
+
                 renderableObject.name = name
-                vertices.length = 0;
-                indices.length = 0;
+
+                this._result = []
+                this._indices = []
+
+
+
             }
             else if(line.startsWith('v ')) {
 
-                vertices.push(...this.processVertex(line))
-            }
-            else if (line.startsWith('vt')){
-                uvs.push(...this.processUV(line))
+                this.processVertex(line)
             }
             else if(line.startsWith('f ')) {
-                indices.push(...this.processFace(line));
+
+               this.processFace(line);
+
             }
+            else if (line.startsWith('vt')){
+
+                this.processUV(line)
+
+            }
+
+
         }
 
     }
 
-    static processVertex(vertex: string) {
+    static processVertex(vertex: string){
 
-        const vertexParts = vertex.split(' ').slice(1);
+        const vertexParts = vertex.replace("\n", "").split(' ').slice(1);
 
-
-        return [parseFloat(vertexParts[0]), parseFloat(vertexParts[1]),parseFloat(vertexParts[2])];
+        this._vertices.push( vec3.fromValues(parseFloat(vertexParts[0]), parseFloat(vertexParts[1]),parseFloat(vertexParts[2])));
     }
 
-    static processFace(face: string): number[] {
-        const faceParts = face.split(' ').slice(1); // Remove 'f' part
-        const indices: number[] = [];
 
-        // Extract vertex indices (convert from 1-based to 0-based)
-        const vertexIndices = faceParts.map(part => {
-            // Handle format like "1/1/1" or "1//1" or just "1"
+    static processIndex(vertexDescription: string){
 
-            const index = parseInt(part.split('/')[0]);
-            return index - 1; // Convert to 0-based indexing
-        });
+        const descriptor = vertexDescription.split('/');
+
+        const vIndex = parseInt(descriptor[0])-1;
+        const vtIndex = parseInt(descriptor[1])-1;
 
 
 
-        // Triangulate the face
-        if (vertexIndices.length === 3) {
-            // Already a triangle
+        const v = this._vertices[vIndex]
+        const vt = this._uvs[vtIndex]
 
-            indices.push(...vertexIndices);
-        } else if (vertexIndices.length === 4) {
-            // Quad - split into two triangles
-            // Triangle 1: 0, 1, 2
-            indices.push(vertexIndices[0], vertexIndices[1], vertexIndices[2],
-                         vertexIndices[0], vertexIndices[2], vertexIndices[3]);
 
-        } else {
-            // N-gon - use fan triangulation
-            for (let i = 1; i < vertexIndices.length - 1; i++) {
-                indices.push(vertexIndices[0], vertexIndices[i], vertexIndices[i + 1]);
-            }
+        if (!v) {
+
+            console.log(`${this._vertices[vIndex]}}`)
+            return;
         }
 
-        return indices;
+
+        this._result.push(...v)
+        this._result.push(...vt)
+
+    }
+
+
+    static processFace(line: string) {
+
+        const faceParts = line.split(' ').slice(1);
+
+        const triangleCount = faceParts.length - 2;
+
+        for (let i = 0; i < triangleCount; i++){
+
+            this.processIndex(faceParts[0]);
+            this.processIndex(faceParts[i+1]);
+            this.processIndex(faceParts[i+2])
+        }
+
+
     }
 
 
     static processUV(line: string) {
         const uvParts = line.split(' ').slice(1);
 
-        return [parseFloat(uvParts[0]), parseFloat(uvParts[1])];
+        this._uvs.push( vec2.fromValues( parseFloat(uvParts[0]),1-parseFloat(uvParts[1])));
+
     }
+
+
 }

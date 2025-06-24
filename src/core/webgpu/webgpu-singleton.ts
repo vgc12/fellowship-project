@@ -2,23 +2,49 @@
 // This is a singleton of things that are commonly used throughout the whole project
 // Neither the device nor adapter should need multiple instances to be made as this isnt made to handle multiple GPU's
 
-import type {IObject} from "../../scene/IObject.ts";
-import {Camera} from "../../scene/Camera.ts";
-import type {IRenderable} from "../../scene/IRenderable.ts";
+import {Camera} from "@/scene/Camera.ts";
+
+import  {type RenderableObject} from "@/scene/renderable-object.ts";
+import type {IObject} from "@/scene/IObject.ts";
 
 class WebGPUSingleton {
+    get textureBindGroupLayout(): GPUBindGroupLayout {
+        return this._textureBindGroupLayout;
+    }
+    get frameBindGroupLayout(): GPUBindGroupLayout {
+        return this._frameBindGroupLayout;
+    }
 
     private static _instance: WebGPUSingleton;
     private _device: GPUDevice | null = null;
     private _adapter: GPUAdapter | null = null;
     private _canvas: HTMLCanvasElement;
     private _windowDimensions = { width: 0, height: 0 };
-    private _objects: IObject[] = [];
-    private _renderables: IRenderable[] = [];
+    private _renderableObjects: RenderableObject[] = [];
+    private _objects : IObject[] = [];
+
     private _mainCamera: Camera | null = null;
     private _vertexBufferLayout : GPUVertexBufferLayout | null = null;
     private _format: GPUTextureFormat;
     private _context: GPUCanvasContext;
+    /* texture bind group layout is located here because then i dont have to supply the layout
+       while creating a material in the react texture-input-component.
+     */
+    private _textureBindGroupLayout: GPUBindGroupLayout;
+    /*
+        this is here now for consistency, if im going to have the other bind group layout here I might as well
+        put this one here.
+     */
+    private _frameBindGroupLayout: GPUBindGroupLayout;
+
+
+    static get Instance(): WebGPUSingleton {
+        if (!this._instance) {
+            this._instance = new WebGPUSingleton();
+
+        }
+        return this._instance;
+    }
 
 
     get format(): GPUTextureFormat {
@@ -31,15 +57,15 @@ class WebGPUSingleton {
         return this._vertexBufferLayout;
     }
 
-
-
-    static get Instance(): WebGPUSingleton {
-        if (!this._instance) {
-            this._instance = new WebGPUSingleton();
-
-        }
-        return this._instance;
+    addObject(object: IObject) {
+        this._objects.push(object);
     }
+
+    get objects(): IObject[] {
+        return this._objects;
+    }
+
+
 
 
     get device(): GPUDevice {
@@ -69,11 +95,8 @@ class WebGPUSingleton {
         return this._adapter;
     }
 
-    get objects(): IObject[] {
-        return this._objects;
-    }
-    get renderables(): IRenderable[] {
-        return this._renderables;
+    get renderableObjects(): RenderableObject[] {
+        return this._renderableObjects;
     }
 
     async initialize(){
@@ -92,7 +115,7 @@ class WebGPUSingleton {
         this._device = await this._adapter.requestDevice();
         this._mainCamera = new Camera();
         this._mainCamera.name = "Camera";
-        this._mainCamera.transform.position.set(0,0,0)
+        this._mainCamera.transform.position.set(0,0,-5)
         this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
 
@@ -119,15 +142,44 @@ class WebGPUSingleton {
             }]
         }
 
+        this._textureBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: {}
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: {}
+            }
+            ]
+        })
+
+        this._frameBindGroupLayout= $WGPU.device.createBindGroupLayout({
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {}
+            },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'read-only-storage',
+                        hasDynamicOffset: false
+                    }
+                }
+            ]
+        })
+
     }
 
-    addObject(object: IObject) {
-        this._objects.push(object);
+    addRenderableObject(object: RenderableObject) {
+        this._renderableObjects.push(object);
     }
 
-    addRenderable(renderable: IRenderable) {
-        this._renderables.push(renderable);
-    }
+
 }
 
 // A singleton that contains several common objects that are used throughout the project.

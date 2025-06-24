@@ -1,8 +1,10 @@
-import type {IObject} from "@/scene/IObject.ts";
-import {type ChangeEvent, useRef, useState} from "react";
-import {Input} from "@/components/ui/input.tsx";
 
-export function TextureInputComponent(props: { object: IObject }) {
+import {type ChangeEvent, useRef, useState} from "react";
+import {Input} from "@/components/input.tsx";
+import type {RenderableObject} from "@/scene/renderable-object.ts";
+import {Material} from "@/graphics/3d/material.ts";
+
+export function TextureInputComponent(props: { object: RenderableObject }) {
 
     const [texture, setTexture] = useState<string>('./img/default.png');
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -11,20 +13,31 @@ export function TextureInputComponent(props: { object: IObject }) {
         fileInputRef.current?.click();
     }
 
-    const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleOnChange = async (e: ChangeEvent<HTMLInputElement>) => {
 
         if (!e.target.files) return;
         const file = e.target.files[0];
         console.log(e.target.files[0]);
 
-        if (file.name.endsWith('.jpg') || file.name.endsWith('.png')) {
+        if (file.type.startsWith('image/')) {
             const fileReader = new FileReader();
             console.log(file);
+
+            const bitmap = await createImageBitmap(file);
+
+            console.log(bitmap);
+
             fileReader.onload = () => {
-                console.log(fileReader.result);
+
                 setTexture(fileReader.result as string);
+
             }
             fileReader.readAsDataURL(file);
+
+            const material = new Material();
+            await material.setImageFile(file);
+
+            props.object.material = material;
 
 
         }

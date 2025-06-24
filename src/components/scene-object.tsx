@@ -1,12 +1,11 @@
 import {Vector3InputComponent} from "./vector3-input-component.tsx";
 
-import type {IObject} from "@/scene/IObject.ts";
-import {TextureInputComponent} from "@/components/ui/texture-input-component.tsx";
+
+import {TextureInputComponent} from "@/components/texture-input-component.tsx";
+import type {RenderableObject} from "@/scene/renderable-object.ts";
 
 
-
-
-function SceneObject(props : {object: IObject}) {
+function SceneObject(props: { object: RenderableObject }) {
 
 
     return (

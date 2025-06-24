@@ -8,7 +8,6 @@ export class Mesh  {
     vertexBuffer: GPUBuffer;
     indices? : Uint16Array
     indexBuffer? : GPUBuffer;
-    uv: Float32Array
 
 }
 
@@ -16,13 +15,15 @@ export class MeshBuilder {
 
     private _vertices: Float32Array
     private _indices?: Uint16Array
-    private _uvCoords: Float32Array
+
     private _fullBufferData : Float32Array
+
+
 
     clear() {
         this._vertices =  new Float32Array();
         this._indices = new Uint16Array();
-        this._uvCoords = new Float32Array();
+        this._fullBufferData = new Float32Array();
     }
 
     constructor() {
@@ -41,10 +42,6 @@ export class MeshBuilder {
         return this;
     }
 
-    setUVCoords(uvs: number[]){
-        this._uvCoords = new Float32Array(uvs);
-        return this;
-    }
 
 
     build(): Mesh {
@@ -52,19 +49,10 @@ export class MeshBuilder {
             throw new Error('Vertices must be provided');
         }
 
-        if(!this._uvCoords){
-            console.warn("Warning: uv coordinates not provided. this will default to 1,1 for each coordinate resulting in unexpected behavior");
-        }
 
-        this._fullBufferData = new Float32Array()
+        this._fullBufferData = new Float32Array(this._vertices);
 
-        const bufferData : number[] = []
-        const vertexCount = this._vertices.length / (3);
 
-        for(let i = 0; i < vertexCount; i++){
-            bufferData.push(this._vertices[3*i], this._vertices[3*i+1], this._vertices[3*i+2], this._uvCoords[2*i], this._uvCoords[2*i+1]);
-        }
-        this._fullBufferData = new Float32Array(bufferData);
 
         // Create vertex buffer
         const vertexBuffer = $WGPU.device.createBuffer({
@@ -86,6 +74,8 @@ export class MeshBuilder {
             $WGPU.device.queue.writeBuffer(indexBuffer, 0, this._indices);
         }
 
+        console.log("Vertex count: " + this.calculateVertexCount())
+        console.log("index count " + this._indices?.length)
         const mesh = {
 
             indices: this._indices,
@@ -95,7 +85,7 @@ export class MeshBuilder {
             vertices: this._vertices,
             vertexBufferDescriptor: vertexBuffer,
             indexBuffer: indexBuffer,
-            uv: this._uvCoords
+
 
         };
         this.clear();

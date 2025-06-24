@@ -6,7 +6,6 @@ struct Transform{
 struct VertexOut{
     @builtin(position) pos : vec4f,
     @location(0) texCoord : vec2f,
-    @location(1) color: vec4f
 
 }
 
@@ -27,9 +26,7 @@ fn main(@builtin(instance_index) i_index: u32, @location(0) vertexPosition: vec3
 
   output.pos = transform.projection * transform.view * objects.model[i_index] * vec4f(vertexPosition,1.0);
 
-  var col = vertexPosition;
-
-  output.color = vec4(col,1);
+  output.texCoord = uv;
 
   return output;
 }

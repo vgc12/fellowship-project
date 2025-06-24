@@ -1,4 +1,4 @@
-import {NumericScrubber} from "@/components/ui/number-scrubber.tsx";
+import {NumericScrubber} from "@/components/number-scrubber.tsx";
 
 interface IVector3InputProps{
     label: string;

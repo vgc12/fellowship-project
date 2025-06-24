@@ -5,11 +5,13 @@ import  {Transform } from "../core/math/transform.ts";
 import {type Mat4, mat4} from "wgpu-matrix";
 import {Deg2Rad} from "../core/math/math-util.ts";
 import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
+import { Material } from "@/graphics/3d/material.ts";
 
 export class RenderableObject implements IObject, IRenderable {
     get guid(): string {
         return this._guid;
     }
+
     get mesh(): Mesh {
         return this._mesh;
     }
@@ -17,12 +19,15 @@ export class RenderableObject implements IObject, IRenderable {
     set mesh(value: Mesh) {
         this._mesh = value;
     }
-    get modelMatrix(): Mat4{
+
+    get modelMatrix(): Mat4 {
         return this._modelMatrix;
     }
+
     get transform(): Transform {
         return this._transform;
     }
+
     get name(): string {
         return this._name;
     }
@@ -45,15 +50,18 @@ export class RenderableObject implements IObject, IRenderable {
 
         mat4.translate(this._modelMatrix, this._transform.position.toArray, this._modelMatrix);
         this._mesh = new Mesh();
+        $WGPU.addRenderableObject(this);
         $WGPU.addObject(this);
-        $WGPU.addRenderable(this);
 
+        this.material = Material.default;
 
     }
 
-    children: IObject[];
+    material: Material;
+    
+    private readonly _guid: string;
+    
 
-    private _guid: string;
 
     update() {
         this._modelMatrix = mat4.identity();
