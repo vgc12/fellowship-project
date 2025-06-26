@@ -21,7 +21,7 @@ export class Scene {
 
     async initialize() {
         await $WGPU.initialize();
-
+       // const input = new Input();
         Material.default = new Material();
         const response = await fetch('./img/default.png');
         const blob = await response.blob();
@@ -43,7 +43,8 @@ export class Scene {
         this.renderer.update();
 
         requestAnimationFrame(this.run)
-      
+
+        $WGPU.mainCamera.rotate(1);
 
 
     };

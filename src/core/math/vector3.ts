@@ -104,6 +104,17 @@ export class Vector3 {
         this._onChange?.(this._x, this._y, this._z);
     }
 
+    static add(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+
+            out = new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+        else {
+            out.set(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+
+        return out;
+    }
 
     get magnitude(): number {
         if (this._recalculateMagnitude) {
@@ -132,4 +143,6 @@ export class Vector3 {
         this._recalculateNormalization = true;
         this._recalculateMagnitude = true;
     }
+
+    static readonly ZERO: Vector3 = new Vector3(0, 0, 0);
 }
