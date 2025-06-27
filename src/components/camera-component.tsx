@@ -29,7 +29,7 @@ export function CameraComponent(props: { object: IObject }) {
                     
                     <Vector3InputComponent 
                         label="Rotation" 
-                        values={props.object.transform.rotation.toArray}
+                        values={props.object.transform.eulerAngles.toArray}
                         onChange={(val, axis) => handleTransformChange('rotation', val, axis)}
                     />
                 </div>

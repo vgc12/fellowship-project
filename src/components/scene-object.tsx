@@ -30,17 +30,17 @@ function SceneObject(props: { object: RenderableObject }) {
                         }
                     }
                 }/>
-                <Vector3InputComponent label={"Rotation"} values={props.object.transform.rotation.toArray} onChange={
+                <Vector3InputComponent label={"Rotation"} values={props.object.transform.eulerAngles.toArray} onChange={
                     (val, axis) => {
                         switch(axis) {
                             case 'X':
-                                props.object.transform.rotation.x = val;
+                                props.object.transform.eulerAngles.x = val;
                                 break;
                             case 'Y':
-                                props.object.transform.rotation.y = val;
+                                props.object.transform.eulerAngles.y = val;
                                 break;
                             case 'Z':
-                                props.object.transform.rotation.z = val;
+                                props.object.transform.eulerAngles.z = val;
                                 break;
 
                         }

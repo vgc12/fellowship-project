@@ -69,10 +69,12 @@ export class RenderableObject implements IObject, IRenderable {
          // Update the transformation matrix based on the transform's position, rotation, and scale
          mat4.translate(this._modelMatrix,  this.transform.position.toArray, this._modelMatrix);
          // Apply rotations in the order of X, Y, Z
-         mat4.rotateX(this._modelMatrix, Deg2Rad(this.transform.rotation.x), this._modelMatrix )
-         mat4.rotateY(this._modelMatrix, Deg2Rad(this.transform.rotation.y), this._modelMatrix )
-         mat4.rotateZ(this._modelMatrix, Deg2Rad(this.transform.rotation.z), this._modelMatrix )
+         mat4.rotateX(this._modelMatrix, Deg2Rad(this.transform.eulerAngles.x), this._modelMatrix )
+         mat4.rotateY(this._modelMatrix, Deg2Rad(this.transform.eulerAngles.y), this._modelMatrix )
+         mat4.rotateZ(this._modelMatrix, Deg2Rad(this.transform.eulerAngles.z), this._modelMatrix )
          // Apply scaling
+
+
          mat4.scale(this._modelMatrix, this.transform.scale.toArray, this._modelMatrix)
 
 

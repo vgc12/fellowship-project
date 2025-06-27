@@ -116,6 +116,16 @@ export class Vector3 {
         return out;
     }
 
+    static subtract(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+            out = new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+        } else {
+            out.set(a.x - b.x, a.y - b.y, a.z - b.z);
+        }
+
+        return out;
+    }
+
     get magnitude(): number {
         if (this._recalculateMagnitude) {
             this._magnitude = Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z);
@@ -145,4 +155,6 @@ export class Vector3 {
     }
 
     static readonly ZERO: Vector3 = new Vector3(0, 0, 0);
+
+
 }

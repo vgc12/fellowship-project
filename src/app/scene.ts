@@ -4,6 +4,7 @@ import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 import {$TIME} from "../utils/time.ts";
 import {Material} from "@/graphics/3d/material.ts";
+import {Input} from "@/core/input.ts";
 
 
 
@@ -21,7 +22,7 @@ export class Scene {
 
     async initialize() {
         await $WGPU.initialize();
-       // const input = new Input();
+        const input = new Input();
         Material.default = new Material();
         const response = await fetch('./img/default.png');
         const blob = await response.blob();
@@ -44,7 +45,7 @@ export class Scene {
 
         requestAnimationFrame(this.run)
 
-        $WGPU.mainCamera.rotate(1);
+        //$WGPU.mainCamera.rotate(1);
 
 
     };
