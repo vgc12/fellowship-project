@@ -1,6 +1,12 @@
 // I decided to write my own vector 3 as a response to it just working better with react
 // Also im changing things to make it feel better to program with compared to the wgpu-matrix library
 export class Vector3 {
+    get sqrMagnitude(): number {
+        this._sqrMagnitude = this._x * this._x + this._y * this._y + this._z * this._z;
+        return this._sqrMagnitude;
+    }
+    private _sqrMagnitude: number;
+
     set onChange(onChange: (x: number, y: number, z: number) => void){
         this._onChange = onChange;
     }
@@ -27,7 +33,7 @@ export class Vector3 {
         this._y = y;
         this._z = z;
 
-
+        this._sqrMagnitude = 0;
 
         this.flagRecalculations();
         this._onChange = onChange;
@@ -126,6 +132,24 @@ export class Vector3 {
         return out;
     }
 
+    static cross(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+            out = new Vector3(
+                a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x
+            );
+        } else {
+            out.set(
+                a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x
+            );
+        }
+
+        return out;
+    }
+
     get magnitude(): number {
         if (this._recalculateMagnitude) {
             this._magnitude = Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z);
@@ -157,4 +181,8 @@ export class Vector3 {
     static readonly ZERO: Vector3 = new Vector3(0, 0, 0);
 
 
+    static dot(forward: Vector3, WORLD_UP: Vector3) {
+        // calculate the dot product of two vectors
+        return forward.x * WORLD_UP.x + forward.y * WORLD_UP.y + forward.z * WORLD_UP.z;
+    }
 }

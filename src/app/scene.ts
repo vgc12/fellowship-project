@@ -13,6 +13,7 @@ import {Input} from "@/core/input.ts";
 export class Scene {
 
     renderer: Renderer;
+    private input : Input;
 
     constructor() {
         this.renderer = new Renderer();
@@ -22,7 +23,7 @@ export class Scene {
 
     async initialize() {
         await $WGPU.initialize();
-        const input = new Input();
+        this.input = new Input();
         Material.default = new Material();
         const response = await fetch('./img/default.png');
         const blob = await response.blob();
@@ -35,12 +36,13 @@ export class Scene {
 
     }
 
-    run = () => {
+    run = async () => {
+
 
         $WGPU.objects.forEach(o => {
             o.update()
         });
-
+        await this.input.update()
         this.renderer.update();
 
         requestAnimationFrame(this.run)

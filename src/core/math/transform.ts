@@ -1,5 +1,5 @@
 import { vec3} from 'wgpu-matrix';
-import {Deg2Rad} from "./math-util.ts";
+import {convertToRadians} from "./math-util.ts";
 import {Vector3} from "./vector3.ts";
 import {Quaternion} from "@/core/math/quaternion.ts";
 
@@ -15,6 +15,8 @@ export class Transform {
     }
 
     set eulerAngles(value: Vector3) {
+        this._eulerDirty = false;
+        this._quaternionDirty = true;
         this._eulerAngles = value;
     }
     get rotation(): Quaternion {
@@ -29,6 +31,8 @@ export class Transform {
     }
 
     set rotation(value: Quaternion) {
+        this._eulerDirty = true;
+        this._quaternionDirty = false;
         this._rotation = value;
     }
     get up(): Vector3 {
@@ -63,7 +67,7 @@ export class Transform {
         this.position = new Vector3(0,0,0);
 
         this.rotation = new Quaternion();
-        this._rotation.onChange = this.onQuaternionChanged;
+        this.rotation.onChange = this.onQuaternionChanged;
         this.eulerAngles.onChange = this.onEulersChanged;
 
         this.scale = new Vector3(1, 1, 1);
@@ -78,9 +82,9 @@ export class Transform {
 
 
 private updateDirectionVectors() {
-    const yaw = Deg2Rad(this.eulerAngles.y);   // Y rotation - left/right
-    const pitch = Deg2Rad(this.eulerAngles.x); // X rotation - up/down
-    const roll = Deg2Rad(this.eulerAngles.z);  // Z rotation - tilt
+    const yaw = convertToRadians(this.eulerAngles.y);   // Y rotation - left/right
+    const pitch = convertToRadians(this.eulerAngles.x); // X rotation - up/down
+    const roll = convertToRadians(this.eulerAngles.z);  // Z rotation - tilt
 
 
     this._forward.set(
@@ -127,6 +131,7 @@ private updateDirectionVectors() {
     private onQuaternionChanged = () => {
         this._eulerDirty = true;
         this._quaternionDirty = false;
+        this.updateDirectionVectors();
     }
 
 

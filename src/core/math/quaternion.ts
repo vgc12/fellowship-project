@@ -1,5 +1,7 @@
 ﻿import  {Vector3} from "@/core/math/vector3.ts";
-import { vec3 } from "wgpu-matrix";
+import {mat4, quat, vec3} from "wgpu-matrix";
+import {convertToDegrees, convertToRadians} from "@/core/math/math-util.ts";
+
 
 export class Quaternion{
     get w(): number {
@@ -62,6 +64,30 @@ export class Quaternion{
 
     }
 
+    static lookRotation(forward: Vector3, up: Vector3 = Vector3.WORLD_UP) {
+        forward = forward.normalized;
+
+        let right = Vector3.cross(up, forward).normalized;
+        if(right.sqrMagnitude < Number.EPSILON ){
+            const fallBackUp = Math.abs(Vector3.dot(forward, Vector3.WORLD_UP)) < 0.999999 ? Vector3.WORLD_UP : Vector3.WORLD_RIGHT;
+            right = Vector3.cross(fallBackUp, forward).normalized;
+        }
+
+        right = right.normalized;
+        up = Vector3.cross(forward, right).normalized;
+
+        const mat =mat4.create(
+            right.x, up.x, forward.x, 0,
+            right.y, up.y, forward.y, 0,
+            right.z, up.z, forward.z, 0,
+            0, 0, 0, 1
+        );
+
+        const q = quat.fromMat(mat);
+        return new Quaternion(q[0], q[1], q[2], q[3]);
+    }
+
+
     static fromToRotation(from : Vector3, to :Vector3) {
         // Normalize input vectors
         from = from.normalized;
@@ -77,7 +103,7 @@ export class Quaternion{
 
         if (dot <= -0.999999) {
             // Find a perpendicular axis
-            let axis = vec3.cross(from.toArray, [1, 0, 0])
+            const axis = vec3.cross(from.toArray, [1, 0, 0])
             if (vec3.length(axis) < 0.000001) {
                 vec3.cross(from.toArray, [0, 1, 0], axis)
             }
@@ -85,7 +111,7 @@ export class Quaternion{
             return new Quaternion(axis[0], axis[1], axis[2], 0)  // 180° rotation
         }
         // General case
-        let axis = vec3.cross(from.toArray, to.toArray)
+        const axis = vec3.cross(from.toArray, to.toArray)
         const s = Math.sqrt((1 + dot) * 2)
         const invs = 1 / s
 
@@ -97,15 +123,13 @@ export class Quaternion{
         )
     }
 
-    static fromAxisAngle(axis: Vector3, angle: number): Quaternion {
-        const halfAngle = angle / 2;
-        const s = Math.sin(halfAngle);
-        return new Quaternion(axis.x * s, axis.y * s, axis.z * s, Math.cos(halfAngle));
-    }
 
-
-
+    //This is expecting x, y, z in degrees
      setFromEuler(x: number, y: number, z: number) {
+
+        x = convertToRadians(x)
+        y = convertToRadians(y) // Convert degrees to radians
+        z = convertToRadians(z) // Convert degrees to radians
 
         const c1 = Math.cos(x / 2);
         const c2 = Math.cos(y / 2);
@@ -125,9 +149,9 @@ export class Quaternion{
 
 
     getEulerAngles(): Vector3 {
-        const x = Math.atan2(2 * (this._w * this._x + this._y * this._z), 1 - 2 * (this._x * this._x + this._y * this._y));
-        const y = Math.asin(2 * (this._w * this._y - this._z * this._x));
-        const z = Math.atan2(2 * (this._w * this._z + this._x * this._y), 1 - 2 * (this._y * this._y + this._z * this._z));
+        const x =  convertToDegrees(Math.atan2(2 * (this._w * this._x + this._y * this._z), 1 - 2 * (this._x * this._x + this._y * this._y)));
+        const y = convertToDegrees(Math.asin(2 * (this._w * this._y - this._z * this._x)));
+        const z = convertToDegrees(Math.atan2(2 * (this._w * this._z + this._x * this._y), 1 - 2 * (this._y * this._y + this._z * this._z)));
 
         return new Vector3(x,y,z);
     }

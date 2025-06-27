@@ -5,7 +5,7 @@ import Vector3InputComponent from "@/components/vector3-input-component.tsx";
 
 export function CameraComponent(props: { object: IObject }) {
     const handleTransformChange = (
-        transformType: 'position' | 'rotation',
+        transformType: 'position' | 'eulerAngles',
         value: number,
         axis: string
     ) => {
@@ -30,7 +30,7 @@ export function CameraComponent(props: { object: IObject }) {
                     <Vector3InputComponent 
                         label="Rotation" 
                         values={props.object.transform.eulerAngles.toArray}
-                        onChange={(val, axis) => handleTransformChange('rotation', val, axis)}
+                        onChange={(val, axis) => handleTransformChange('eulerAngles', val, axis)}
                     />
                 </div>
             </div>
