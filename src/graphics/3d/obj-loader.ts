@@ -6,20 +6,15 @@ import {vec2, type Vec2, vec3, type Vec3} from "wgpu-matrix";
 
 export class OBJLoader {
 
-    uploadInput: HTMLInputElement;
+
 
     private static _vertices: Vec3[] = [];
     private static _uvs: Vec2[] = [];
     private static _result: number[] = [];
-    private static _indices : number[] = [];
 
 
 
-    constructor() {
 
-        this.uploadInput = document.getElementById('file-input') as HTMLInputElement;
-        // this.uploadInput.onchange = this.onFileUploaded;
-    }
 
 
     static async loadMeshes(file: File) {
@@ -46,7 +41,6 @@ export class OBJLoader {
 
 
 
-                console.log(this._indices.length/3)
                 const mesh = meshBuilder
                     .setVertices(this._result)
                     //.setIndices(this._indices)
@@ -59,9 +53,6 @@ export class OBJLoader {
                 renderableObject.name = name
 
                 this._result = []
-                this._indices = []
-
-
 
             }
             else if(line.startsWith('v ')) {
@@ -84,6 +75,7 @@ export class OBJLoader {
 
     }
 
+    // Processes a vertex line, which starts with 'v' and contains 3 float values.
     static processVertex(vertex: string){
 
         const vertexParts = vertex.replace("\n", "").split(' ').slice(1);
@@ -91,39 +83,58 @@ export class OBJLoader {
         this._vertices.push( vec3.fromValues(parseFloat(vertexParts[0]), parseFloat(vertexParts[1]),parseFloat(vertexParts[2])));
     }
 
-
+    // Pairs a vertex with its proper UV coordinate.
     static processIndex(vertexDescription: string){
-
+       /* one vertex description may look like this:
+        * 1/1/1
+        * where the first number is the vertex index,
+        * the second number is the uv index,
+        */
         const descriptor = vertexDescription.split('/');
 
+        // extract the vertex and uv indices from the descriptor
         const vIndex = parseInt(descriptor[0])-1;
         const vtIndex = parseInt(descriptor[1])-1;
-
-
-
+        // Find the vertex in the vertices array based on the index.
         const v = this._vertices[vIndex]
+        // Find the uv coordinate in the uvs array based on the index.
         const vt = this._uvs[vtIndex]
-
 
         if (!v) {
 
-            console.log(`${this._vertices[vIndex]}}`)
             return;
         }
 
-
+        // push the vertex and uv coordinate to the result array.
+        // one entry in the result array will look like this:
+        // [x, y, z, u, v]
         this._result.push(...v)
         this._result.push(...vt)
 
     }
 
-
+    // Forms triangle(s) from the face description.
     static processFace(line: string) {
 
+         /* the face line may look like this:
+          * f 1/1/1 2/2/2 3/3/3 4/4/4
+          * where each group is split like vertex_index/uv_index/normal_index
+          * this function searches the already made vertices and uv arrays
+          * and creates triangles based on these indices.
+          */
         const faceParts = line.split(' ').slice(1);
 
         const triangleCount = faceParts.length - 2;
 
+        /* Assembles the triangles from the face description.
+         * If the face has 3 vertices, like this:
+         * f 1/1/1 2/2/2 3/3/3
+         * it will create one triangle from the first three vertices.
+         * If the face has 4 or more vertices, like this:
+         * f 1/1/1 2/2/2 3/3/3 4/4/4
+         * a triangle gets created from the first three (1/1/1 2/2/2 3/3/3)
+         * and then from the first vertex, and the next two vertices (1/1/1 3/3/3 4/4/4).
+         */
         for (let i = 0; i < triangleCount; i++){
 
             this.processIndex(faceParts[0]);

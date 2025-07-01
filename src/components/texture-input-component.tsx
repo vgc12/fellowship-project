@@ -17,15 +17,11 @@ export function TextureInputComponent(props: { object: RenderableObject }) {
 
         if (!e.target.files) return;
         const file = e.target.files[0];
-        console.log(e.target.files[0]);
+
 
         if (file.type.startsWith('image/')) {
             const fileReader = new FileReader();
-            console.log(file);
 
-            const bitmap = await createImageBitmap(file);
-
-            console.log(bitmap);
 
             fileReader.onload = () => {
 
