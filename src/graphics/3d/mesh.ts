@@ -64,7 +64,7 @@ export class MeshBuilder {
 
         // Create index buffer if indices provided
         let indexBuffer: GPUBuffer | undefined;
-        console.log(this._indices)
+
         if (this._indices) {
 
             indexBuffer = $WGPU.device.createBuffer({
@@ -74,8 +74,7 @@ export class MeshBuilder {
             $WGPU.device.queue.writeBuffer(indexBuffer, 0, this._indices);
         }
 
-        console.log("Vertex count: " + this.calculateVertexCount())
-        console.log("index count " + this._indices?.length)
+
         const mesh = {
 
             indices: this._indices,

@@ -9,6 +9,10 @@ import type {IObject} from "@/scene/IObject.ts";
 
 export function SceneObjectListComponent() {
 
+    if ($WGPU.objects.length === 0) {
+        return <></>
+    }
+
     const [selectedObject, setSelectedObject] = useState<IObject>($WGPU.objects[0]);
 
     const buttonClicked = (o: IObject) =>{
@@ -16,7 +20,8 @@ export function SceneObjectListComponent() {
     }
     let component: JSX.Element;
 
-    if (selectedObject == null) {
+
+    if (selectedObject == null)  {
         component = <></>;
     }else if(selectedObject.guid == $WGPU.mainCamera.guid){
         component = <CameraComponent key={selectedObject.guid} object={selectedObject}></CameraComponent>
@@ -27,7 +32,7 @@ export function SceneObjectListComponent() {
 
     return (
 
-        $WGPU.objects.length > 0 ? <div className={" bg-gray-800 text-white p-4 mb-8 rounded-md text-center flex flex-col " }>
+       <div className={" bg-gray-800 text-white p-4 mb-8 rounded-md text-center flex flex-col " }>
             {component}
             {$WGPU.objects.map(o => {
 
@@ -39,8 +44,6 @@ export function SceneObjectListComponent() {
                 `} onClick={() => buttonClicked(o)}>{o.name}</button>
             })}
 
-
-
-        </div> : <></>
+        </div>
     )
 }
