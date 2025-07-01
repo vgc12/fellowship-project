@@ -1,26 +1,29 @@
 
-import { $WGPU } from '../../core/webgpu/webgpu-singleton.ts';
-
-
+import { $WGPU } from '@/core/webgpu/webgpu-singleton.ts';
 
 export class Mesh  {
   
-    vertices: Float32Array;
+    vertices: Float32Array
     vertexCount: number;
     vertexBuffer: GPUBuffer;
-    indices? : Uint16Array;
+    indices? : Uint16Array
     indexBuffer? : GPUBuffer;
 
 }
 
 export class MeshBuilder {
 
-    private _vertices: Float32Array;
-    private _indices?: Uint16Array;
+    private _vertices: Float32Array
+    private _indices?: Uint16Array
+
+    private _fullBufferData : Float32Array
+
+
 
     clear() {
-        this._vertices = new Float32Array();
+        this._vertices =  new Float32Array();
         this._indices = new Uint16Array();
+        this._fullBufferData = new Float32Array();
     }
 
     constructor() {
@@ -28,13 +31,14 @@ export class MeshBuilder {
         this.clear();
     }
 
-    setVertices(vertices: Float32Array): MeshBuilder {
-        this._vertices = vertices;
+    setVertices(vertices: number[]): MeshBuilder {
+        this._vertices = new Float32Array(vertices);
         return this;
     }
 
-    setIndices(indices: Uint16Array): MeshBuilder {
-        this._indices = indices;
+    setIndices(indices: number[]): MeshBuilder {
+        this._indices = new Uint16Array( indices);
+
         return this;
     }
 
@@ -46,22 +50,30 @@ export class MeshBuilder {
         }
 
 
+        this._fullBufferData = new Float32Array(this._vertices);
+
+
+
         // Create vertex buffer
         const vertexBuffer = $WGPU.device.createBuffer({
-            size: this._vertices.byteLength,
+            size: this._fullBufferData.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        $WGPU.device.queue.writeBuffer(vertexBuffer, 0, this._vertices);
+        $WGPU.device.queue.writeBuffer(vertexBuffer, 0, this._fullBufferData);
+
 
         // Create index buffer if indices provided
         let indexBuffer: GPUBuffer | undefined;
+
         if (this._indices) {
+
             indexBuffer = $WGPU.device.createBuffer({
                 size: this._indices.byteLength,
                 usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
             });
             $WGPU.device.queue.writeBuffer(indexBuffer, 0, this._indices);
         }
+
 
         const mesh = {
 
@@ -72,6 +84,7 @@ export class MeshBuilder {
             vertices: this._vertices,
             vertexBufferDescriptor: vertexBuffer,
             indexBuffer: indexBuffer,
+
 
         };
         this.clear();
@@ -91,7 +104,7 @@ export class MeshBuilder {
             would get me three vertices.
          */
         return $WGPU.vertexBufferLayout?.arrayStride != null
-            ? this._vertices.length / ($WGPU.vertexBufferLayout?.arrayStride / 4)
+            ? this._fullBufferData.length / ($WGPU.vertexBufferLayout?.arrayStride / 4)
             : 0;
     }
 

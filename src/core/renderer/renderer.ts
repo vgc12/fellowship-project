@@ -13,8 +13,8 @@ export class Renderer {
 
 
     uniformBuffer: GPUBuffer;
-    bindGroup: GPUBindGroup;
-    bindGroupLayout: GPUBindGroupLayout;
+    frameBindGroup: GPUBindGroup;
+
     pipeline: GPURenderPipeline;
     storageBuffer: GPUBuffer;
     passEncoder: GPURenderPassEncoder;
@@ -23,11 +23,11 @@ export class Renderer {
     depthTexture: GPUTexture;
 
 
+
     async initialize() {
         if (!navigator.gpu) {
             console.error('WebGPU is not supported. Please enable it in your browser settings.');
         }
-
 
 
 
@@ -55,7 +55,7 @@ export class Renderer {
 
     private async setupShaderPipeline(shader: Shader) {
         const pipelineLayout: GPUPipelineLayout = $WGPU.device.createPipelineLayout({
-            bindGroupLayouts: [this.bindGroupLayout]
+            bindGroupLayouts: [$WGPU.frameBindGroupLayout, $WGPU.textureBindGroupLayout]
         });
 
         this.pipeline = await $WGPU.device.createRenderPipelineAsync({
@@ -72,7 +72,7 @@ export class Renderer {
             depthStencil: {
                 depthWriteEnabled: true,
                 depthCompare: "less",
-                format: "depth24plus"
+                format: "depth24plus-stencil8"
             },
 
         });
@@ -94,25 +94,9 @@ export class Renderer {
     }
 
     private setUpBindGroups() {
-        this.bindGroupLayout= $WGPU.device.createBindGroupLayout({
-            entries: [{
-                binding: 0,
-                visibility: GPUShaderStage.VERTEX,
-                buffer: {}
-            },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: {
-                        type: 'read-only-storage',
-                        hasDynamicOffset: false
-                    }
-                }
-            ]
-        })
 
-        this.bindGroup = $WGPU.device.createBindGroup({
-            layout: this.bindGroupLayout,
+        this.frameBindGroup = $WGPU.device.createBindGroup({
+            layout: $WGPU.frameBindGroupLayout,
             entries: [
                 {
                     binding: 0,
@@ -129,22 +113,24 @@ export class Renderer {
             ]
         });
 
+
+
     }
 
     private writeBindGroupBuffers() {
         const modelMatrices = this.createModelMatrixArray();
         $WGPU.device.queue.writeBuffer(this.storageBuffer, 0, modelMatrices as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 0, $WGPU.camera.viewMatrix as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 64, $WGPU.camera.projectionMatrix as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 0, $WGPU.mainCamera.viewMatrix as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 64, $WGPU.mainCamera.projectionMatrix as ArrayBuffer);
     }
 
 // Puts every value of the model matrix from each object to be drawn into one array
     private createModelMatrixArray() {
         const modelMatrices = new Float32Array(16 * 1024);
 
-        for (let renderableIndex = 0; renderableIndex < $WGPU.renderables.length; renderableIndex++) {
+        for (let renderableIndex = 0; renderableIndex < $WGPU.renderableObjects.length; renderableIndex++) {
 
-            const renderable = $WGPU.renderables[renderableIndex];
+            const renderable = $WGPU.renderableObjects[renderableIndex];
 
             for (let MATRIX_POSITION = 0; MATRIX_POSITION < renderable.modelMatrix.length; MATRIX_POSITION++) {
 
@@ -173,7 +159,6 @@ export class Renderer {
                 mipLevelCount: 1, // How many mip levels the texture has (1 for no mipmapping)
                 baseArrayLayer: 0, // The base array layer of the texture (0 for no array layers) an array layer is a slice of a texture that can be used for 3D textures or texture arrays.
                 arrayLayerCount: 1, // The number of array layers in the texture (1 for no array layers)
-
             },
         );
 
@@ -183,7 +168,7 @@ export class Renderer {
         // Depth testing is a technique used to determine which objects are in front of others, so objects are rendered in the correct order.
         this.depthTexture = $WGPU.device.createTexture({
             size: windowDimensions,
-            format: 'depth24plus',
+            format: 'depth24plus-stencil8',
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
 
         });
@@ -194,13 +179,15 @@ export class Renderer {
             colorAttachments: [{
 
                 view: this.textureView, // The texture view that will be rendered to belonging to the canvas.
-                clearValue: [0.0, 0.0, 0.0, .7],
+                clearValue: [.3, 0.3, 0.3, 1.0],
                 loadOp: 'clear', // Clear the canvas before rendering
                 storeOp: 'store', // Store the rendered image in the canvas
             }],
             depthStencilAttachment: {
                 view: this.depthTexture.createView(),
                 depthClearValue: 1.0,
+                stencilLoadOp: 'clear',
+                stencilStoreOp: 'store',
                 depthLoadOp: 'clear',
                 depthStoreOp: 'store'
             }
@@ -215,22 +202,27 @@ export class Renderer {
         this.passEncoder.setPipeline(this.pipeline);
 
 
-        this.passEncoder.setBindGroup(0, this.bindGroup);
+
 
         let objectsDrawn = 0;
-        $WGPU.renderables.forEach((renderable) => {
-            if(renderable.mesh.indexBuffer != undefined){
+        $WGPU.renderableObjects.forEach((renderable) => {
 
+
+            if(renderable.mesh.indexBuffer != undefined && renderable.mesh.indices?.length !== 0){
+                this.passEncoder.setBindGroup(0, this.frameBindGroup);
+                this.passEncoder.setBindGroup(1, renderable.material.bindGroup)
                 this.passEncoder.setIndexBuffer(renderable.mesh.indexBuffer as GPUBuffer, "uint16");
-                
+
                 this.passEncoder.setVertexBuffer(0, renderable.mesh.vertexBuffer);
                 this.passEncoder.drawIndexed(renderable.mesh.indices?.length ?? 0, 1,0,0, objectsDrawn);
 
             }
             else {
 
+                this.passEncoder.setBindGroup(0, this.frameBindGroup);
+                this.passEncoder.setBindGroup(1, renderable.material.bindGroup)
                 this.passEncoder.setVertexBuffer(0, renderable.mesh.vertexBuffer)
-                this.passEncoder.draw(renderable.mesh.vertexCount, 1,0,0);
+                this.passEncoder.draw(renderable.mesh.vertexCount, 1,0,objectsDrawn);
             }
             objectsDrawn++;
         });
