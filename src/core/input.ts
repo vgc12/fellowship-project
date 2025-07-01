@@ -23,11 +23,11 @@ export class Input {
 
      document.onkeydown = (e) => {
 
-      this.altKeyPressed = e.shiftKey
+      this.altKeyPressed = e.altKey
   }
 
   document.onkeyup = async (e) => {
-      this.altKeyPressed = e.shiftKey
+      this.altKeyPressed = e.altKey
 
 
   }
@@ -52,7 +52,13 @@ export class Input {
  async update() {
 
      if( this.middleMouseButtonPressed) {
-         $WGPU.mainCamera.rotateAroundTarget(this.movementX, this.movementY)
+            if (!this.pointerLocked) {
+                await this.canvas.requestPointerLock();
+                this.pointerLocked = true;
+            }
+            if (this.mouseMoving) {
+                $WGPU.mainCamera.rotateAroundTarget(this.movementX, this.movementY)
+            }
      }
 
      if(this.altKeyPressed) {
@@ -66,7 +72,7 @@ export class Input {
         }
          //console.log(e.movementY)
      }
-console.log(this.altKeyPressed)
+
      if (this.pointerLocked && !this.middleMouseButtonPressed && !this.altKeyPressed) {
          document.exitPointerLock();
          this.pointerLocked = false;

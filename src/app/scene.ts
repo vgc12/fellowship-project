@@ -10,6 +10,7 @@ import {Input} from "@/core/input.ts";
 
 
 
+
 export class Scene {
 
     renderer: Renderer;
@@ -39,11 +40,16 @@ export class Scene {
     run = async () => {
 
 
+
         $WGPU.objects.forEach(o => {
             o.update()
+
         });
+
         await this.input.update()
         this.renderer.update();
+
+
 
         requestAnimationFrame(this.run)
 

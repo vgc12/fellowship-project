@@ -1,16 +1,29 @@
 ﻿import  {Vector3} from "@/core/math/vector3.ts";
-import {mat4, quat, vec3} from "wgpu-matrix";
-import {convertToDegrees, convertToRadians} from "@/core/math/math-util.ts";
+import {mat3} from "wgpu-matrix";
+import { convertToDegrees, convertToRadians} from "@/core/math/math-util.ts";
+
 
 
 export class Quaternion{
+
+    get toArray(): [number, number, number, number]{
+        if(this._setArray) {
+            this._toArray = [this._x, this._y, this._z, this._w];
+            this._setArray = false;
+        }
+
+        return this._toArray;
+    }
+
+
     get w(): number {
         return this._w;
     }
 
     set w(value: number) {
         this._w = value;
-        this.onChange?.(this._x, this._y, this._z, this._w)
+        this.flagRecalculations();
+        this.onChange?.(this._x, this._y, this._z, this._w);
     }
     get z(): number {
         return this._z;
@@ -18,7 +31,8 @@ export class Quaternion{
 
     set z(value: number) {
         this._z = value;
-        this.onChange?.(this._x, this._y, this._z, this._w)
+        this.flagRecalculations();
+        this.onChange?.(this._x, this._y, this._z, this._w);
     }
     get y(): number {
         return this._y;
@@ -26,15 +40,18 @@ export class Quaternion{
 
     set y(value: number) {
         this._y = value;
-        this.onChange?.(this._x, this._y, this._z, this._w)
+        this.flagRecalculations();
+        this.onChange?.(this._x, this._y, this._z, this._w);
     }
     get x(): number {
         return this._x;
+
     }
 
     set x(value:  number) {
         this._x = value;
-        this.onChange?.(this._x, this._y, this._z, this._w)
+        this.flagRecalculations();
+        this.onChange?.(this._x, this._y, this._z, this._w);
     }
 
 
@@ -43,93 +60,198 @@ export class Quaternion{
     private _z: number;
     private _w: number;
 
-    onChange?: (x: number, y: number, z: number, w: number) => void;
+    private _normalized: Quaternion;
+    private _eulerAngles: Vector3;
+    private _length: number;
+    private _toArray: [number, number, number, number];
 
+    // Lazy recalculation flags, calculate only when needed
+    private _recalculateNormalization: boolean = true;
+    private _recalculateEulerAngles: boolean = true;
+    private _recalculateLength: boolean = true;
+    private _recalculateRotationMatrix: boolean = true;
+    private _setArray: boolean = true;
 
-
-
-
+    private _rotationMatrix: {[coordinate : string] : number};
 
     constructor(x: number = 0, y: number = 0, z: number = 0, w: number = 1, onChange?: (x: number, y: number, z: number, w: number) => void) {
         this._x = x;
         this._y = y;
         this._z = z;
         this._w = w;
-
+        this._eulerAngles = new Vector3(0, 0, 0);
+        this._eulerAngles.onChange = (x, y, z) => {
+            this.setFromEuler(x, y, z);
+        }
         this.onChange = onChange;
 
 
+        this.flagRecalculations();
+        this.onChange?.(this._x, this._y, this._z, this._w);
 
-     //   this.calculateEulerAngles();
 
     }
 
-    static lookRotation(forward: Vector3, up: Vector3 = Vector3.WORLD_UP) {
-        forward = forward.normalized;
+    private flagRecalculations() {
+        this._recalculateNormalization = true;
+        this._recalculateEulerAngles = true;
+        this._recalculateLength = true;
+        this._recalculateRotationMatrix = true;
+        this._setArray = true;
 
-        let right = Vector3.cross(up, forward).normalized;
-        if(right.sqrMagnitude < Number.EPSILON ){
-            const fallBackUp = Math.abs(Vector3.dot(forward, Vector3.WORLD_UP)) < 0.999999 ? Vector3.WORLD_UP : Vector3.WORLD_RIGHT;
-            right = Vector3.cross(fallBackUp, forward).normalized;
+    }
+
+    get eulerAngles() {
+        if( this._recalculateEulerAngles) {
+            this.calculateEulerAngles();
+            this._recalculateEulerAngles = false;
         }
 
-        right = right.normalized;
-        up = Vector3.cross(forward, right).normalized;
+        return this._eulerAngles;
 
-        const mat =mat4.create(
-            right.x, up.x, forward.x, 0,
-            right.y, up.y, forward.y, 0,
-            right.z, up.z, forward.z, 0,
-            0, 0, 0, 1
+    }
+
+    get length(): number {
+
+        if(this._recalculateLength) {
+            this.calculateLength();
+            this._recalculateLength = false;
+        }
+        return this._length;
+
+    }
+
+    get normalized(): Quaternion {
+        if(!this._normalized) {
+            this._normalized = new Quaternion(this._x, this._y, this._z, this._w);
+        }
+
+        if(this._recalculateNormalization) {
+            this.calculateNormalization()
+        }
+        return this._normalized;
+    }
+
+    /*
+     * A 3x3 rotation matrix representing the quaternion.
+     * This is accessed by rows and columns, rotationMatrix.r1c1 for the first row and first column.
+     * The first row represents the transformed X axis, the second row represents the transformed Y axis,
+     * and the third row represents the transformed Z axis.
+     */
+    get rotationMatrix(): {[coordinate : string] : number} {
+        if(this._recalculateRotationMatrix) {
+            this.calculateRotationMatrix()
+
+            this._recalculateRotationMatrix = false;
+        }
+
+        return this._rotationMatrix;
+    }
+
+    private calculateRotationMatrix() {
+        const nx = this.normalized.x;
+        const ny = this.normalized.y;
+        const nz = this.normalized.z;
+        const nw = this.normalized.w;
+
+        // Create rotation matrix from quaternion
+        // https://automaticaddison.com/wp-content/uploads/2020/09/quaternion-to-rotation-matrix.jpg
+        const mat = mat3.fromQuat([ nx, ny, nz, nw]);
+
+        this._rotationMatrix = {
+            r1c1: mat[0], r1c2: mat[1], r1c3: mat[2],
+            r2c1: mat[4], r2c2: mat[5], r2c3: mat[6],
+            r3c1: mat[8], r3c2: mat[9], r3c3: mat[10]
+        };
+
+
+    }
+
+    private calculateLength() {
+        this._length = Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w);
+    }
+
+    private calculateNormalization() {
+
+        this._normalized.set(
+            this._x / this.length,
+            this._y / this.length,
+            this._z / this.length,
+            this._w / this.length
         );
 
-        const q = quat.fromMat(mat);
-        return new Quaternion(q[0], q[1], q[2], q[3]);
+    }
+
+    private calculateEulerAngles() {
+
+        // Create rotation matrix from quaternion
+        // https://automaticaddison.com/wp-content/uploads/2020/09/quaternion-to-rotation-matrix.jpg
+
+        // Convert quaternion to rotation matrix
+        // The code of how it is calculated can be found here:
+        // https://github.com/greggman/wgpu-matrix/blob/main/src/mat3-impl.ts
+
+        let pitch: number;
+        let yaw: number;
+        let roll: number;
+
+        // Check for gimbal lock
+        const sinPitch = -this.rotationMatrix.r2c3;
+
+
+        // If the absolute value of sinPitch is close to 1, we are in a gimbal lock situation
+        if (Math.abs(sinPitch) >= 0.99999) {
+            // Gimbal lock case
+            pitch = Math.asin(Math.max(-1, Math.min(1, sinPitch)));
+            console.log(convertToDegrees(-this.rotationMatrix.r3c1), convertToDegrees( this.rotationMatrix.r1c1));
+            yaw = Math.atan2(-this.rotationMatrix.r3c1, this.rotationMatrix.r1c1); // Use -m31 to avoid flipping the yaw direction
+            console.log(yaw);
+            roll = 0; // Set roll to 0 in gimbal lock
+        }
+        else {
+            // Normal case
+            pitch = Math.asin(Math.max(-1, Math.min(1, sinPitch)));
+            yaw = Math.atan2(this.rotationMatrix.r1c3, this.rotationMatrix.r3c3);
+            roll = Math.atan2(this.rotationMatrix.r2c1, this.rotationMatrix.r2c2);
+        }
+
+        this._eulerAngles = new Vector3 (convertToDegrees(pitch), convertToDegrees(yaw), convertToDegrees(roll));
+
     }
 
 
-    static fromToRotation(from : Vector3, to :Vector3) {
-        // Normalize input vectors
-        from = from.normalized;
-        to = to.normalized;
 
-        // Calculate dot product
-        const dot = vec3.dot(from.toArray, to.toArray)
+    onChange?: (x: number, y: number, z: number, w: number) => void;
 
-        // Handle special cases
-        if (dot >= 0.999999) {  // Vectors are nearly identical
-            return new Quaternion(0, 0, 0, 1)  // Identity quaternion
-        }
-
-        if (dot <= -0.999999) {
-            // Find a perpendicular axis
-            const axis = vec3.cross(from.toArray, [1, 0, 0])
-            if (vec3.length(axis) < 0.000001) {
-                vec3.cross(from.toArray, [0, 1, 0], axis)
-            }
-            vec3.normalize(axis,axis)
-            return new Quaternion(axis[0], axis[1], axis[2], 0)  // 180° rotation
-        }
-        // General case
-        const axis = vec3.cross(from.toArray, to.toArray)
-        const s = Math.sqrt((1 + dot) * 2)
-        const invs = 1 / s
-
-        return new Quaternion(
-            axis[0] * invs,
-            axis[1] * invs,
-            axis[2] * invs,
-            s * 0.5
-        )
+    set(x: number, y: number, z: number, w: number) {
+        this._x = x;
+        this._y = y;
+        this._z = z;
+        this._w = w;
+        this.flagRecalculations();
+        this.onChange?.(this._x, this._y, this._z, this._w);
     }
 
 
     //This is expecting x, y, z in degrees
-     setFromEuler(x: number, y: number, z: number) {
+    setFromEuler(x: number, y: number, z: number) {
 
+        const q = Quaternion.euler(x, y, z);
+
+        this._x = q.x;
+        this._y = q.y;
+        this._z = q.z;
+        this._w = q.w;
+        this.flagRecalculations();
+        this.onChange?.(this._x, this._y, this._z, this._w);
+    }
+
+    static euler(x: number, y: number, z: number) {
         x = convertToRadians(x)
-        y = convertToRadians(y) // Convert degrees to radians
-        z = convertToRadians(z) // Convert degrees to radians
+        y = convertToRadians(y)
+        z = convertToRadians(z)
+
+
 
         const c1 = Math.cos(x / 2);
         const c2 = Math.cos(y / 2);
@@ -138,22 +260,68 @@ export class Quaternion{
         const s2 = Math.sin(y / 2);
         const s3 = Math.sin(z / 2);
 
-        this.x = s1 * c2 * c3 + c1 * s2 * s3;
-        this.y = c1 * s2 * c3 - s1 * c2 * s3;
-        this.z = c1 * c2 * s3 + s1 * s2 * c3;
-        this.w = c1 * c2 * c3 - s1 * s2 * s3;
+        const q = new Quaternion();
 
-        this.onChange?.(this._x, this._y, this._z, this._w);
+
+        q.x = s1 * c2 * c3 + c1 * s2 * s3;
+        q.y = c1 * s2 * c3 - s1 * c2 * s3;
+        q.z = c1 * c2 * s3 + s1 * s2 * c3;
+        q.w = c1 * c2 * c3 - s1 * s2 * s3;
+
+        if (q.w < 0) {
+            q.x = -q.x;
+            q.y = -q.y;
+            q.z = -q.z;
+            q.w = -q.w;
+        }
+
+        return q.normalized;
+    }
+
+    private static _identity: Quaternion = new Quaternion(0, 0, 0, 1);
+
+    static get identity() {
+        return this._identity
     }
 
 
 
-    getEulerAngles(): Vector3 {
-        const x =  convertToDegrees(Math.atan2(2 * (this._w * this._x + this._y * this._z), 1 - 2 * (this._x * this._x + this._y * this._y)));
-        const y = convertToDegrees(Math.asin(2 * (this._w * this._y - this._z * this._x)));
-        const z = convertToDegrees(Math.atan2(2 * (this._w * this._z + this._x * this._y), 1 - 2 * (this._y * this._y + this._z * this._z)));
 
-        return new Vector3(x,y,z);
+    static multiply(yRotation: Quaternion, orbitRotation: Quaternion) {
+
+        const x = yRotation.x * orbitRotation.w + yRotation.w * orbitRotation.x + yRotation.y * orbitRotation.z - yRotation.z * orbitRotation.y;
+        const y = yRotation.y * orbitRotation.w + yRotation.w * orbitRotation.y + yRotation.z * orbitRotation.x - yRotation.x * orbitRotation.z;
+        const z = yRotation.z * orbitRotation.w + yRotation.w * orbitRotation.z + yRotation.x * orbitRotation.y - yRotation.y * orbitRotation.x;
+        const w = yRotation.w * orbitRotation.w - yRotation.x * orbitRotation.x - yRotation.y * orbitRotation.y - yRotation.z * orbitRotation.z;
+
+        return new Quaternion(x, y, z, w);
     }
 
+    static angleAxis(up : Vector3, angle : number, angleInRadians = false): Quaternion {
+
+        const halfAngle = angleInRadians ? angle * .5 :  convertToRadians(angle) * .5;
+        const sinHalfAngle = Math.sin(halfAngle);
+        const cosHalfAngle = Math.cos(halfAngle);
+
+        return new Quaternion(
+            up.x * sinHalfAngle,
+            up.y * sinHalfAngle,
+            up.z * sinHalfAngle,
+            cosHalfAngle
+        );
+
+    }
+
+
+    static multiplyVector3(q: Quaternion, vec: Vector3) {
+        const x = vec.x, y = vec.y, z = vec.z;
+        const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
+
+        const ix =  qw * x + qy * z - qz * y,
+            iy =  qw * y + qz * x - qx * z,
+            iz =  qw * z + qx * y - qy * x,
+            iw = -qx * x - qy * y - qz * z;
+
+        return new Vector3(ix * qw + iw * -qx + iy * -qz - iz * -qy,iy * qw + iw * -qy + iz * -qx - ix * -qz,iz * qw + iw * -qz + ix * -qy - iy * -qx);
+    }
 }

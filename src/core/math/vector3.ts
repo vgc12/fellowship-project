@@ -110,45 +110,6 @@ export class Vector3 {
         this._onChange?.(this._x, this._y, this._z);
     }
 
-    static add(a: Vector3, b: Vector3, out?: Vector3) {
-        if (!out) {
-
-            out = new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
-        }
-        else {
-            out.set(a.x + b.x, a.y + b.y, a.z + b.z);
-        }
-
-        return out;
-    }
-
-    static subtract(a: Vector3, b: Vector3, out?: Vector3) {
-        if (!out) {
-            out = new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
-        } else {
-            out.set(a.x - b.x, a.y - b.y, a.z - b.z);
-        }
-
-        return out;
-    }
-
-    static cross(a: Vector3, b: Vector3, out?: Vector3) {
-        if (!out) {
-            out = new Vector3(
-                a.y * b.z - a.z * b.y,
-                a.z * b.x - a.x * b.z,
-                a.x * b.y - a.y * b.x
-            );
-        } else {
-            out.set(
-                a.y * b.z - a.z * b.y,
-                a.z * b.x - a.x * b.z,
-                a.x * b.y - a.y * b.x
-            );
-        }
-
-        return out;
-    }
 
     get magnitude(): number {
         if (this._recalculateMagnitude) {
@@ -182,7 +143,56 @@ export class Vector3 {
 
 
     static dot(forward: Vector3, WORLD_UP: Vector3) {
-        // calculate the dot product of two vectors
+
         return forward.x * WORLD_UP.x + forward.y * WORLD_UP.y + forward.z * WORLD_UP.z;
     }
+
+    static add(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+
+            out = new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+        else {
+            out.set(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+
+        return out;
+    }
+
+    static subtract(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+            out = new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+        } else {
+            out.set(a.x - b.x, a.y - b.y, a.z - b.z);
+        }
+
+        return out;
+    }
+
+    static distance(a: Vector3, b: Vector3): number {
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dz = a.z - b.z;
+
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+    static cross(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+            out = new Vector3(
+                a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x
+            );
+        } else {
+            out.set(
+                a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x
+            );
+        }
+
+        return out;
+    }
+
 }

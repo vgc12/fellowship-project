@@ -3,7 +3,7 @@ import {NumericScrubber} from "@/components/number-scrubber.tsx";
 interface IVector3InputProps{
     label: string;
     values: number[];
-    onChange: (value: number, axis : string) => void;
+    onChange: (value: number, axis : 'x' | 'y' | 'z' ) => void;
 }
 
 
@@ -11,8 +11,8 @@ export function Vector3InputComponent({label, values, onChange}: IVector3InputPr
     return (
         <div>
             <label>{label}</label>
-            <div className={"flex"}>
-                {['X', 'Y', 'Z'].map((axis, index) => (
+            <div className={"flex justify-center mb-3"}>
+                {['x', 'y', 'z'].map((axis, index) => (
                     <span key={index}  >
                         <label>{axis}</label>
                         <NumericScrubber
@@ -20,7 +20,7 @@ export function Vector3InputComponent({label, values, onChange}: IVector3InputPr
                             min={Number.NEGATIVE_INFINITY}
                             max={Number.POSITIVE_INFINITY}
                             value={values[index]}
-                            onChange={(e) => onChange(e, axis)}></NumericScrubber>
+                            onChange={(e) => onChange(e, axis as 'x' | 'y' | 'z')}></NumericScrubber>
 
                     </span>
                 ))}
