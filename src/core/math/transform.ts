@@ -1,5 +1,3 @@
-import { vec3} from 'wgpu-matrix';
-import { convertToRadians} from "./math-util.ts";
 import {Vector3} from "./vector3.ts";
 import {Quaternion} from "@/core/math/quaternion.ts";
 
@@ -8,6 +6,20 @@ import {Quaternion} from "@/core/math/quaternion.ts";
 
 
 export class Transform {
+    get scale(): Vector3 {
+        return this._scale;
+    }
+
+    set scale(value: Vector3) {
+        this._scale = value;
+    }
+    get position(): Vector3 {
+        return this._position;
+    }
+
+    set position(value: Vector3) {
+        this._position = value;
+    }
 
     get rotation(): Quaternion {
 
@@ -30,14 +42,14 @@ export class Transform {
         return this._forward;
     }
 
-    position: Vector3
+    private _position: Vector3
     private _rotation: Quaternion
 
-    scale: Vector3
+    private _scale: Vector3
 
-    private  _forward: Vector3;
-    private  _right: Vector3;
-    private  _up: Vector3;
+    private readonly _forward: Vector3;
+    private readonly _right: Vector3;
+    private readonly _up: Vector3;
 
 
 
@@ -45,11 +57,11 @@ export class Transform {
 
 
     constructor() {
-        this.position = new Vector3(0,0,0);
+        this._position = new Vector3(0,0,0);
 
         this.rotation = new Quaternion();
         this.rotation.onChange = this.onRotationChanged;
-        this.scale = new Vector3(1, 1, 1);
+        this._scale = new Vector3(1, 1, 1);
 
         this._forward = new Vector3(0, 0, 1);
         this._right = new Vector3(1, 0, 0);
@@ -62,48 +74,20 @@ export class Transform {
 
     private updateDirectionVectors () {
 
-            // look into calculating via quaternion directly
-        const eulerAngles = this.rotation.eulerAngles;
 
-        const yaw = convertToRadians(eulerAngles.y);   // Y rotation - left/right
-        const pitch = convertToRadians(eulerAngles.x); // X rotation - up/down
-        const roll = convertToRadians(eulerAngles.z);  // Z rotation - tilt
-
+        const rm = this.rotation.rotationMatrix;
 
         this._forward.set(
-            Math.sin(yaw) * Math.cos(pitch),
-            Math.sin(pitch),
-            Math.cos(yaw) * Math.cos(pitch)
-        );
+            rm.r1c3,-rm.r2c3, rm.r3c3
+        )
 
-        //console.log("Forward", this._forward);
+        this._right.set(
+            -rm.r1c1, rm.r2c1, -rm.r3c1
+        )
 
-        this._forward = this._forward.normalized;
-
-        // Calculate right vector using cross product with world up
-        this._right.setFromArray(vec3.cross(this._forward.toArray, Vector3.WORLD_UP.toArray));
-
-
-        // Calculate base up vector using cross product
-        const baseUp = vec3.cross(this._right.toArray, this._forward.toArray);
-
-        // Apply roll rotation to the up vector
-        // Roll rotates around the forward axis
-        const cosRoll = Math.cos(roll);
-        const sinRoll = Math.sin(roll);
-
-        // Rotate the up vector around the forward axis by the roll amount
-        const upRotated = vec3.create();
-        upRotated[0] = this._right.x * sinRoll + baseUp[0] * cosRoll;
-        upRotated[1] = this._right.y * sinRoll + baseUp[1] * cosRoll;
-        upRotated[2] = this._right.z * sinRoll + baseUp[2] * cosRoll;
-
-        this._up.set(upRotated[0], upRotated[1], upRotated[2]);
-        this._up = this._up.normalized;
-
-        // Recalculate right vector to ensure orthogonality after roll
-        this._right.setFromArray(vec3.cross(this._forward.toArray, this._up.toArray));
-        this._right = this._right.normalized;
+        this._up.set(
+            -rm.r1c2, rm.r2c2, -rm.r3c2
+        )
 
     }
 

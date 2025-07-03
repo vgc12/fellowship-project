@@ -102,15 +102,6 @@ export class Vector3 {
     }
 
 
-    add(x: number, y: number, z: number) {
-        this._x += x;
-        this._y += y;
-        this._z += z;
-        this.flagRecalculations()
-        this._onChange?.(this._x, this._y, this._z);
-    }
-
-
     get magnitude(): number {
         if (this._recalculateMagnitude) {
             this._magnitude = Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z);
@@ -175,6 +166,17 @@ export class Vector3 {
         const dz = a.z - b.z;
 
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+
+    static multiplyScalar(vec : Vector3, scalar: number, out?: Vector3) {
+        if (!out) {
+            out = new Vector3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
+        } else {
+            out.set(vec.x * scalar, vec.y * scalar, vec.z * scalar);
+        }
+
+        return out;
     }
 
     static cross(a: Vector3, b: Vector3, out?: Vector3) {

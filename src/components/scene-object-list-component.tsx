@@ -1,5 +1,5 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
-import SceneObject from "./scene-object.tsx";
+import SceneObjectComponent from "./scene-object-component.tsx";
 import {type JSX, useState} from "react";
 
 import {CameraComponent} from "@/components/camera-component.tsx";
@@ -27,7 +27,7 @@ export function SceneObjectListComponent() {
         component = <CameraComponent key={selectedObject.guid} object={selectedObject}></CameraComponent>
     }
     else {
-        component = <SceneObject key={selectedObject.guid} object={selectedObject as RenderableObject}/>;
+        component = <SceneObjectComponent key={selectedObject.guid} object={selectedObject as RenderableObject}/>;
     }
 
     return (

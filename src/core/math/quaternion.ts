@@ -80,8 +80,10 @@ export class Quaternion{
         this._z = z;
         this._w = w;
         this._eulerAngles = new Vector3(0, 0, 0);
-        this._eulerAngles.onChange = (x, y, z) => {
-            this.setFromEuler(x, y, z);
+        this._eulerAngles.onChange = (x,y,z) => {
+
+               this.setFromEuler(x, y, z);
+            this.flagRecalculations()
         }
         this.onChange = onChange;
 
@@ -91,6 +93,7 @@ export class Quaternion{
 
 
     }
+
 
     private flagRecalculations() {
         this._recalculateNormalization = true;
@@ -149,14 +152,14 @@ export class Quaternion{
     }
 
     private calculateRotationMatrix() {
-        const nx = this.normalized.x;
-        const ny = this.normalized.y;
-        const nz = this.normalized.z;
-        const nw = this.normalized.w;
 
         // Create rotation matrix from quaternion
         // https://automaticaddison.com/wp-content/uploads/2020/09/quaternion-to-rotation-matrix.jpg
-        const mat = mat3.fromQuat([ nx, ny, nz, nw]);
+
+        // Convert quaternion to rotation matrix
+        // The code of how it is calculated can be found here:
+        // https://github.com/greggman/wgpu-matrix/blob/main/src/mat3-impl.ts
+        const mat = mat3.fromQuat(this.normalized.toArray);
 
         this._rotationMatrix = {
             r1c1: mat[0], r1c2: mat[1], r1c3: mat[2],
@@ -184,38 +187,32 @@ export class Quaternion{
 
     private calculateEulerAngles() {
 
-        // Create rotation matrix from quaternion
-        // https://automaticaddison.com/wp-content/uploads/2020/09/quaternion-to-rotation-matrix.jpg
 
-        // Convert quaternion to rotation matrix
-        // The code of how it is calculated can be found here:
-        // https://github.com/greggman/wgpu-matrix/blob/main/src/mat3-impl.ts
-
-        let pitch: number;
         let yaw: number;
         let roll: number;
+
 
         // Check for gimbal lock
         const sinPitch = -this.rotationMatrix.r2c3;
 
+        const pitch = Math.asin(Math.max(-1, Math.min(1, sinPitch)));
 
-        // If the absolute value of sinPitch is close to 1, we are in a gimbal lock situation
-        if (Math.abs(sinPitch) >= 0.99999) {
-            // Gimbal lock case
-            pitch = Math.asin(Math.max(-1, Math.min(1, sinPitch)));
-            console.log(convertToDegrees(-this.rotationMatrix.r3c1), convertToDegrees( this.rotationMatrix.r1c1));
-            yaw = Math.atan2(-this.rotationMatrix.r3c1, this.rotationMatrix.r1c1); // Use -m31 to avoid flipping the yaw direction
-            console.log(yaw);
+        const isGimbalLock = Math.abs(pitch) >= (Math.PI / 2 - 0.00001);
+
+
+        if (isGimbalLock) {
+
+            yaw = Math.atan2(-this.rotationMatrix.r3c1, this.rotationMatrix.r1c1);
             roll = 0; // Set roll to 0 in gimbal lock
-        }
-        else {
-            // Normal case
-            pitch = Math.asin(Math.max(-1, Math.min(1, sinPitch)));
+        } else {
+
             yaw = Math.atan2(this.rotationMatrix.r1c3, this.rotationMatrix.r3c3);
             roll = Math.atan2(this.rotationMatrix.r2c1, this.rotationMatrix.r2c2);
         }
 
+
         this._eulerAngles = new Vector3 (convertToDegrees(pitch), convertToDegrees(yaw), convertToDegrees(roll));
+
 
     }
 
@@ -236,17 +233,13 @@ export class Quaternion{
     //This is expecting x, y, z in degrees
     setFromEuler(x: number, y: number, z: number) {
 
-        const q = Quaternion.euler(x, y, z);
+        Quaternion.euler(x, y, z, this);
 
-        this._x = q.x;
-        this._y = q.y;
-        this._z = q.z;
-        this._w = q.w;
         this.flagRecalculations();
         this.onChange?.(this._x, this._y, this._z, this._w);
     }
 
-    static euler(x: number, y: number, z: number) {
+    static euler(x: number, y: number, z: number, out? : Quaternion): Quaternion {
         x = convertToRadians(x)
         y = convertToRadians(y)
         z = convertToRadians(z)
@@ -260,22 +253,20 @@ export class Quaternion{
         const s2 = Math.sin(y / 2);
         const s3 = Math.sin(z / 2);
 
-        const q = new Quaternion();
 
-
-        q.x = s1 * c2 * c3 + c1 * s2 * s3;
-        q.y = c1 * s2 * c3 - s1 * c2 * s3;
-        q.z = c1 * c2 * s3 + s1 * s2 * c3;
-        q.w = c1 * c2 * c3 - s1 * s2 * s3;
-
-        if (q.w < 0) {
-            q.x = -q.x;
-            q.y = -q.y;
-            q.z = -q.z;
-            q.w = -q.w;
+        if(!out) {
+            out = new Quaternion();
         }
 
-        return q.normalized;
+
+
+        out.x = s1 * c2 * c3 + c1 * s2 * s3;
+        out.y = c1 * s2 * c3 - s1 * c2 * s3;
+        out.z = c1 * c2 * s3 + s1 * s2 * c3;
+        out.w = c1 * c2 * c3 - s1 * s2 * s3;
+
+
+        return out;
     }
 
     private static _identity: Quaternion = new Quaternion(0, 0, 0, 1);
@@ -283,9 +274,6 @@ export class Quaternion{
     static get identity() {
         return this._identity
     }
-
-
-
 
     static multiply(yRotation: Quaternion, orbitRotation: Quaternion) {
 

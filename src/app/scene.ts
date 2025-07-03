@@ -4,7 +4,8 @@ import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 import {$TIME} from "../utils/time.ts";
 import {Material} from "@/graphics/3d/material.ts";
-import {Input} from "@/core/input.ts";
+import {$INPUT} from "@/core/input.ts";
+import { CameraController } from '@/core/camera-controller.ts';
 
 
 
@@ -14,17 +15,16 @@ import {Input} from "@/core/input.ts";
 export class Scene {
 
     renderer: Renderer;
-    private input : Input;
+    cameraController : CameraController
 
     constructor() {
         this.renderer = new Renderer();
-
-
     }
 
     async initialize() {
         await $WGPU.initialize();
-        this.input = new Input();
+        $INPUT.initialize();
+
         Material.default = new Material();
         const response = await fetch('./img/default.png');
         const blob = await response.blob();
@@ -34,26 +34,24 @@ export class Scene {
         await this.renderer.initialize();
         $TIME.initialize();
 
+        this.cameraController = new CameraController();
+
 
     }
 
     run = async () => {
 
-
+        this.cameraController.update();
 
         $WGPU.objects.forEach(o => {
             o.update()
 
         });
 
-        await this.input.update()
         this.renderer.update();
-
-
 
         requestAnimationFrame(this.run)
 
-        //$WGPU.mainCamera.rotate(1);
 
 
     };

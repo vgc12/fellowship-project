@@ -7,7 +7,7 @@ import type {RenderableObject} from "@/scene/renderable-object.ts";
 
 
 
-function SceneObject(props: { object: RenderableObject }) {
+function SceneObjectComponent(props: { object: RenderableObject }) {
 
     type TransformType = 'position' | 'rotation' | 'scale';
     return (
@@ -42,4 +42,4 @@ function SceneObject(props: { object: RenderableObject }) {
     )
 }
 
-export default SceneObject;
+export default SceneObjectComponent;
