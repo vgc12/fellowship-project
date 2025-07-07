@@ -17,6 +17,7 @@ export class Transform {
         return this._position;
     }
 
+
     set position(value: Vector3) {
         this._position = value;
     }
@@ -60,7 +61,7 @@ export class Transform {
         this._position = new Vector3(0,0,0);
 
         this.rotation = new Quaternion();
-        this.rotation.onChange = this.onRotationChanged;
+        this.rotation.addCallback( this.onRotationChanged);
         this._scale = new Vector3(1, 1, 1);
 
         this._forward = new Vector3(0, 0, 1);

@@ -23,7 +23,7 @@ export class Quaternion{
     set w(value: number) {
         this._w = value;
         this.flagRecalculations();
-        this.onChange?.(this._x, this._y, this._z, this._w);
+        this.onChange.forEach(c => c?.(this._x, this._y, this._z, this._w));
     }
     get z(): number {
         return this._z;
@@ -32,7 +32,7 @@ export class Quaternion{
     set z(value: number) {
         this._z = value;
         this.flagRecalculations();
-        this.onChange?.(this._x, this._y, this._z, this._w);
+        this.onChange.forEach(c => c?.(this._x, this._y, this._z, this._w));
     }
     get y(): number {
         return this._y;
@@ -41,7 +41,7 @@ export class Quaternion{
     set y(value: number) {
         this._y = value;
         this.flagRecalculations();
-        this.onChange?.(this._x, this._y, this._z, this._w);
+        this.onChange.forEach(c => c?.(this._x, this._y, this._z, this._w));
     }
     get x(): number {
         return this._x;
@@ -51,7 +51,7 @@ export class Quaternion{
     set x(value:  number) {
         this._x = value;
         this.flagRecalculations();
-        this.onChange?.(this._x, this._y, this._z, this._w);
+        this.onChange.forEach(c => c?.(this._x, this._y, this._z, this._w));
     }
 
 
@@ -80,20 +80,27 @@ export class Quaternion{
         this._z = z;
         this._w = w;
         this._eulerAngles = new Vector3(0, 0, 0);
-        this._eulerAngles.onChange = (x,y,z) => {
+        this._eulerAngles.addCallback((x: number, y: number, z: number) => {
 
                this.setFromEuler(x, y, z);
             this.flagRecalculations()
-        }
-        this.onChange = onChange;
+        });
+        this.onChange = new Array<(x: number, y: number, z: number, w: number) => void>();
 
+
+        if(onChange) {
+            this.onChange.push(onChange)
+        }
 
         this.flagRecalculations();
-        this.onChange?.(this._x, this._y, this._z, this._w);
+        this.onChange.forEach(c => c?.(this._x, this._y, this._z, this._w));
 
 
     }
 
+    addCallback =  (onChange: (x: number, y: number, z: number, w: number) => void)=> {
+        this.onChange.push(onChange);
+    }
 
     private flagRecalculations() {
         this._recalculateNormalization = true;
@@ -218,7 +225,7 @@ export class Quaternion{
 
 
 
-    onChange?: (x: number, y: number, z: number, w: number) => void;
+    onChange: Array < (x: number, y: number, z: number, w: number) => void>;
 
     set(x: number, y: number, z: number, w: number) {
         this._x = x;
@@ -226,7 +233,7 @@ export class Quaternion{
         this._z = z;
         this._w = w;
         this.flagRecalculations();
-        this.onChange?.(this._x, this._y, this._z, this._w);
+        this.onChange.forEach(c => c?.(this._x, this._y, this._z, this._w));
     }
 
 
@@ -236,7 +243,7 @@ export class Quaternion{
         Quaternion.euler(x, y, z, this);
 
         this.flagRecalculations();
-        this.onChange?.(this._x, this._y, this._z, this._w);
+        this.onChange.forEach(c => c?.(this._x, this._y, this._z, this._w));
     }
 
     static euler(x: number, y: number, z: number, out? : Quaternion): Quaternion {

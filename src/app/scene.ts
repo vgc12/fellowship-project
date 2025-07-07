@@ -34,14 +34,12 @@ export class Scene {
         await this.renderer.initialize();
         $TIME.initialize();
 
-        this.cameraController = new CameraController();
-
 
     }
 
     run = async () => {
 
-        this.cameraController.update();
+
 
         $WGPU.objects.forEach(o => {
             o.update()

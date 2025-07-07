@@ -20,15 +20,20 @@ export class CameraController implements IObject {
 
 
 
-    constructor() {
+
+
+    constructor(camera: Camera) {
         this.name = 'camera-controller';
         this.guid = crypto.randomUUID();
         this.transform = new Transform();
-        this.camera = $WGPU.mainCamera;
+        this.camera = camera
         this.cameraTarget = new Transform();
-        this.orbitRotation = Vector3.ZERO
-        this.firstPersonRotation = Vector3.ZERO;
+        this.orbitRotation = new Vector3()
+        this.firstPersonRotation = new Vector3()
+
+        $WGPU.addObject(this);
     }
+
 
     update(): void {
 
@@ -46,21 +51,23 @@ export class CameraController implements IObject {
 
     setTargetPosition(){
 
-        if(!$INPUT.altKeyPressed && !$INPUT.shiftKeyPressed) {
+        if($INPUT.altKeyPressed) return;
+
+        if( !$INPUT.shiftKeyPressed) {
             this.camera.transform.position.set(
                 this.cameraTarget.position.x - this.cameraTarget.forward.x * this.orbitRadius,
                 this.cameraTarget.position.y - this.cameraTarget.forward.y * this.orbitRadius,
                 this.cameraTarget.position.z - this.cameraTarget.forward.z * this.orbitRadius
             );
         }
-
-        if(!$INPUT.altKeyPressed && $INPUT.shiftKeyPressed) {
+        else {
             this.cameraTarget.position.set(
                 this.camera.transform.position.x + this.camera.transform.forward.x * this.orbitRadius,
                 this.camera.transform.position.y + this.camera.transform.forward.y * this.orbitRadius,
                 this.camera.transform.position.z + this.camera.transform.forward.z * this.orbitRadius
             )
         }
+
 
     }
 
@@ -78,6 +85,7 @@ export class CameraController implements IObject {
 
     rotateAroundTarget() {
 
+
         if ($INPUT.shiftKeyPressed || !$INPUT.middleMouseButtonPressed) return;
 
 
@@ -93,6 +101,8 @@ export class CameraController implements IObject {
 
         this.camera.transform.rotation = this.cameraTarget.rotation;
     }
+
+
 
     shiftCamera(){
         if(!$INPUT.shiftKeyPressed || !$INPUT.middleMouseButtonPressed) return;
