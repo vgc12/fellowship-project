@@ -4,8 +4,8 @@ import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 import {$TIME} from "../utils/time.ts";
 import {Material} from "@/graphics/3d/material.ts";
-import {$INPUT} from "@/core/input.ts";
-import { CameraController } from '@/core/camera-controller.ts';
+import {$INPUT} from "@/Controls/input.ts";
+import { CameraController } from '@/Controls/camera-controller.ts';
 
 
 

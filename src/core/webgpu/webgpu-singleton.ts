@@ -7,7 +7,7 @@ import {Camera} from "@/scene/Camera.ts";
 import  {type RenderableObject} from "@/scene/renderable-object.ts";
 import type {IObject} from "@/scene/IObject.ts";
 
-import {CameraController} from "@/core/camera-controller.ts";
+import {CameraController} from "@/Controls/camera-controller.ts";
 
 class WebGPUSingleton {
     get cameraController(): CameraController {

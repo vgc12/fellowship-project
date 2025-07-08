@@ -13,10 +13,6 @@ export class OBJLoader {
     private static _result: number[] = [];
 
 
-
-
-
-
     static async loadMeshes(file: File) {
         const fileContents = await file.text();
 

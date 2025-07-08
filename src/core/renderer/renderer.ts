@@ -21,7 +21,7 @@ export class Renderer {
     commandEncoder: GPUCommandEncoder;
     textureView: GPUTextureView;
     depthTexture: GPUTexture;
-
+    modelMatrices : Float32Array;
 
 
     async initialize() {
@@ -49,8 +49,17 @@ export class Renderer {
 
         this.setUpBindGroups();
         await this.setupShaderPipeline(shader);
+        const windowDimensions = $WGPU.windowDimensions;
+        // Create a depth texture to be used for depth testing.
+        // Depth testing is a technique used to determine which objects are in front of others, so objects are rendered in the correct order.
+        this.depthTexture = $WGPU.device.createTexture({
+            size: windowDimensions,
+            format: 'depth24plus-stencil8',
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
 
+        });
 
+        this.modelMatrices = new Float32Array(16 * 1024);
     }
 
     private async setupShaderPipeline(shader: Shader) {
@@ -126,7 +135,7 @@ export class Renderer {
 
 // Puts every value of the model matrix from each object to be drawn into one array
     private createModelMatrixArray() {
-        const modelMatrices = new Float32Array(16 * 1024);
+
 
         for (let renderableIndex = 0; renderableIndex < $WGPU.renderableObjects.length; renderableIndex++) {
 
@@ -134,12 +143,13 @@ export class Renderer {
 
             for (let MATRIX_POSITION = 0; MATRIX_POSITION < renderable.modelMatrix.length; MATRIX_POSITION++) {
 
-                modelMatrices[16 * renderableIndex + MATRIX_POSITION] = renderable.modelMatrix[MATRIX_POSITION];
+                this.modelMatrices[16 * renderableIndex + MATRIX_POSITION] = renderable.modelMatrix[MATRIX_POSITION];
             }
 
         }
 
-        return modelMatrices;
+        return this.modelMatrices;
+
     }
 
     update() {
@@ -162,16 +172,9 @@ export class Renderer {
             },
         );
 
-        const windowDimensions = $WGPU.windowDimensions;
 
-        // Create a depth texture to be used for depth testing.
-        // Depth testing is a technique used to determine which objects are in front of others, so objects are rendered in the correct order.
-        this.depthTexture = $WGPU.device.createTexture({
-            size: windowDimensions,
-            format: 'depth24plus-stencil8',
-            usage: GPUTextureUsage.RENDER_ATTACHMENT,
 
-        });
+
 
 
         // Create a render pass descriptor with a depth texture and a color attachment, this color attachment is the color of background of the canvas.
@@ -205,22 +208,21 @@ export class Renderer {
 
 
         let objectsDrawn = 0;
+        this.passEncoder.setBindGroup(0, this.frameBindGroup);
+
         $WGPU.renderableObjects.forEach((renderable) => {
 
+            this.passEncoder.setBindGroup(1, renderable.material.bindGroup)
 
             if(renderable.mesh.indexBuffer != undefined && renderable.mesh.indices?.length !== 0){
-                this.passEncoder.setBindGroup(0, this.frameBindGroup);
-                this.passEncoder.setBindGroup(1, renderable.material.bindGroup)
-                this.passEncoder.setIndexBuffer(renderable.mesh.indexBuffer as GPUBuffer, "uint16");
 
+                this.passEncoder.setIndexBuffer(renderable.mesh.indexBuffer as GPUBuffer, "uint16");
                 this.passEncoder.setVertexBuffer(0, renderable.mesh.vertexBuffer);
                 this.passEncoder.drawIndexed(renderable.mesh.indices?.length ?? 0, 1,0,0, objectsDrawn);
 
             }
             else {
 
-                this.passEncoder.setBindGroup(0, this.frameBindGroup);
-                this.passEncoder.setBindGroup(1, renderable.material.bindGroup)
                 this.passEncoder.setVertexBuffer(0, renderable.mesh.vertexBuffer)
                 this.passEncoder.draw(renderable.mesh.vertexCount, 1,0,objectsDrawn);
             }

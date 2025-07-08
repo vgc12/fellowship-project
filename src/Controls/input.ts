@@ -1,6 +1,13 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
 export class Input {
+    get sensitivity(): number {
+        return this._sensitivity;
+    }
+
+    set sensitivity(value: number) {
+        this._sensitivity = value;
+    }
     get scrollMovementY(): number {
         return this._scrollMovementY;
     }
@@ -36,6 +43,7 @@ export class Input {
     private _movementX: number = 0;
     private _movementY: number = 0;
     private _scrollMovementY: number = 0;
+    private _sensitivity: number = 50;
 
 
 
