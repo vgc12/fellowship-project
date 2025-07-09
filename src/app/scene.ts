@@ -26,10 +26,18 @@ export class Scene {
         $INPUT.initialize();
 
         Material.default = new Material();
-        const response = await fetch('./img/default.png');
-        const blob = await response.blob();
-        const file = new File([blob], 'default.png');
-        await Material.default.setImageFile(file)
+
+        const albedoFile = await Material.GetFile('./img/default_albedo.png');
+        const roughnessFile = await Material.GetFile('./img/default_roughness.png');
+        const metallicFile = await Material.GetFile('./img/default_metallic.png');
+        const aoFile = await Material.GetFile('./img/default_ao.png');
+
+        Material.default.albedoFile = albedoFile
+        Material.default.roughnessFile = roughnessFile;
+        Material.default.metallicFile = metallicFile;
+        Material.default.ambientOcclusionFile = aoFile;
+
+        await Material.default.initialize();
 
         await this.renderer.initialize();
         $TIME.initialize();

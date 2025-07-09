@@ -6,7 +6,7 @@ import {Material} from "@/graphics/3d/material.ts";
 
 export function TextureInputComponent(props: { object: RenderableObject }) {
 
-    const [texture, setTexture] = useState<string>('./img/default.png');
+    const [texture, setTexture] = useState<string>('./img/default_albedo.png');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleOnClick = () => {
@@ -31,7 +31,9 @@ export function TextureInputComponent(props: { object: RenderableObject }) {
             fileReader.readAsDataURL(file);
 
             const material = new Material();
-            await material.setImageFile(file);
+            material.albedoFile = file
+            await material.initialize();
+            //await material.setAlbedoFile(file);
 
             props.object.material = material;
 

@@ -10,6 +10,7 @@ export class OBJLoader {
 
     private static _vertices: Vec3[] = [];
     private static _uvs: Vec2[] = [];
+    private static _normals: Vec2[] = [];
     private static _result: number[] = [];
 
 
@@ -60,6 +61,11 @@ export class OBJLoader {
                this.processFace(line);
 
             }
+            else if (line.startsWith('vn')){
+
+                this.processNormal(line)
+
+            }
             else if (line.startsWith('vt')){
 
                 this.processUV(line)
@@ -91,10 +97,13 @@ export class OBJLoader {
         // extract the vertex and uv indices from the descriptor
         const vIndex = parseInt(descriptor[0])-1;
         const vtIndex = parseInt(descriptor[1])-1;
+        const vnIndex = parseInt(descriptor[2])-1;
         // Find the vertex in the vertices array based on the index.
         const v = this._vertices[vIndex]
         // Find the uv coordinate in the uvs array based on the index.
         const vt = this._uvs[vtIndex]
+
+        const vn = this._normals[vnIndex];
 
         if (!v) {
 
@@ -103,9 +112,10 @@ export class OBJLoader {
 
         // push the vertex and uv coordinate to the result array.
         // one entry in the result array will look like this:
-        // [x, y, z, u, v]
+        // [x, y, z, u, v, nx, ny, nz]
         this._result.push(...v)
         this._result.push(...vt)
+        this._result.push(...vn)
 
     }
 
@@ -150,4 +160,8 @@ export class OBJLoader {
     }
 
 
+    private static processNormal(line: string) {
+        const normalParts = line.split(' ').slice(1);
+        this._normals.push( vec3.fromValues(parseFloat(normalParts[0]), parseFloat(normalParts[1]), parseFloat(normalParts[2])));
+    }
 }

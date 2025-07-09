@@ -1,61 +1,142 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
 
-
 export class Material {
+
+    static async GetFile(url : string): Promise<File> {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new File([blob], url.split('/').pop() || 'default.png');
+    }
+
+    private _roughnessMetallicAOView: GPUTextureView;
+
+    get ambientOcclusionFile(): File {
+        return this._ambientOcclusionFile;
+    }
+
+    set ambientOcclusionFile(value: File) {
+        this._ambientOcclusionFile = value;
+    }
+
+    get roughnessFile(): File {
+        return this._roughnessFile;
+    }
+
+    set roughnessFile(value: File) {
+        this._roughnessFile = value;
+    }
+
+    get metallicFile(): File {
+        return this._metallicFile;
+    }
+
+    set metallicFile(value: File) {
+        this._metallicFile = value;
+    }
+
     static default: Material;
 
     get bindGroup(): GPUBindGroup {
         return this._bindGroup;
     }
-    get view(): GPUTextureView {
-        return this._view;
-    }
-    get imageFile(): File {
-        return this._imageFile;
-    }
-    async setImageFile(value: File) {
-        this._imageFile = value;
-        await this.initialize();
+
+    get albedoView(): GPUTextureView {
+        return this._albedoView;
     }
 
-    get imageBitmap(): ImageBitmap {
-        return this._imageBitmap;
+    get albedoImageFile(): File {
+        return this._albedoImageFile;
     }
 
-    private _texture: GPUTexture;
-    private _view: GPUTextureView;
+    set albedoFile(value: File) {
+        this._albedoImageFile = value;
+
+    }
+
+
+    private _albedoTexture: GPUTexture;
+    private _roughnessMetallicAOTexture: GPUTexture;
+    private _albedoView: GPUTextureView;
     private _sampler: GPUSampler;
     private _bindGroup: GPUBindGroup;
-    private _imageFile: File;
-    private _imageBitmap: ImageBitmap;
+    private _albedoImageFile: File;
 
+    private _metallicFile: File;
+    private _roughnessFile: File;
+    private _ambientOcclusionFile: File;
+
+    imageBitmapToImageData(imageBitmap: ImageBitmap): ImageData {
+        const offscreenCanvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+        const ctx = offscreenCanvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Failed to get 2D context');
+        }
+        ctx.drawImage(imageBitmap, 0, 0);
+        return ctx.getImageData(0, 0, imageBitmap.width, imageBitmap.height);
+    }
+
+    packTextures(metallicData: ImageData, roughnessData: ImageData, aoData: ImageData) {
+
+        const width = metallicData.width;
+        const height = metallicData.height;
+        const packedData = new Uint8ClampedArray(width * height * 4);
+
+        for (let i = 0; i < width * height; i++) {
+            packedData[i * 4] = aoData.data[i * 4];          // R channel (AO)
+            packedData[i * 4 + 1] = roughnessData.data[i * 4];   // G channel (roughness)
+            packedData[i * 4 + 2] = metallicData.data[i * 4];     // B channel (metallic)
+            packedData[i * 4 + 3] = 255;                         // A channel (unused)
+        }
+
+        return new ImageData(packedData, width, height);
+    }
 
     async initialize() {
-        const imageBitmap = await createImageBitmap(this._imageFile)
-        this._imageBitmap = imageBitmap;
+        const albedoImageBitmap = await createImageBitmap(this._albedoImageFile)
+        const roughnessImageBitmap = await createImageBitmap(this._roughnessFile);
+        const metallicImageBitmap = await createImageBitmap(this._metallicFile);
+        const aoImageBitmap = await createImageBitmap(this._ambientOcclusionFile);
 
-        const textureDescriptor : GPUTextureDescriptor = {
+        const roughnessData = this.imageBitmapToImageData(roughnessImageBitmap);
+        const metallicData = this.imageBitmapToImageData(metallicImageBitmap);
+        const aoData = this.imageBitmapToImageData(aoImageBitmap);
+
+        const roughnessMetallicAO = await createImageBitmap(this.packTextures(metallicData, roughnessData, aoData));
+
+
+        const albedoTextureDescriptor: GPUTextureDescriptor = {
             size: {
-                width: imageBitmap.width,
-                height: imageBitmap.height,
+                width: albedoImageBitmap.width,
+                height: albedoImageBitmap.height,
             },
 
             format: navigator.gpu.getPreferredCanvasFormat(),
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
         }
 
-        this._texture = $WGPU.device.createTexture(textureDescriptor);
+        const roughnessMetallicAOTextureDescriptor: GPUTextureDescriptor = {
+            size: {
+                width: roughnessMetallicAO.width,
+                height: roughnessMetallicAO.height,
+            },
+            format: navigator.gpu.getPreferredCanvasFormat(),
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+        }
 
-        this.loadImageBitmap( imageBitmap, 0);
+        this._albedoTexture = $WGPU.device.createTexture(albedoTextureDescriptor);
+        this._roughnessMetallicAOTexture = $WGPU.device.createTexture(roughnessMetallicAOTextureDescriptor);
+
+        this.loadImageBitmap(albedoImageBitmap, this._albedoTexture, 0);
+        this.loadImageBitmap(roughnessMetallicAO, this._roughnessMetallicAOTexture, 0);
 
         const viewDescriptor: GPUTextureViewDescriptor = {
             format: navigator.gpu.getPreferredCanvasFormat(),
             aspect: "all",
             dimension: "2d",
         }
-        this._view = this._texture.createView(viewDescriptor);
-
+        this._albedoView = this._albedoTexture.createView(viewDescriptor);
+        this._roughnessMetallicAOView = this._roughnessMetallicAOTexture.createView(viewDescriptor);
         const samplerDescriptor: GPUSamplerDescriptor = {
             addressModeU: "mirror-repeat",
             addressModeV: "mirror-repeat",
@@ -72,10 +153,14 @@ export class Material {
             entries: [
                 {
                     binding: 0,
-                    resource: this._view
+                    resource: this._albedoView
                 },
                 {
                     binding: 1,
+                    resource: this._roughnessMetallicAOView
+                },
+                {
+                    binding: 2,
                     resource: this._sampler
                 }
             ]
@@ -84,19 +169,17 @@ export class Material {
     }
 
 
-   loadImageBitmap( imageBitmap: ImageBitmap, mipLevel: number) {
+    loadImageBitmap(imageBitmap: ImageBitmap, texture: GPUTexture, mipLevel: number) {
 
         $WGPU.device.queue.copyExternalImageToTexture(
             {source: imageBitmap},
             {
-                texture: this._texture,
+                texture: texture,
                 mipLevel: mipLevel
             },
             {width: imageBitmap.width, height: imageBitmap.height}
-
         )
     }
-
 
 
 }

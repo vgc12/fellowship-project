@@ -1,20 +1,18 @@
 ﻿import vertexShader from '../../graphics/shaders/default.vert.wgsl';
 import fragmentShader from '../../graphics/shaders/default.frag.wgsl';
 
-import {type Shader} from '../../graphics/shader-utils/shader.ts';
+import {type Shader} from '@/graphics/shader-utils/shader.ts';
 
 import { $WGPU }  from '../webgpu/webgpu-singleton.ts';
-import {ShaderBuilder} from "../../graphics/shader-utils/shader-builder.ts";
+import {ShaderBuilder} from "@/graphics/shader-utils/shader-builder.ts";
 
 
 
 
 export class Renderer {
 
-
     uniformBuffer: GPUBuffer;
     frameBindGroup: GPUBindGroup;
-
     pipeline: GPURenderPipeline;
     storageBuffer: GPUBuffer;
     passEncoder: GPURenderPassEncoder;
@@ -75,9 +73,7 @@ export class Renderer {
             layout: pipelineLayout,
             primitive: {
                 topology: 'triangle-list',
-
             },
-
             depthStencil: {
                 depthWriteEnabled: true,
                 depthCompare: "less",
@@ -91,7 +87,7 @@ export class Renderer {
         this.uniformBuffer = $WGPU.device.createBuffer({
             label: "uniform buffer",
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-            size: 64 * 3 //3 matrix 4x4, so 4 bytes * 4 rows * 4 columns * 3 matrices
+            size: (64 * 2) + (4*4) //2 matrix 4x4, so 4 bytes * 4 rows * 4 columns * 2 matrices
         });
 
         // Write the uniform data to the uniform buffer.
@@ -131,6 +127,12 @@ export class Renderer {
         $WGPU.device.queue.writeBuffer(this.storageBuffer, 0, modelMatrices as ArrayBuffer);
         $WGPU.device.queue.writeBuffer(this.uniformBuffer, 0, $WGPU.mainCamera.viewMatrix as ArrayBuffer);
         $WGPU.device.queue.writeBuffer(this.uniformBuffer, 64, $WGPU.mainCamera.projectionMatrix as ArrayBuffer);
+        const pos = $WGPU.mainCamera.transform.position;
+        const posBuffer = new Float32Array(3);
+        posBuffer[0] = pos.x;
+        posBuffer[1] = pos.y;
+        posBuffer[2] = pos.z;
+        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 128, posBuffer as ArrayBuffer);
     }
 
 // Puts every value of the model matrix from each object to be drawn into one array

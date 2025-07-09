@@ -36,6 +36,7 @@ export class MeshBuilder {
         return this;
     }
 
+
     setIndices(indices: number[]): MeshBuilder {
         this._indices = new Uint16Array( indices);
 
@@ -48,7 +49,6 @@ export class MeshBuilder {
         if (!this._vertices) {
             throw new Error('Vertices must be provided');
         }
-
 
         this._fullBufferData = new Float32Array(this._vertices);
 
