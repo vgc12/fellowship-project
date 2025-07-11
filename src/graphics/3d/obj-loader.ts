@@ -40,7 +40,7 @@ export class OBJLoader {
 
                 const mesh = meshBuilder
                     .setVertices(this._result)
-                    //.setIndices(this._indices)
+
                     .build();
 
 

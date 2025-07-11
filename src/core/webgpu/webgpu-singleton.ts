@@ -7,8 +7,23 @@ import {type RenderableObject} from "@/scene/renderable-object.ts";
 import type {IObject} from "@/scene/IObject.ts";
 
 import {CameraController} from "@/Controls/camera-controller.ts";
+import {Light, type PointLight} from "@/scene/point-light.ts";
 
 class WebGPUSingleton {
+    get lightBindGroupLayout(): GPUBindGroupLayout {
+        return this._lightBindGroupLayout;
+    }
+
+
+    private _lightBindGroupLayout: GPUBindGroupLayout;
+    get lights(): Light[] {
+        return this._lights;
+    }
+
+    addLight (light: PointLight) {
+        this._lights.push(light);
+    }
+
     get cameraController(): CameraController {
         return this._cameraController;
     }
@@ -28,7 +43,7 @@ class WebGPUSingleton {
     private _windowDimensions = {width: 0, height: 0};
     private _renderableObjects: RenderableObject[] = [];
     private _objects: IObject[] = [];
-
+    private _lights: Light[];
     private _mainCamera: Camera | null = null;
     private _cameraController: CameraController;
     private _vertexBufferLayout: GPUVertexBufferLayout | null = null;
@@ -68,7 +83,6 @@ class WebGPUSingleton {
 
     addObject(object: IObject) {
         this._objects.push(object);
-
     }
 
     get objects(): IObject[] {
@@ -120,7 +134,7 @@ class WebGPUSingleton {
             height: this._canvas.height
         }
 
-
+        this._lights = [];
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
         this._device = await this._adapter.requestDevice();
         this._mainCamera = new Camera();
@@ -195,8 +209,32 @@ class WebGPUSingleton {
                         hasDynamicOffset: false
                     }
                 }
+
             ]
         })
+
+        this._lightBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            label : 'Light Bind Group Layout',
+            entries: [
+                {
+                    binding: 0,
+                    visibility:  GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'read-only-storage',
+                        hasDynamicOffset: false
+                    }
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: false
+                    }
+                }
+                ]
+
+        });
 
     }
 

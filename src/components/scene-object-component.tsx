@@ -1,7 +1,7 @@
 import {Vector3InputComponent} from "./vector3-input-component.tsx";
 
 
-import {TextureInputComponent} from "@/components/texture-input-component.tsx";
+import {ImageFileTypes, TextureInputComponent} from "@/components/texture-input-component.tsx";
 import type {RenderableObject} from "@/scene/renderable-object.ts";
 
 
@@ -35,10 +35,18 @@ function SceneObjectComponent(props: { object: RenderableObject }) {
                                 values[axis] = val;
                             }
                         }/>
-                    } )}
+                    } )
+                }
 
-                </div>
-          <TextureInputComponent object={props.object} />
+            </div>
+
+            {
+                ImageFileTypes.map ((type) => {
+                    return <TextureInputComponent object={props.object} textureType={type} />
+                })
+            }
+
+
         </div>
         </li>
     )

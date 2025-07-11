@@ -11,12 +11,12 @@ export class Material {
 
     private _roughnessMetallicAOView: GPUTextureView;
 
-    get ambientOcclusionFile(): File {
-        return this._ambientOcclusionFile;
+    get aoFile(): File {
+        return this._aoFile;
     }
 
-    set ambientOcclusionFile(value: File) {
-        this._ambientOcclusionFile = value;
+    set aoFile(value: File) {
+        this._aoFile = value;
     }
 
     get roughnessFile(): File {
@@ -45,12 +45,12 @@ export class Material {
         return this._albedoView;
     }
 
-    get albedoImageFile(): File {
-        return this._albedoImageFile;
+    get albedoFile(): File {
+        return this._albedoFile;
     }
 
     set albedoFile(value: File) {
-        this._albedoImageFile = value;
+        this._albedoFile = value;
 
     }
 
@@ -60,11 +60,11 @@ export class Material {
     private _albedoView: GPUTextureView;
     private _sampler: GPUSampler;
     private _bindGroup: GPUBindGroup;
-    private _albedoImageFile: File;
+    private _albedoFile: File;
 
     private _metallicFile: File;
     private _roughnessFile: File;
-    private _ambientOcclusionFile: File;
+    private _aoFile: File;
 
     imageBitmapToImageData(imageBitmap: ImageBitmap): ImageData {
         const offscreenCanvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
@@ -89,14 +89,15 @@ export class Material {
             packedData[i * 4 + 3] = 255;                         // A channel (unused)
         }
 
+
         return new ImageData(packedData, width, height);
     }
 
     async initialize() {
-        const albedoImageBitmap = await createImageBitmap(this._albedoImageFile)
+        const albedoImageBitmap = await createImageBitmap(this._albedoFile)
         const roughnessImageBitmap = await createImageBitmap(this._roughnessFile);
         const metallicImageBitmap = await createImageBitmap(this._metallicFile);
-        const aoImageBitmap = await createImageBitmap(this._ambientOcclusionFile);
+        const aoImageBitmap = await createImageBitmap(this._aoFile);
 
         const roughnessData = this.imageBitmapToImageData(roughnessImageBitmap);
         const metallicData = this.imageBitmapToImageData(metallicImageBitmap);
@@ -182,4 +183,7 @@ export class Material {
     }
 
 
+    async refresh() {
+        await this.initialize();
+    }
 }

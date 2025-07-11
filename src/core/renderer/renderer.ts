@@ -5,21 +5,27 @@ import {type Shader} from '@/graphics/shader-utils/shader.ts';
 
 import { $WGPU }  from '../webgpu/webgpu-singleton.ts';
 import {ShaderBuilder} from "@/graphics/shader-utils/shader-builder.ts";
+import {lightType} from "@/scene/point-light.ts";
+import type {AreaLight} from "@/scene/area-light.ts";
 
 
 
 
 export class Renderer {
 
-    uniformBuffer: GPUBuffer;
+    objectUniformBuffer: GPUBuffer;
     frameBindGroup: GPUBindGroup;
     pipeline: GPURenderPipeline;
-    storageBuffer: GPUBuffer;
+    objectStorageBuffer: GPUBuffer;
     passEncoder: GPURenderPassEncoder;
     commandEncoder: GPUCommandEncoder;
     textureView: GPUTextureView;
     depthTexture: GPUTexture;
     modelMatrices : Float32Array;
+    lightStorageBuffer : GPUBuffer;
+    lightBindGroup: GPUBindGroup;
+    lightUniformBuffer: GPUBuffer;
+
 
 
     async initialize() {
@@ -62,7 +68,7 @@ export class Renderer {
 
     private async setupShaderPipeline(shader: Shader) {
         const pipelineLayout: GPUPipelineLayout = $WGPU.device.createPipelineLayout({
-            bindGroupLayouts: [$WGPU.frameBindGroupLayout, $WGPU.textureBindGroupLayout]
+            bindGroupLayouts: [$WGPU.frameBindGroupLayout, $WGPU.textureBindGroupLayout, $WGPU.lightBindGroupLayout],
         });
 
         this.pipeline = await $WGPU.device.createRenderPipelineAsync({
@@ -84,55 +90,97 @@ export class Renderer {
     }
 
     private setUpBuffers() {
-        this.uniformBuffer = $WGPU.device.createBuffer({
+        this.objectUniformBuffer = $WGPU.device.createBuffer({
             label: "uniform buffer",
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             size: (64 * 2) + (4*4) //2 matrix 4x4, so 4 bytes * 4 rows * 4 columns * 2 matrices
         });
 
         // Write the uniform data to the uniform buffer.
-        this.storageBuffer = $WGPU.device.createBuffer({
+        this.objectStorageBuffer = $WGPU.device.createBuffer({
             label: "storage buffer",
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
             size: 64 * 1024 // I can store 1024 matrices in this buffer, each matrix is 64 bytes (4x4 matrix)
         });
+
+        this.lightStorageBuffer = $WGPU.device.createBuffer({
+            label: "light storage buffer",
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+            size: 24 * 64  // I can store 64 lights in this buffer, each light is 8 bytes (4x2 vector)
+        });
+
+        this.lightUniformBuffer = $WGPU.device.createBuffer({
+            label : "light uniform buffer",
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            size : 4
+        })
+
+
     }
 
     private setUpBindGroups() {
 
+
         this.frameBindGroup = $WGPU.device.createBindGroup({
+            label: "Frame Bind Group",
             layout: $WGPU.frameBindGroupLayout,
             entries: [
                 {
                     binding: 0,
                     resource: {
-                        buffer: this.uniformBuffer
+                        buffer: this.objectUniformBuffer
                     }
                 },
                 {
                     binding: 1,
                     resource: {
-                        buffer: this.storageBuffer
+                        buffer: this.objectStorageBuffer
+                    }
+                }
+
+            ]
+        });
+
+        this.lightBindGroup = $WGPU.device.createBindGroup({
+            layout: $WGPU.lightBindGroupLayout,
+            label: "Light Bind Group",
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.lightStorageBuffer
+                    }
+
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: this.lightUniformBuffer
                     }
                 }
             ]
         });
 
 
+    }
+
+    private writeFrameGroupBuffers() {
+        const modelMatrices = this.createModelMatrixArray();
+        $WGPU.device.queue.writeBuffer(this.objectStorageBuffer, 0, modelMatrices as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.objectUniformBuffer, 0, $WGPU.mainCamera.viewMatrix as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.objectUniformBuffer, 64, $WGPU.mainCamera.projectionMatrix as ArrayBuffer);
+        const pos = $WGPU.mainCamera.transform.position;
+        const posBuffer = new Float32Array(pos.toArray);
+
+        $WGPU.device.queue.writeBuffer(this.objectUniformBuffer, 128, posBuffer as ArrayBuffer);
+
 
     }
 
-    private writeBindGroupBuffers() {
-        const modelMatrices = this.createModelMatrixArray();
-        $WGPU.device.queue.writeBuffer(this.storageBuffer, 0, modelMatrices as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 0, $WGPU.mainCamera.viewMatrix as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 64, $WGPU.mainCamera.projectionMatrix as ArrayBuffer);
-        const pos = $WGPU.mainCamera.transform.position;
-        const posBuffer = new Float32Array(3);
-        posBuffer[0] = pos.x;
-        posBuffer[1] = pos.y;
-        posBuffer[2] = pos.z;
-        $WGPU.device.queue.writeBuffer(this.uniformBuffer, 128, posBuffer as ArrayBuffer);
+    private writeLightBuffer() {
+        const lightArray = this.createLightArray();
+        $WGPU.device.queue.writeBuffer(this.lightStorageBuffer, 0, lightArray as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.lightUniformBuffer, 0, new Int32Array([lightArray.length])); // Store the number of lights in the first float of the buffer
     }
 
 // Puts every value of the model matrix from each object to be drawn into one array
@@ -154,9 +202,60 @@ export class Renderer {
 
     }
 
+    private createLightArray () {
+        const lights = $WGPU.lights;
+
+        const lightArray = new Float32Array(24 * lights.length);
+        for (let i = 0; i < lights.length; i++) {
+            const light = lights[i];
+            const j = i * 24; // Each light takes up 8 floats in the array
+            lightArray[j] = light.transform.position.x;
+            lightArray[j + 1] = light.transform.position.y;
+            lightArray[j + 2] = light.transform.position.z;
+            lightArray[j + 3] = light.intensity; // Intensity of the light
+            lightArray[j + 4] = light.color.x; // Red component of the light color
+            lightArray[j + 5] = light.color.y; // Green component of the light color
+            lightArray[j + 6] = light.color.z; // Blue component of the light color
+            lightArray[j + 7] = light.lightType;
+            if(light.lightType === lightType.POINT) {
+                lightArray[j + 8] = 0; // Padding for point lights
+                lightArray[j + 9] = 0; // Padding for point lights
+                lightArray[j + 10] = 0; // Padding for point lights
+                lightArray[j + 11] = 0;
+                console.log(lights.length)
+            }
+            else if(light.lightType === lightType.AREA) {
+                const al = light as AreaLight;
+                lightArray[j + 8] = al.width; // Width of the area light
+                lightArray[j + 9] = al.height; // Height of the area light
+                lightArray[j + 10] = 0; // Padding for point lights
+                lightArray[j + 11] = 0;
+            }
+            // come back for area lights
+
+            lightArray[j + 12] = light.transform.up.x; // Up vector x component
+            lightArray[j + 13] = light.transform.up.y; // Up vector y component
+            lightArray[j + 14] = light.transform.up.z; // Up vector z component
+            lightArray[j + 15] = 0; // Padding for up vector
+            lightArray[j + 16] = light.transform.right.x; // Right vector x component
+            lightArray[j + 17] = light.transform.right.y; // Right vector y component
+            lightArray[j + 18] = light.transform.right.z; // Right vector z component
+            lightArray[j + 19] = 0; // Padding for right vector
+            lightArray[j + 20] = light.transform.forward.x; // Forward vector x component
+            lightArray[j + 21] = light.transform.forward.y; // Forward vector y component
+            lightArray[j + 22] = light.transform.forward.z; // Forward vector z component
+            lightArray[j + 23] = 0; // Padding for forward vector
+
+        }
+        console.log(lightArray);
+        return lightArray;
+    }
+
     update() {
 
-        this.writeBindGroupBuffers();
+        this.writeFrameGroupBuffers();
+
+        this.writeLightBuffer();
 
 
         // The GPUTextureView is used to specify the texture that will be rendered to.
@@ -210,9 +309,13 @@ export class Renderer {
 
 
         let objectsDrawn = 0;
+        this.passEncoder.setBindGroup(2, this.lightBindGroup);
         this.passEncoder.setBindGroup(0, this.frameBindGroup);
 
+
         $WGPU.renderableObjects.forEach((renderable) => {
+
+
 
             this.passEncoder.setBindGroup(1, renderable.material.bindGroup)
 
