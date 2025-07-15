@@ -12,7 +12,7 @@ export class Vector3 {
     private _x: number = 0;
     private _y: number = 0;
     private _z: number = 0;
-    private _onChange: Array< (x: number, y: number, z: number) => void>;
+    private _onChange:  ((x: number, y: number, z: number) => void) [];
     private _toArray: [number, number, number] = [this._x, this._y, this._z];
     private _normalized: Vector3;
     private _magnitude: number;
@@ -34,9 +34,11 @@ export class Vector3 {
         this._sqrMagnitude = 0;
 
         this.flagRecalculations();
-        this._onChange = new Array<(x: number, y: number, z: number) => void>();
+        this._onChange = [];
         if(onChange) {
             this._onChange.push(onChange);
+            console.log(onChange)
+            console.log(this._onChange)
         }
     }
     sharesValuesWith(vector: Vector3): boolean {
@@ -68,8 +70,10 @@ export class Vector3 {
     }
 
     set y(value: number) {
+
         this._y = value;
         this.flagRecalculations()
+        console.log(this._onChange)
         this._onChange.forEach( c => c?.(this._x, this._y, this._z));
     }
 
@@ -79,6 +83,7 @@ export class Vector3 {
     }
 
     set z(value: number) {
+
         this._z = value;
         this.flagRecalculations()
         this._onChange.forEach( c => c?.(this._x, this._y, this._z));

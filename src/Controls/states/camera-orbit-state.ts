@@ -10,7 +10,7 @@ export class CameraOrbitState implements IState {
 
 
     update(): void {
-        this._controller.clampOrbitRadius();
+
         this._controller.adjustCameraPosition();
         this._controller.rotateAroundTarget();
 

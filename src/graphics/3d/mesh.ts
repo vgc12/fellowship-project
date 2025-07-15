@@ -92,7 +92,7 @@ export class MeshBuilder {
     }
 
     private calculateVertexCount(): number {
-        /* In theory, this should get the amount of vertices
+        /*  this should get the amount of vertices
             if i have an array that has a position: vec3 and a texture coordinate: vec2 (this is a random array)
               x y z u v
             [

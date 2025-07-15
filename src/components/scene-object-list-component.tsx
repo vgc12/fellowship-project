@@ -5,6 +5,10 @@ import {RenderableObject} from "@/scene/renderable-object.ts";
 import type {IObject} from "@/scene/IObject.ts";
 import type {CameraController} from "@/Controls/camera-controller.ts";
 import CameraControllerComponent from "@/components/camera-controller-component.tsx";
+import SpotLightComponent from "@/components/spot-light-component.tsx";
+import type {SpotLight} from "@/scene/spot-light.ts";
+import PointLightComponent from "./point-light-component.tsx";
+import type {PointLight} from "@/scene/point-light.ts";
 
 
 
@@ -27,6 +31,14 @@ export function SceneObjectListComponent(props: {objects: IObject[]}) {
     }
     else if(selectedObject.guid === $WGPU.cameraController.guid){
         component = <CameraControllerComponent key={selectedObject.guid} object={selectedObject as CameraController}/>;
+    }
+    else if(selectedObject.constructor.name === 'SpotLight') {
+        console.log(selectedObject + " is a SpotLight");
+        component = <SpotLightComponent key={selectedObject.guid} object={selectedObject as SpotLight}/>;
+    }
+    else if(selectedObject.constructor.name === 'PointLight'){
+        console.log(selectedObject + " is a PointLight");
+        component = <PointLightComponent key={selectedObject.guid} object={selectedObject as PointLight}/>;
     }
     else {
         component = <SceneObjectComponent key={selectedObject.guid} object={selectedObject as RenderableObject}/>;

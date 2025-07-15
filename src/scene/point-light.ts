@@ -3,6 +3,7 @@ import type {IObject} from "@/scene/IObject.ts";
 import {Transform} from "@/core/math/transform.ts";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
+
 export const lightType = {
     POINT: 0,
     AREA: 1

@@ -7,7 +7,7 @@ import {type RenderableObject} from "@/scene/renderable-object.ts";
 import type {IObject} from "@/scene/IObject.ts";
 
 import {CameraController} from "@/Controls/camera-controller.ts";
-import {Light, type PointLight} from "@/scene/point-light.ts";
+import {Light} from "@/scene/point-light.ts";
 
 class WebGPUSingleton {
     get lightBindGroupLayout(): GPUBindGroupLayout {
@@ -16,11 +16,14 @@ class WebGPUSingleton {
 
 
     private _lightBindGroupLayout: GPUBindGroupLayout;
-    get lights(): Light[] {
+
+    private _lights :  Light[];
+
+    get lights() {
         return this._lights;
     }
 
-    addLight (light: PointLight) {
+    addLight (light: Light) {
         this._lights.push(light);
     }
 
@@ -43,7 +46,7 @@ class WebGPUSingleton {
     private _windowDimensions = {width: 0, height: 0};
     private _renderableObjects: RenderableObject[] = [];
     private _objects: IObject[] = [];
-    private _lights: Light[];
+
     private _mainCamera: Camera | null = null;
     private _cameraController: CameraController;
     private _vertexBufferLayout: GPUVertexBufferLayout | null = null;
@@ -154,7 +157,7 @@ class WebGPUSingleton {
 
 
         this._vertexBufferLayout = {
-            arrayStride: 32,
+            arrayStride: 56,
             attributes: [
                 {
                     shaderLocation: 0,
@@ -170,6 +173,16 @@ class WebGPUSingleton {
                     shaderLocation: 2,
                     format: 'float32x3',
                     offset: 20
+                },
+                {
+                    shaderLocation: 3,
+                    format: 'float32x3',
+                    offset: 32
+                },
+                {
+                    shaderLocation: 4,
+                    format: 'float32x3',
+                    offset: 44
                 }
             ]
         }
@@ -188,6 +201,11 @@ class WebGPUSingleton {
                 },
                 {
                     binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {}
+                },
+                {
+                    binding: 3,
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: {}
                 }

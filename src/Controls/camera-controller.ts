@@ -14,6 +14,20 @@ import {IdleState} from "@/Controls/states/idle-state.ts";
 import {CameraPanState} from "@/Controls/states/camera-pan-state.ts";
 import {CameraOrbitState} from "@/Controls/states/camera-orbit-state.ts";
 
+export class ZoomState implements IState {
+    private readonly _cameraController: CameraController;
+    constructor(cameraController: CameraController) {
+        this._cameraController = cameraController;
+    }
+
+    update(): void {
+        this._cameraController.adjustCameraPosition();
+        this._cameraController.clampOrbitRadius()
+    }
+
+}
+
+
 export class CameraController implements IObject {
     set guid(value: string) {
         this._guid = value;
@@ -89,26 +103,37 @@ export class CameraController implements IObject {
         const panState = new CameraPanState(this);
         const firstPersonState = new CameraFirstPersonState(this);
         const idleState = new IdleState();
+        const zoomState = new ZoomState(this);
 
         // Away from Idle
         this.at(idleState, orbitState, { evaluate: () => {return $INPUT.middleMouseButtonPressed || this._changedBySlider}});
         this.at(idleState, panState, { evaluate: () => {return $INPUT.middleMouseButtonPressed && $INPUT.shiftKeyPressed}});
         this.at(idleState, firstPersonState, { evaluate: () => {return $INPUT.altKeyPressed}});
+        this.at(idleState, zoomState, {evaluate: () => {return $INPUT.scrollMovementY != 0}} )
 
         // Away from Orbit
         this.at(orbitState, panState, { evaluate: () => {return $INPUT.shiftKeyPressed}});
         this.at(orbitState, firstPersonState, { evaluate: () => {return $INPUT.altKeyPressed}});
         this.at(orbitState, idleState, { evaluate: () => {return !$INPUT.middleMouseButtonPressed}});
+        this.at(orbitState, zoomState, {evaluate: () => {return $INPUT.scrollMovementY != 0}} )
 
         // Away from Pan
-        this.at(panState, orbitState, { evaluate: () => {return !$INPUT.shiftKeyPressed && $INPUT.middleMouseButtonPressed}});
+        this.at(panState, orbitState, { evaluate: () => {return  !$INPUT.shiftKeyPressed && $INPUT.middleMouseButtonPressed}});
         this.at(panState, firstPersonState, { evaluate: () => {return $INPUT.altKeyPressed}});
         this.at(panState, idleState, { evaluate: () => {return !$INPUT.middleMouseButtonPressed && !$INPUT.shiftKeyPressed}});
+        this.at(panState, zoomState, {evaluate: () => {return $INPUT.scrollMovementY != 0}} )
 
         // Away from First Person
         this.at(firstPersonState, orbitState, { evaluate: () => {return $INPUT.middleMouseButtonPressed && !$INPUT.altKeyPressed}});
         this.at(firstPersonState, panState, { evaluate: () => {return $INPUT.middleMouseButtonPressed && $INPUT.shiftKeyPressed && !$INPUT.altKeyPressed}});
         this.at(firstPersonState, idleState, { evaluate: () => {return !$INPUT.altKeyPressed}});
+        this.at(firstPersonState, zoomState, {evaluate: () => {return $INPUT.scrollMovementY != 0}} )
+
+        // Away from zoom
+        this.at(zoomState, idleState, { evaluate: () => {return $INPUT.scrollMovementY == 0}});
+
+
+
         this._stateMachine.setState(idleState);
     }
 

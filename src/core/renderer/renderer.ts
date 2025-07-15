@@ -5,8 +5,9 @@ import {type Shader} from '@/graphics/shader-utils/shader.ts';
 
 import { $WGPU }  from '../webgpu/webgpu-singleton.ts';
 import {ShaderBuilder} from "@/graphics/shader-utils/shader-builder.ts";
-import {lightType} from "@/scene/point-light.ts";
-import type {AreaLight} from "@/scene/area-light.ts";
+import {Light, lightType} from "@/scene/point-light.ts";
+import type {SpotLight} from "@/scene/spot-light.ts";
+
 
 
 
@@ -106,7 +107,7 @@ export class Renderer {
         this.lightStorageBuffer = $WGPU.device.createBuffer({
             label: "light storage buffer",
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-            size: 24 * 64  // I can store 64 lights in this buffer, each light is 8 bytes (4x2 vector)
+            size: 24 * 64
         });
 
         this.lightUniformBuffer = $WGPU.device.createBuffer({
@@ -180,7 +181,7 @@ export class Renderer {
     private writeLightBuffer() {
         const lightArray = this.createLightArray();
         $WGPU.device.queue.writeBuffer(this.lightStorageBuffer, 0, lightArray as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.lightUniformBuffer, 0, new Int32Array([lightArray.length])); // Store the number of lights in the first float of the buffer
+        $WGPU.device.queue.writeBuffer(this.lightUniformBuffer, 0, new Int32Array([$WGPU.lights.length])); // Store the number of lights in the first float of the buffer
     }
 
 // Puts every value of the model matrix from each object to be drawn into one array
@@ -203,51 +204,75 @@ export class Renderer {
     }
 
     private createLightArray () {
+
+        const LIGHT_STRIDE = 24;
+        const OFFSETS = {
+            POSITION: 0,
+            INTENSITY: 3,
+            COLOR: 4,
+            LIGHT_TYPE: 7,
+            LIGHT_PARAMS: 8,
+            UP_VECTOR: 12,
+            RIGHT_VECTOR: 16,
+            FORWARD_VECTOR: 20
+        } as const ;
+
         const lights = $WGPU.lights;
 
-        const lightArray = new Float32Array(24 * lights.length);
-        for (let i = 0; i < lights.length; i++) {
-            const light = lights[i];
-            const j = i * 24; // Each light takes up 8 floats in the array
-            lightArray[j] = light.transform.position.x;
-            lightArray[j + 1] = light.transform.position.y;
-            lightArray[j + 2] = light.transform.position.z;
-            lightArray[j + 3] = light.intensity; // Intensity of the light
-            lightArray[j + 4] = light.color.x; // Red component of the light color
-            lightArray[j + 5] = light.color.y; // Green component of the light color
-            lightArray[j + 6] = light.color.z; // Blue component of the light color
-            lightArray[j + 7] = light.lightType;
-            if(light.lightType === lightType.POINT) {
-                lightArray[j + 8] = 0; // Padding for point lights
-                lightArray[j + 9] = 0; // Padding for point lights
-                lightArray[j + 10] = 0; // Padding for point lights
-                lightArray[j + 11] = 0;
-                console.log(lights.length)
-            }
-            else if(light.lightType === lightType.AREA) {
-                const al = light as AreaLight;
-                lightArray[j + 8] = al.width; // Width of the area light
-                lightArray[j + 9] = al.height; // Height of the area light
-                lightArray[j + 10] = 0; // Padding for point lights
-                lightArray[j + 11] = 0;
-            }
-            // come back for area lights
+        const lightArray = new Float32Array(LIGHT_STRIDE * lights.length);
 
-            lightArray[j + 12] = light.transform.up.x; // Up vector x component
-            lightArray[j + 13] = light.transform.up.y; // Up vector y component
-            lightArray[j + 14] = light.transform.up.z; // Up vector z component
-            lightArray[j + 15] = 0; // Padding for up vector
-            lightArray[j + 16] = light.transform.right.x; // Right vector x component
-            lightArray[j + 17] = light.transform.right.y; // Right vector y component
-            lightArray[j + 18] = light.transform.right.z; // Right vector z component
-            lightArray[j + 19] = 0; // Padding for right vector
-            lightArray[j + 20] = light.transform.forward.x; // Forward vector x component
-            lightArray[j + 21] = light.transform.forward.y; // Forward vector y component
-            lightArray[j + 22] = light.transform.forward.z; // Forward vector z component
-            lightArray[j + 23] = 0; // Padding for forward vector
+        function setVector( vector: number[], offset: number,padding : number = 0) {
+
+            for (let i = 0; i < vector.length; i++) {
+                lightArray[offset + i] = vector[i];
+            }
+
+            for (let i = 0; i < padding; i++) {
+                lightArray[offset + vector.length + i] = 0;
+            }
 
         }
-        console.log(lightArray);
+
+        function setLightParams( offset : number, light : Light) {
+            lightArray.fill(0, offset, offset + 4);
+
+            if (light.lightType === lightType.AREA) {
+                const l = light as SpotLight;
+
+                lightArray[offset] = l.innerAngleRadians;
+                lightArray[offset + 1] = l.outerAngleRadians;
+            }
+
+        }
+
+        lights.forEach((light, i) => {
+            const offset = i * LIGHT_STRIDE;
+
+            // Position (3 floats)
+            setVector(light.transform.position.toArray, offset + OFFSETS.POSITION, );
+
+            // Intensity (1 float)
+            lightArray[offset + OFFSETS.INTENSITY] = light.intensity;
+
+            // Color (3 floats)
+            setVector( light.color.toArray, offset + OFFSETS.COLOR,);
+
+            // Light type (1 float)
+            lightArray[offset + OFFSETS.LIGHT_TYPE] = light.lightType;
+
+            // Light-specific parameters (4 floats)
+            setLightParams(offset + OFFSETS.LIGHT_PARAMS, light);
+
+            // Transform vectors (3x4 floats each, with padding)
+            const structPadding = 1;
+            console.log(light.transform.forward);
+            setVector(light.transform.up.toArray, offset + OFFSETS.UP_VECTOR,  structPadding);
+
+            setVector(light.transform.right.toArray, offset + OFFSETS.RIGHT_VECTOR, structPadding);
+            setVector(light.transform.forward.toArray, offset + OFFSETS.FORWARD_VECTOR,  structPadding);
+
+        });
+
         return lightArray;
     }
 
@@ -283,7 +308,7 @@ export class Renderer {
             colorAttachments: [{
 
                 view: this.textureView, // The texture view that will be rendered to belonging to the canvas.
-                clearValue: [.3, 0.3, 0.3, 1.0],
+                clearValue: [.6, 0.3, 0.3, 1.0],
                 loadOp: 'clear', // Clear the canvas before rendering
                 storeOp: 'store', // Store the rendered image in the canvas
             }],
