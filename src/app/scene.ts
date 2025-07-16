@@ -1,5 +1,4 @@
-﻿
-import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
+﻿import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 import {$TIME} from "../utils/time.ts";
 import {Material} from "@/graphics/3d/material.ts";
@@ -8,11 +7,7 @@ import {$INPUT} from "@/Controls/input.ts";
 import {Vector3} from "@/core/math/vector3.ts";
 import {SpotLight} from "@/scene/spot-light.ts";
 import {Renderer} from "@/core/renderer/renderer.ts";
-
-
-
-
-
+import {Quaternion} from "@/core/math/quaternion.ts";
 
 
 export class Scene {
@@ -23,7 +18,9 @@ export class Scene {
         this.renderer = new Renderer();
 
     }
-    x : SpotLight;
+
+    x: SpotLight;
+
     async initialize() {
         await $WGPU.initialize();
         $INPUT.initialize();
@@ -45,13 +42,16 @@ export class Scene {
         await Material.default.initialize();
 
 
-       this.x =new SpotLight(new Vector3(1, 1, .2), 1000*90, 4, 10);
+        this.x = new SpotLight(new Vector3(1, 1, 1), 1000 * 90, 4, 60);
+        this.x.transform.position.x = -1;
+        this.x.transform.position.y = 5;
+        this.x.transform.position.z = 2;
+
+        Quaternion.euler(30, 0, 0, this.x.transform.rotation);
 
 
         await this.renderer.initialize();
         $TIME.initialize();
-
-
 
 
     }
@@ -67,7 +67,6 @@ export class Scene {
         this.renderer.update();
 
         requestAnimationFrame(this.run)
-
 
 
     };
