@@ -139,7 +139,11 @@ class WebGPUSingleton {
 
         this._lights = [];
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
-        this._device = await this._adapter.requestDevice();
+        this._device = await this._adapter.requestDevice({
+            requiredLimits : {
+                maxColorAttachmentBytesPerSample : 64
+            }
+        });
         this._mainCamera = new Camera();
         this._mainCamera.name = "Camera";
         this._mainCamera.transform.position.set(0, 0, -5)

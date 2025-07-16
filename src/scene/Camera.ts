@@ -7,7 +7,11 @@ import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 import {Vector3} from "@/core/math/vector3.ts";
 
 
+
 export class Camera implements IObject {
+
+
+
     get name(): string {
         return this._name;
     }
@@ -40,6 +44,7 @@ export class Camera implements IObject {
 
 
 
+
     constructor() {
 
         this._transform = new Transform();
@@ -47,6 +52,8 @@ export class Camera implements IObject {
         this._viewMatrix = mat4.create();
 
         this._projectionMatrix = mat4.create();
+
+
 
         this._guid= crypto.randomUUID();
 
@@ -77,6 +84,8 @@ export class Camera implements IObject {
             0.1,
             1000
         );
+
+
     }
 }
 

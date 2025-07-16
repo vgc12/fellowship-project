@@ -1,5 +1,4 @@
 struct Transform{
-
     view: mat4x4<f32>,
     projection: mat4x4<f32>,
     cameraPosition: vec4f,
@@ -12,8 +11,6 @@ struct VertexOut{
     @location(2) worldPosition : vec3f,
     @location(3) tangent : vec3f,
     @location(4) bitangent : vec3f,
-
-
 }
 
 struct ObjectData{
@@ -43,10 +40,10 @@ fn main(@builtin(instance_index) i_index: u32, @location(0) vertexPosition: vec3
   let worldTangent = normalize((objects.model[i_index] * vec4f(tangent, 0.0)).xyz);
    // let worldBitangent = normalize(cross(worldNormal, worldTangent));
     output.worldPosition = (objects.model[i_index] * vec4f(vertexPosition, 1.0)).xyz;
-  output.normal = worldNormal;
+    output.normal = worldNormal;
     output.tangent = worldTangent;
     let worldBitangent = normalize((objects.model[i_index] * vec4f(bitangent, 0.0)).xyz);
-   // let worldBitangent = cross(worldNormal, worldTangent);
+    // let worldBitangent = cross(worldNormal, worldTangent);
    output.bitangent = normalize(worldBitangent);
 
 

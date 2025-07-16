@@ -1,5 +1,4 @@
 ﻿
-import { Renderer } from '../core/renderer/renderer.ts';
 import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 import {$TIME} from "../utils/time.ts";
@@ -8,6 +7,8 @@ import {$INPUT} from "@/Controls/input.ts";
 
 import {Vector3} from "@/core/math/vector3.ts";
 import {SpotLight} from "@/scene/spot-light.ts";
+import {Renderer} from "@/core/renderer/renderer.ts";
+
 
 
 
@@ -20,6 +21,7 @@ export class Scene {
 
     constructor() {
         this.renderer = new Renderer();
+
     }
     x : SpotLight;
     async initialize() {

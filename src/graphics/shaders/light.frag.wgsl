@@ -6,8 +6,8 @@ struct Transform{
     projection: mat4x4<f32>,
     cameraPosition: vec4f,
 
-}
 
+}
 
 struct Light{
     position: vec3f,
@@ -24,17 +24,6 @@ struct Light{
 struct LightData{
     length: i32,
 }
-
-@binding(0) @group(0) var<uniform> transform: Transform;
-
-@binding(0) @group(1) var albedoTexture : texture_2d<f32>;
-@binding(1) @group(1) var normalTexture : texture_2d<f32>;
-@binding(2) @group(1) var metallicRoughnessAo : texture_2d<f32>;
-@binding(3) @group(1) var texSampler : sampler;
-
-@binding(0) @group(2) var<storage, read> lights: array<Light>;
-@binding(1) @group(2) var<uniform> lightData: LightData;
-
 
 
 fn fresnelSchlick(F0: vec3f, viewDir: vec3f, h : vec3f ) -> vec3f {
@@ -109,7 +98,7 @@ fn calculatePointLight(pointLight : Light,
         return outgoingLight;
 }
 
-fn calculateSpotLight(light: Light, worldPosition: vec3f, worldNormal: vec3f, viewDir: vec3f, F0: vec3f, albedo : vec4f, metallic: f32, roughness: f32, localPos:vec4f) -> vec3f {
+fn calculateSpotLight(light: Light, worldPosition: vec3f, worldNormal: vec3f, viewDir: vec3f, F0: vec3f, albedo : vec4f, metallic: f32, roughness: f32) -> vec3f {
     var lightPosition : vec3f = light.position;
     var lightColor : vec3f = light.color;
     var lightIntensity : f32 = light.intensity;
@@ -183,36 +172,41 @@ fn calculateDirectionalLight(light: Light, worldPosition: vec3f, worldNormal: ve
     return outgoingLight;
 }
 
+@group(0) @binding(0) var<uniform> camera: Transform;
 
+@group(1) @binding(0) var gBufferAlbedo: texture_2d<f32>;
+@group(1) @binding(1) var gBufferNormal: texture_2d<f32>;
+@group(1) @binding(2) var gBufferMetallicRoughnessAO: texture_2d<f32>;
+@group(1) @binding(3) var gBufferPosition: texture_2d<f32>;
+@group(1) @binding(4) var gBufferDepth: texture_depth_2d;
+
+@binding(0) @group(2) var<storage, read> lights: array<Light>;
+@binding(1) @group(2) var<uniform> lightData: LightData;
 
 
 
 
 @fragment
-fn main(@builtin(position) localPos : vec4f, @location(0) texCoord : vec2f, @location(1) vertexNormal: vec3f, @location(2) worldPosition : vec3f, @location(3) tangent : vec3f, @location(4) bitangent: vec3f) -> @location(0) vec4f {
+fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
 
-    let albedo = textureSample(albedoTexture, texSampler, texCoord); // Sample the albedo texture
-    let ao = textureSample(metallicRoughnessAo, texSampler, texCoord).r; // Sample the ambient occlusion texture
-    let metallic = textureSample(metallicRoughnessAo, texSampler, texCoord).b; // Sample the metallic texture
-    let roughness = textureSample(metallicRoughnessAo, texSampler, texCoord).g; // Sample the roughness texture
-    let normal = textureSample(normalTexture, texSampler, texCoord); // Sample the normal texture
+    let c = vec2i(coord.xy);
+    let depth = textureLoad(gBufferDepth, c, 0); // Sample the depth texture
 
+      if (depth >= 1.0) {
+        discard;
+      }
 
-   let t = normalize(tangent);
-   let b = normalize(bitangent);
-   let n = normalize(vertexNormal);
-
-   let tbn : mat3x3<f32> = mat3x3<f32>(t, b, n);
-
-   var tangentNormal : vec3f = normal.xyz * 2.0 - 1.0 ;
-
-   var worldNormal : vec3f = normalize(tbn * tangentNormal);
-
+    let albedo = textureLoad(gBufferAlbedo, c, 0); // Sample the albedo texture
+    let metallic = textureLoad(gBufferMetallicRoughnessAO, c, 0).g; // Sample the metallic texture
+    let roughness = textureLoad(gBufferMetallicRoughnessAO, c, 0).r; // Sample the roughness texture
+    let ao = textureLoad(gBufferMetallicRoughnessAO, c, 0).b; // Sample the ambient occlusion texture
+    let worldNormal = textureLoad(gBufferNormal, c, 0).xyz; // Sample the normal texture
+    let worldPosition = textureLoad(gBufferPosition, c, 0).xyz; // Sample the world position texture
 
     let emissivity : f32 = 0.0;
     let F0 : vec3f = mix(vec3(0.04), albedo.xyz, metallic);
     var L0 : vec3f = vec3f(0.0);
-    var v : vec3f = normalize(transform.cameraPosition.xyz - worldPosition);
+    var v : vec3f = normalize(camera.cameraPosition.xyz - worldPosition);
 
 
     for (var i = 0; i < lightData.length; i++) {
@@ -224,7 +218,7 @@ fn main(@builtin(position) localPos : vec4f, @location(0) texCoord : vec2f, @loc
                    L0 +=  calculatePointLight(light, worldPosition, worldNormal, v, F0, albedo,  metallic, roughness);
                 }
                 case 1: {
-                  L0 +=  calculateSpotLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness, localPos);
+                  L0 +=  calculateSpotLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness);
                 }
                 case 2: {
                    L0 +=  calculateDirectionalLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness);
@@ -234,8 +228,6 @@ fn main(@builtin(position) localPos : vec4f, @location(0) texCoord : vec2f, @loc
                    L0 += vec3f(0.0);
                 }
         }
-
-
 
 
     }

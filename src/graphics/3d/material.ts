@@ -1,7 +1,12 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
 
+
+
 export class Material {
+    get sampler(): GPUSampler {
+        return this._sampler;
+    }
 
 
     get normalFile(): File {
@@ -97,9 +102,9 @@ export class Material {
 
         for (let i = 0; i < width * height; i++) {
             const o = i * 4;
-            packedData[o] = aoData.data[o];          // R channel (AO)
-            packedData[o + 1] = roughnessData.data[o];   // G channel (roughness)
-            packedData[o + 2] = metallicData.data[o];     // B channel (metallic)
+            packedData[o] = roughnessData.data[o];   // R channel (roughness)
+            packedData[o + 1] = metallicData.data[o];     // G channel (metallic)
+            packedData[o + 2] = aoData.data[o];          // B channel (AO)
             packedData[o + 3] = 255                      // A channel
         }
 
