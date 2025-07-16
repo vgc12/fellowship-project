@@ -1,4 +1,4 @@
-import { MeshBuilder} from "./mesh.ts";
+import {MeshBuilder} from "./mesh.ts";
 import {RenderableObject} from "@/scene/renderable-object.ts";
 import {vec2, type Vec2, vec3, type Vec3} from "wgpu-matrix";
 
@@ -11,7 +11,6 @@ interface IVertexData {
 }
 
 export class OBJLoader {
-
 
 
     private static _vertices: Vec3[] = [];
@@ -28,20 +27,19 @@ export class OBJLoader {
 
         const meshBuilder = new MeshBuilder();
 
-        let name : string = ""
+        let name: string = ""
 
-        for (let i = 0; i < lines.length; i++){
+        for (let i = 0; i < lines.length; i++) {
 
 
             const line = lines[i];
 
 
-
-            if(line.startsWith('o ')){
+            if (line.startsWith('o ')) {
                 name = line.substring(2);
             }
 
-            if(i+1 == lines.length || (line.startsWith('o ') && this._vertices.length > 0)) {
+            if (i + 1 == lines.length || (line.startsWith('o ') && this._vertices.length > 0)) {
 
                 this.calculateTangents(this._vertexData);
 
@@ -59,22 +57,18 @@ export class OBJLoader {
                 this._result = []
                 this._vertexData = [];
 
-            }
-            else if(line.startsWith('v ')) {
+            } else if (line.startsWith('v ')) {
 
                 this.processVertex(line)
-            }
-            else if(line.startsWith('f ')) {
+            } else if (line.startsWith('f ')) {
 
-               this.processFace(line);
+                this.processFace(line);
 
-            }
-            else if (line.startsWith('vn')){
+            } else if (line.startsWith('vn')) {
 
                 this.processNormal(line)
 
-            }
-            else if (line.startsWith('vt')){
+            } else if (line.startsWith('vt')) {
 
                 this.processUV(line)
 
@@ -86,28 +80,27 @@ export class OBJLoader {
     }
 
 
-
     // Processes a vertex line, which starts with 'v' and contains 3 float values.
-    static processVertex(vertex: string){
+    static processVertex(vertex: string) {
 
         const vertexParts = vertex.replace("\n", "").split(' ').slice(1);
 
-        this._vertices.push( vec3.fromValues(parseFloat(vertexParts[0]), parseFloat(vertexParts[1]),parseFloat(vertexParts[2])));
+        this._vertices.push(vec3.fromValues(parseFloat(vertexParts[0]), parseFloat(vertexParts[1]), parseFloat(vertexParts[2])));
     }
 
     // Pairs a vertex with its proper UV coordinate.
-    static processIndex(vertexDescription: string){
-       /* one vertex description may look like this:
-        * 1/1/1
-        * where the first number is the vertex index,
-        * the second number is the uv index,
-        */
+    static processIndex(vertexDescription: string) {
+        /* one vertex description may look like this:
+         * 1/1/1
+         * where the first number is the vertex index,
+         * the second number is the uv index,
+         */
         const descriptor = vertexDescription.split('/');
 
         // extract the vertex and uv indices from the descriptor
-        const vIndex = parseInt(descriptor[0])-1;
-        const vtIndex = parseInt(descriptor[1])-1;
-        const vnIndex = parseInt(descriptor[2])-1;
+        const vIndex = parseInt(descriptor[0]) - 1;
+        const vtIndex = parseInt(descriptor[1]) - 1;
+        const vnIndex = parseInt(descriptor[2]) - 1;
         // Find the vertex in the vertices array based on the index.
         const v = this._vertices[vIndex]
         // Find the uv coordinate in the uvs array based on the index.
@@ -135,6 +128,7 @@ export class OBJLoader {
             normal: vn
         })
     }
+
     // Calculate tangents for the loaded mesh
     private static calculateTangents(vertices: IVertexData[]): IVertexData[] {
         // Initialize tangent and bitangent accumulators
@@ -163,7 +157,6 @@ export class OBJLoader {
             }
 
             const inverseDeterminant = 1.0 / det;
-
 
 
             const tangent = vec3.scale(vec3.sub(
@@ -210,7 +203,7 @@ export class OBJLoader {
             vertex.bitangent = bitangent;
 
             this._result.push(...vertex.position)
-            console.log(vertex.position + " " + vertex.tangent)
+
             this._result.push(...vertex.uv);
             this._result.push(...vertex.normal);
             this._result.push(...vertex.tangent);
@@ -220,15 +213,16 @@ export class OBJLoader {
 
         return vertices;
     }
+
     // Forms triangle(s) from the face description.
     static processFace(line: string) {
 
-         /* the face line may look like this:
-          * f 1/1/1 2/2/2 3/3/3 4/4/4
-          * where each group is split like vertex_index/uv_index/normal_index
-          * this function searches the already made vertices and uv arrays
-          * and creates triangles based on these indices.
-          */
+        /* the face line may look like this:
+         * f 1/1/1 2/2/2 3/3/3 4/4/4
+         * where each group is split like vertex_index/uv_index/normal_index
+         * this function searches the already made vertices and uv arrays
+         * and creates triangles based on these indices.
+         */
         const faceParts = line.split(' ').slice(1);
 
         const triangleCount = faceParts.length - 2;
@@ -242,11 +236,11 @@ export class OBJLoader {
          * a triangle gets created from the first three (1/1/1 2/2/2 3/3/3)
          * and then from the first vertex, and the next two vertices (1/1/1 3/3/3 4/4/4).
          */
-        for (let i = 0; i < triangleCount; i++){
+        for (let i = 0; i < triangleCount; i++) {
 
             this.processIndex(faceParts[0]);
-            this.processIndex(faceParts[i+1]);
-            this.processIndex(faceParts[i+2])
+            this.processIndex(faceParts[i + 1]);
+            this.processIndex(faceParts[i + 2])
         }
 
 
@@ -256,13 +250,13 @@ export class OBJLoader {
     static processUV(line: string) {
         const uvParts = line.split(' ').slice(1);
 
-        this._uvs.push( vec2.fromValues( parseFloat(uvParts[0]),1-parseFloat(uvParts[1])));
+        this._uvs.push(vec2.fromValues(parseFloat(uvParts[0]), 1 - parseFloat(uvParts[1])));
 
     }
 
 
     private static processNormal(line: string) {
         const normalParts = line.split(' ').slice(1);
-        this._normals.push( vec3.fromValues(parseFloat(normalParts[0]), parseFloat(normalParts[1]), parseFloat(normalParts[2])));
+        this._normals.push(vec3.fromValues(parseFloat(normalParts[0]), parseFloat(normalParts[1]), parseFloat(normalParts[2])));
     }
 }

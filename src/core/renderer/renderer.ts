@@ -1,5 +1,4 @@
-﻿
-import deferredVertexShader from '../../graphics/shaders/geometry.vert.wgsl';
+﻿import deferredVertexShader from '../../graphics/shaders/geometry.vert.wgsl';
 import deferredFragmentShader from '../../graphics/shaders/geometry.frag.wgsl';
 import lightingVertexShader from '../../graphics/shaders/light.vert.wgsl';
 import lightingFragmentShader from '../../graphics/shaders/light.frag.wgsl';
@@ -204,7 +203,6 @@ export class Renderer {
         });
 
 
-
         this.gBufferBindGroup = $WGPU.device.createBindGroup({
             layout: this.gBufferBindGroupLayout,
             entries: [
@@ -251,7 +249,7 @@ export class Renderer {
             label: "Geometry Pipeline Layout",
             bindGroupLayouts: [$WGPU.frameBindGroupLayout, $WGPU.textureBindGroupLayout]
         });
-        console.log(geometryShader.fragmentState);
+
         this.geometryPipeline = await $WGPU.device.createRenderPipelineAsync({
             label: "Geometry Pipeline",
             vertex: geometryShader.vertexState,
@@ -271,9 +269,6 @@ export class Renderer {
             .setFragmentCode(lightingFragmentShader, 'main')
             .addColorFormat($WGPU.format)
             .build();
-
-
-
 
 
         const lightingPipelineLayout = $WGPU.device.createPipelineLayout({
@@ -356,8 +351,7 @@ export class Renderer {
             }
         }
 
-        lights.forEach((light, i) =>
-        {
+        lights.forEach((light, i) => {
             const offset = i * LIGHT_STRIDE;
             setVector(light.transform.position.toArray, offset + OFFSETS.POSITION);
             lightArray[offset + OFFSETS.INTENSITY] = light.intensity;
@@ -430,8 +424,7 @@ export class Renderer {
         this.geometryPassEncoder.setBindGroup(0, this.frameBindGroup);
 
         let objectsDrawn = 0;
-        $WGPU.renderableObjects.forEach((renderable) =>
-        {
+        $WGPU.renderableObjects.forEach((renderable) => {
             this.geometryPassEncoder.setBindGroup(1, renderable.material.bindGroup);
 
             if (renderable.mesh.indexBuffer && renderable.mesh.indices?.length !== 0) {
