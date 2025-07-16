@@ -3,7 +3,7 @@ import type {IObject} from "./IObject.ts";
 import type {IRenderable} from "./IRenderable.ts";
 import  {Transform } from "../core/math/transform.ts";
 import {type Mat4, mat4} from "wgpu-matrix";
-import {Deg2Rad} from "../core/math/math-util.ts";
+import {convertToRadians} from "../core/math/math-util.ts";
 import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 import { Material } from "@/graphics/3d/material.ts";
 
@@ -69,10 +69,13 @@ export class RenderableObject implements IObject, IRenderable {
          // Update the transformation matrix based on the transform's position, rotation, and scale
          mat4.translate(this._modelMatrix,  this.transform.position.toArray, this._modelMatrix);
          // Apply rotations in the order of X, Y, Z
-         mat4.rotateX(this._modelMatrix, Deg2Rad(this.transform.rotation.x), this._modelMatrix )
-         mat4.rotateY(this._modelMatrix, Deg2Rad(this.transform.rotation.y), this._modelMatrix )
-         mat4.rotateZ(this._modelMatrix, Deg2Rad(this.transform.rotation.z), this._modelMatrix )
+        const eulerAngles = this.transform.rotation.eulerAngles;
+         mat4.rotateX(this._modelMatrix, convertToRadians(eulerAngles.x), this._modelMatrix )
+         mat4.rotateY(this._modelMatrix, convertToRadians(eulerAngles.y), this._modelMatrix )
+         mat4.rotateZ(this._modelMatrix, convertToRadians(eulerAngles.z), this._modelMatrix )
          // Apply scaling
+
+
          mat4.scale(this._modelMatrix, this.transform.scale.toArray, this._modelMatrix)
 
 

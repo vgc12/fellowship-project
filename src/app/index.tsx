@@ -1,14 +1,14 @@
 import ReactDOM from 'react-dom/client';
-
-
 import {SceneObjectListComponent} from "../components/scene-object-list-component.tsx";
-import {CanvasComponent} from "../components/canvas-component.tsx";
-
 import {type ChangeEvent, useState, useCallback} from "react";
 import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
+import {CanvasComponent} from "@/components/canvas-component.tsx";
+import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
 
 function App () {
+
+
     const [loadedFiles, setLoadedFiles] = useState<File[]>([]);
     const handleOnChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -17,20 +17,21 @@ function App () {
 
                 if (file.name.endsWith('.obj')) {
                     await OBJLoader.loadMeshes(file);
-                    setLoadedFiles([...loadedFiles, file]);
+                   setLoadedFiles([...loadedFiles, file]);
                 }
 
             }
         }
     }, [loadedFiles]);
 
+
     return (<div id='app' className={" bg-gray-900  "}>
         <div className={"m-4 flex p-4"}>
-        <CanvasComponent />
+            <CanvasComponent></CanvasComponent>
         <div className={"flex-1/2 "}>
 
 
-            <SceneObjectListComponent  />
+            <SceneObjectListComponent objects={$WGPU.objects}></SceneObjectListComponent>
             <div className={"text-center p-4"}>
                 <label   className={`
                     text-white bg-gray-700 hover:bg-gray-500 focus:outline-none 
@@ -50,7 +51,6 @@ function App () {
         </div>
     </div>);
 }
-
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
     <App />

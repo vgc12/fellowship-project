@@ -4,6 +4,9 @@ import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 
 import {$TIME} from "../utils/time.ts";
 import {Material} from "@/graphics/3d/material.ts";
+import {$INPUT} from "@/Controls/input.ts";
+import { CameraController } from '@/Controls/camera-controller.ts';
+
 
 
 
@@ -12,15 +15,15 @@ import {Material} from "@/graphics/3d/material.ts";
 export class Scene {
 
     renderer: Renderer;
+    cameraController : CameraController
 
     constructor() {
         this.renderer = new Renderer();
-
-
     }
 
     async initialize() {
         await $WGPU.initialize();
+        $INPUT.initialize();
 
         Material.default = new Material();
         const response = await fetch('./img/default.png');
@@ -34,16 +37,19 @@ export class Scene {
 
     }
 
-    run = () => {
+    run = async () => {
+
+
 
         $WGPU.objects.forEach(o => {
             o.update()
+
         });
 
         this.renderer.update();
 
         requestAnimationFrame(this.run)
-      
+
 
 
     };

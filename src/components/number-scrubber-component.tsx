@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils.ts";
-import { Input } from "@/components/input.tsx";
+import { InputComponent } from "@/components/input-component.tsx";
 
 export interface NumericScrubberProps
   extends Omit<React.HTMLAttributes<HTMLInputElement>, "onChange"> {
@@ -156,7 +156,7 @@ export const NumericScrubber = React.forwardRef<
 
     return (
       <div className={cn("")}>
-        <Input
+        <InputComponent
           ref={ref}
           type="number"
           /**

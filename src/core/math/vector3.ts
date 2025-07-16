@@ -1,15 +1,18 @@
 // I decided to write my own vector 3 as a response to it just working better with react
 // Also im changing things to make it feel better to program with compared to the wgpu-matrix library
 export class Vector3 {
-    set onChange(onChange: (x: number, y: number, z: number) => void){
-        this._onChange = onChange;
+    get sqrMagnitude(): number {
+        this._sqrMagnitude = this._x * this._x + this._y * this._y + this._z * this._z;
+        return this._sqrMagnitude;
     }
+    private _sqrMagnitude: number;
+
 
 
     private _x: number = 0;
     private _y: number = 0;
     private _z: number = 0;
-    private _onChange?: (x: number, y: number, z: number) => void;
+    private _onChange: Array< (x: number, y: number, z: number) => void>;
     private _toArray: [number, number, number] = [this._x, this._y, this._z];
     private _normalized: Vector3;
     private _magnitude: number;
@@ -22,15 +25,22 @@ export class Vector3 {
     static readonly WORLD_RIGHT: Vector3 = new Vector3(1, 0, 0);
     static readonly WORLD_FORWARD: Vector3 = new Vector3(0, 0, 1);
 
+
     constructor(x: number = 0, y: number = 0, z: number = 0, onChange?: (x: number, y: number, z: number) => void) {
         this._x = x;
         this._y = y;
         this._z = z;
 
-
+        this._sqrMagnitude = 0;
 
         this.flagRecalculations();
-        this._onChange = onChange;
+        this._onChange = new Array<(x: number, y: number, z: number) => void>();
+        if(onChange) {
+            this._onChange.push(onChange);
+        }
+    }
+    sharesValuesWith(vector: Vector3): boolean {
+        return this._x === vector.x && this._y === vector.y && this._z === vector.z;
     }
 
     private updateArray() {
@@ -39,7 +49,9 @@ export class Vector3 {
         this._toArray[2] = this._z;
     }
 
-
+    get onChange(): Array<(x: number, y: number, z: number) => void> {
+            return this._onChange
+    }
     get x(): number {
         return this._x;
     }
@@ -47,7 +59,7 @@ export class Vector3 {
     set x(value: number) {
         this._x = value;
         this.flagRecalculations()
-        this._onChange?.(this._x, this._y, this._z);
+        this._onChange.forEach(c => c?.(this._x, this._y, this._z));
     }
 
 
@@ -58,7 +70,7 @@ export class Vector3 {
     set y(value: number) {
         this._y = value;
         this.flagRecalculations()
-        this._onChange?.(this._x, this._y, this._z);
+        this._onChange.forEach( c => c?.(this._x, this._y, this._z));
     }
 
 
@@ -69,7 +81,7 @@ export class Vector3 {
     set z(value: number) {
         this._z = value;
         this.flagRecalculations()
-        this._onChange?.(this._x, this._y, this._z);
+        this._onChange.forEach( c => c?.(this._x, this._y, this._z));
     }
 
 
@@ -78,7 +90,7 @@ export class Vector3 {
         this._y = y;
         this._z = z;
         this.flagRecalculations()
-        this._onChange?.(this._x, this._y, this._z);
+        this._onChange.forEach( c => c?.(this._x, this._y, this._z));
     }
 
     setFromArray(array: [number, number, number]) {
@@ -86,22 +98,13 @@ export class Vector3 {
         this._y = array[1];
         this._z = array[2];
         this.flagRecalculations()
-        this._onChange?.(this._x, this._y, this._z);
+        this._onChange.forEach( c => c?.(this._x, this._y, this._z));
     }
 
 
     get toArray(): [number, number, number] {
         this.updateArray();
         return this._toArray;
-    }
-
-
-    add(x: number, y: number, z: number) {
-        this._x += x;
-        this._y += y;
-        this._z += z;
-        this.flagRecalculations()
-        this._onChange?.(this._x, this._y, this._z);
     }
 
 
@@ -131,5 +134,76 @@ export class Vector3 {
     private flagRecalculations() {
         this._recalculateNormalization = true;
         this._recalculateMagnitude = true;
+    }
+
+    static readonly ZERO: Vector3 = new Vector3(0, 0, 0);
+
+
+    static dot(forward: Vector3, WORLD_UP: Vector3) {
+
+        return forward.x * WORLD_UP.x + forward.y * WORLD_UP.y + forward.z * WORLD_UP.z;
+    }
+
+    static add(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+
+            out = new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+        else {
+            out.set(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+
+        return out;
+    }
+
+    static subtract(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+            out = new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+        } else {
+            out.set(a.x - b.x, a.y - b.y, a.z - b.z);
+        }
+
+        return out;
+    }
+
+    static distance(a: Vector3, b: Vector3): number {
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dz = a.z - b.z;
+
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+
+    static multiplyScalar(vec : Vector3, scalar: number, out?: Vector3) {
+        if (!out) {
+            out = new Vector3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
+        } else {
+            out.set(vec.x * scalar, vec.y * scalar, vec.z * scalar);
+        }
+
+        return out;
+    }
+
+    static cross(a: Vector3, b: Vector3, out?: Vector3) {
+        if (!out) {
+            out = new Vector3(
+                a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x
+            );
+        } else {
+            out.set(
+                a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x
+            );
+        }
+
+        return out;
+    }
+
+    addCallback(callback: (x: number, y: number, z: number) => void) {
+        this._onChange.push(callback);
     }
 }

@@ -1,4 +1,4 @@
-import {$WGPU} from "../../core/webgpu/webgpu-singleton.ts";
+import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import type {Shader} from "./shader.ts";
 
 export class ShaderBuilder {

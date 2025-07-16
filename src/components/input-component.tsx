@@ -2,7 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils.ts"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+function InputComponent({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
@@ -18,4 +18,4 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   )
 }
 
-export { Input }
+export { InputComponent }

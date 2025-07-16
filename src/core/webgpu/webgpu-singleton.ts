@@ -7,7 +7,13 @@ import {Camera} from "@/scene/Camera.ts";
 import  {type RenderableObject} from "@/scene/renderable-object.ts";
 import type {IObject} from "@/scene/IObject.ts";
 
+import {CameraController} from "@/Controls/camera-controller.ts";
+
 class WebGPUSingleton {
+    get cameraController(): CameraController {
+        return this._cameraController;
+    }
+
     get textureBindGroupLayout(): GPUBindGroupLayout {
         return this._textureBindGroupLayout;
     }
@@ -24,6 +30,7 @@ class WebGPUSingleton {
     private _objects : IObject[] = [];
 
     private _mainCamera: Camera | null = null;
+    private _cameraController: CameraController;
     private _vertexBufferLayout : GPUVertexBufferLayout | null = null;
     private _format: GPUTextureFormat;
     private _context: GPUCanvasContext;
@@ -36,6 +43,8 @@ class WebGPUSingleton {
         put this one here.
      */
     private _frameBindGroupLayout: GPUBindGroupLayout;
+
+
 
 
     static get Instance(): WebGPUSingleton {
@@ -59,6 +68,7 @@ class WebGPUSingleton {
 
     addObject(object: IObject) {
         this._objects.push(object);
+
     }
 
     get objects(): IObject[] {
@@ -99,16 +109,19 @@ class WebGPUSingleton {
         return this._renderableObjects;
     }
 
-    async initialize(){
+    async initialize(): Promise<void> {
         if (this._device) return;
         // Request a GPU adapter and device
         // An adapter is a link between the browser and the GPU hardware.
         // Allows for getting information about the GPU and creating a device to interact with it.
         this._canvas = document.getElementById('canvas-main') as HTMLCanvasElement;
+       // this._canvas =  document.createElement('canvas');
+        //this._canvas = canvas as HTMLCanvasElement;
         this._windowDimensions = {
             width: this._canvas.width,
             height: this._canvas.height
         }
+
 
 
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
@@ -118,6 +131,7 @@ class WebGPUSingleton {
         this._mainCamera.transform.position.set(0,0,-5)
         this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
 
+        this._cameraController = new CameraController(this._mainCamera);
 
         this._format = navigator.gpu.getPreferredCanvasFormat();
 
@@ -177,6 +191,7 @@ class WebGPUSingleton {
 
     addRenderableObject(object: RenderableObject) {
         this._renderableObjects.push(object);
+
     }
 
 
