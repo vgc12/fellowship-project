@@ -98,7 +98,15 @@ fn calculatePointLight(pointLight : Light,
         return outgoingLight;
 }
 
-fn calculateSpotLight(light: Light, worldPosition: vec3f, worldNormal: vec3f, viewDir: vec3f, F0: vec3f, albedo : vec4f, metallic: f32, roughness: f32) -> vec3f {
+fn calculateSpotLight(
+    light: Light,
+    worldPosition: vec3f,
+    worldNormal: vec3f,
+    viewDir: vec3f,
+    F0: vec3f,
+    albedo : vec4f,
+    metallic: f32,
+    roughness: f32) -> vec3f {
     var lightPosition : vec3f = light.position;
     var lightColor : vec3f = light.color;
     var lightIntensity : f32 = light.intensity;

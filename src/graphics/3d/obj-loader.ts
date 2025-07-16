@@ -116,12 +116,7 @@ export class OBJLoader {
         // push the vertex and uv coordinate to the result array.
         // one entry in the result array will look like this:
         // [x, y, z, u, v, nx, ny, nz]
-        /*
-        this._result.push(...v)
-        this._result.push(...vt)
-        this._result.push(...vn)
 
-         */
         this._vertexData.push({
             position: v,
             uv: vt,

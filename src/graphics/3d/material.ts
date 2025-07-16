@@ -67,8 +67,6 @@ export class Material {
         this._albedoFile = value;
     }
     
-    
-
 
     private _albedoTexture: GPUTexture;
     private _normalTexture: GPUTexture;
