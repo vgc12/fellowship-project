@@ -1,5 +1,4 @@
-﻿
-import deferredVertexShader from '../../graphics/shaders/geometry.vert.wgsl';
+﻿import deferredVertexShader from '../../graphics/shaders/geometry.vert.wgsl';
 import deferredFragmentShader from '../../graphics/shaders/geometry.frag.wgsl';
 import lightingVertexShader from '../../graphics/shaders/light.vert.wgsl';
 import lightingFragmentShader from '../../graphics/shaders/light.frag.wgsl';
@@ -10,6 +9,7 @@ import {$WGPU} from '../webgpu/webgpu-singleton.ts';
 import {ShaderBuilder} from "@/graphics/shader-utils/shader-builder.ts";
 import {Light, lightType} from "@/scene/point-light.ts";
 import type {SpotLight} from "@/scene/spot-light.ts";
+import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
 
 
 export class Renderer {
@@ -46,7 +46,7 @@ export class Renderer {
     lightStorageBuffer: GPUBuffer;
     lightBindGroup: GPUBindGroup;
     lightUniformBuffer: GPUBuffer;
-    cameraBuffer : GPUBuffer;
+    cameraBuffer: GPUBuffer;
     modelMatrices: Float32Array;
 
 
@@ -56,6 +56,7 @@ export class Renderer {
     commandEncoder: GPUCommandEncoder;
     geometryPassEncoder: GPURenderPassEncoder;
     lightingPassEncoder: GPURenderPassEncoder;
+    skyPassEncoder: GPURenderPassEncoder;
 
 
     async initialize() {
@@ -142,8 +143,8 @@ export class Renderer {
             size: 4
         });
         this.cameraBuffer = $WGPU.device.createBuffer({
-           label: "camera buffer",
-           usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            label: "camera buffer",
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             size: 4 * 4 * 3
         });
     }
@@ -208,6 +209,18 @@ export class Renderer {
             ]
         });
 
+        const urls = [
+            "img/sky/px.png",  //x+
+            "img/sky/nx.png",   //x-
+            "img/sky/py.png",   //y+
+            "img/sky/ny.png",  //y-
+            "img/sky/pz.png", //z+
+            "img/sky/nz.png",    //z-
+        ]
+
+        SkyMaterial.default = new SkyMaterial();
+        await SkyMaterial.default.initialize(urls);
+
         this.skyBindGroup = $WGPU.device.createBindGroup({
             layout: $WGPU.skyBindGroupLayout,
             entries: [
@@ -217,7 +230,11 @@ export class Renderer {
                 },
                 {
                     binding: 1,
-                    resource:
+                    resource: SkyMaterial.default.view,
+                },
+                {
+                    binding: 2,
+                    resource: SkyMaterial.default.sampler
                 }
             ]
         })
@@ -265,7 +282,6 @@ export class Renderer {
             .build();
 
 
-
         const lightingPipelineLayout = $WGPU.device.createPipelineLayout({
             label: "Lighting Pipeline Layout",
             bindGroupLayouts: [
@@ -299,7 +315,14 @@ export class Renderer {
             label: "Sky Pipeline",
             vertex: skyShader.vertexState,
             fragment: skyShader.fragmentState,
-            layout : skyPipelineLayout,
+            layout: skyPipelineLayout,
+            primitive: {topology: 'triangle-list'},
+            depthStencil: {
+                depthWriteEnabled: false,
+                depthCompare: 'less-equal',
+                format: "depth32float"
+            }
+
 
         })
     }
@@ -314,6 +337,13 @@ export class Renderer {
         const pos = $WGPU.mainCamera.transform.position;
         const posBuffer = new Float32Array(pos.toArray);
         $WGPU.device.queue.writeBuffer(this.objectUniformBuffer, 128, posBuffer as ArrayBuffer);
+    }
+
+    private writeCameraBuffer() {
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 0, new Float32Array($WGPU.mainCamera.transform.forward.normalized.toArray) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 16, new Float32Array($WGPU.mainCamera.transform.right.normalized.toArray) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 32, new Float32Array($WGPU.mainCamera.transform.up.normalized.toArray) as ArrayBuffer)
+
     }
 
     private writeLightBuffer() {
@@ -366,8 +396,7 @@ export class Renderer {
             }
         }
 
-        lights.forEach((light, i) =>
-        {
+        lights.forEach((light, i) => {
             const offset = i * LIGHT_STRIDE;
             setVector(light.transform.position.toArray, offset + OFFSETS.POSITION);
             lightArray[offset + OFFSETS.INTENSITY] = light.intensity;
@@ -386,17 +415,48 @@ export class Renderer {
 
     update() {
         this.writeFrameGroupBuffers();
+        this.writeCameraBuffer()
         this.writeLightBuffer();
 
         this.commandEncoder = $WGPU.device.createCommandEncoder();
 
         // GEOMETRY PASS - Render to G-Buffer
+
         this.renderGeometryPass();
 
 
         this.renderLightingPass();
-
+        this.renderSkyPass();
         $WGPU.device.queue.submit([this.commandEncoder.finish()]);
+    }
+
+    private renderSkyPass() {
+        const textureView = $WGPU.context.getCurrentTexture().createView();
+
+        const skyPassDescriptor: GPURenderPassDescriptor = {
+            colorAttachments: [{
+                view: textureView,
+                clearValue: [0.0, 0.0, 0.0, 0.0],
+                loadOp: 'load',
+                storeOp: 'store'
+            }],
+            depthStencilAttachment: {
+                view: this.gBufferViews.depth,
+                depthLoadOp: 'load',
+                depthStoreOp: 'store'
+            }
+
+        };
+
+        this.skyPassEncoder = this.commandEncoder.beginRenderPass(skyPassDescriptor);
+
+        
+        this.skyPassEncoder.setPipeline(this.skyPipeline);
+        this.skyPassEncoder.setBindGroup(0, this.skyBindGroup);
+        // Draw fullscreen quad
+        this.skyPassEncoder.setVertexBuffer(0, this.fullscreenVertexBuffer);
+        this.skyPassEncoder.draw(6, 1, 0, 0);
+        this.skyPassEncoder.end();
     }
 
     private renderGeometryPass() {
@@ -440,8 +500,7 @@ export class Renderer {
         this.geometryPassEncoder.setBindGroup(0, this.frameBindGroup);
 
         let objectsDrawn = 0;
-        $WGPU.renderableObjects.forEach((renderable) =>
-        {
+        $WGPU.renderableObjects.forEach((renderable) => {
             this.geometryPassEncoder.setBindGroup(1, renderable.material.bindGroup);
 
             if (renderable.mesh.indexBuffer && renderable.mesh.indices?.length !== 0) {

@@ -1,9 +1,12 @@
-﻿export class SkyMaterial {
+﻿import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+
+export class SkyMaterial {
+    static default: SkyMaterial;
     texture: GPUTexture;
     view: GPUTextureView;
     sampler: GPUSampler;
 
-    async initialize(device: GPUDevice, urls: string[]) {
+    async initialize(urls: string[]) {
         var imageData: ImageBitmap[] = new Array(6);
 
         for (let i = 0; i < urls.length; i++) {
@@ -12,7 +15,7 @@
             imageData[i] = await createImageBitmap(blob);
         }
 
-        await this.loadImageBitmaps(device, imageData);
+        await this.loadImageBitmaps($WGPU.device, imageData);
 
         const viewDescriptor: GPUTextureViewDescriptor = {
             format: navigator.gpu.getPreferredCanvasFormat(),
@@ -33,12 +36,17 @@
             mipmapFilter: "nearest",
             maxAnisotropy: 1
         };
-        this.sampler = device.createSampler(samplerDescriptor);
+        this.sampler = $WGPU.device.createSampler(samplerDescriptor);
+
+    }
+
+    createMipMaps() {
 
     }
 
     private async loadImageBitmaps(device: GPUDevice, imageData: ImageBitmap[]) {
         const textureDescriptor: GPUTextureDescriptor = {
+            label: 'something',
             size: {
                 width: imageData[0].width,
                 height: imageData[0].height,

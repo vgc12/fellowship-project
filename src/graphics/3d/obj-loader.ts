@@ -29,6 +29,7 @@ export class OBJLoader {
 
         let name: string = ""
 
+
         for (let i = 0; i < lines.length; i++) {
 
 

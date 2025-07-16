@@ -191,6 +191,9 @@ fn calculateDirectionalLight(light: Light, worldPosition: vec3f, worldNormal: ve
 @binding(0) @group(2) var<storage, read> lights: array<Light>;
 @binding(1) @group(2) var<uniform> lightData: LightData;
 
+@group(0) @binding(1) var skyTexture: texture_cube<f32>;
+@group(0) @binding(2) var skySampler: sampler;
+
 
 
 
@@ -240,9 +243,14 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
 
     }
 
+    let eyeToSurfaceDir = worldPosition - camera.cameraPosition.xyz;
+
+    let reflectionDir = reflect(eyeToSurfaceDir, worldNormal);
+
+
 
     let ambient = albedo.xyz * ao * 0.1; // Ambient light contribution
-    var color =  L0 + vec3f(emissivity) ; // Combine all contributions
+    var color =  L0 + vec3f(emissivity); // Combine all contributions
     color = color / (color + vec3f(1.0)); // Simple tone mapping
     color = pow(color, vec3f(1.0 / 2.2)); // Gamma correction
     return vec4f(color,1.0);

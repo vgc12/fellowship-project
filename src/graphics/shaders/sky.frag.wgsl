@@ -1,4 +1,4 @@
-﻿
+
 @group(0) @binding(1) var skyTexture: texture_cube<f32>;
 @group(0) @binding(2) var skySampler: sampler;
 

@@ -14,9 +14,11 @@ class WebGPUSingleton {
     get skyBindGroupLayout(): GPUBindGroupLayout {
         return this._skyBindGroupLayout;
     }
+
     get gBufferBindGroupLayout(): GPUBindGroupLayout {
         return this._gBufferBindGroupLayout;
     }
+
     get lightBindGroupLayout(): GPUBindGroupLayout {
         return this._lightBindGroupLayout;
     }
@@ -24,13 +26,13 @@ class WebGPUSingleton {
 
     private _lightBindGroupLayout: GPUBindGroupLayout;
 
-    private _lights :  Light[];
+    private _lights: Light[];
 
     get lights() {
         return this._lights;
     }
 
-    addLight (light: Light) {
+    addLight(light: Light) {
         this._lights.push(light);
     }
 
@@ -71,7 +73,7 @@ class WebGPUSingleton {
     // I hate this
     private _gBufferBindGroupLayout: GPUBindGroupLayout;
     // and this
-    private _skyBindGroupLayout : GPUBindGroupLayout;
+    private _skyBindGroupLayout: GPUBindGroupLayout;
 
 
     static get Instance(): WebGPUSingleton {
@@ -230,7 +232,7 @@ class WebGPUSingleton {
     }
 
     private createGBufferBindGroupLayout() {
-       this._gBufferBindGroupLayout = $WGPU.device.createBindGroupLayout({
+        this._gBufferBindGroupLayout = $WGPU.device.createBindGroupLayout({
             label: "G-Buffer Bind Group Layout",
             entries: [
                 {
@@ -271,15 +273,18 @@ class WebGPUSingleton {
                 {
                     binding: 0,
                     visibility: GPUShaderStage.VERTEX,
-                    buffer:{
-                        type : 'uniform',
+                    buffer: {
+                        type: 'uniform',
                         hasDynamicOffset: false
                     }
                 },
                 {
                     binding: 1,
                     visibility: GPUShaderStage.FRAGMENT,
-                    texture: {}
+                    texture: {
+                        sampleType: 'float',
+                        viewDimension: 'cube'
+                    }
                 },
                 {
                     binding: 2,
@@ -309,10 +314,10 @@ class WebGPUSingleton {
                 maxColorAttachmentBytesPerSample: 64
             }
         });
-
+        this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
         this._format = navigator.gpu.getPreferredCanvasFormat();
 
-        this.context.configure({
+        this._context.configure({
             format: this.format,
             device: $WGPU.device,
             alphaMode: 'premultiplied',
@@ -323,7 +328,7 @@ class WebGPUSingleton {
         this._mainCamera = new Camera();
         this._mainCamera.name = "Camera";
         this._mainCamera.transform.position.set(0, 0, -5)
-        this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
+
 
         this._cameraController = new CameraController(this._mainCamera);
     }
