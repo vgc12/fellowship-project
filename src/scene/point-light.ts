@@ -26,7 +26,7 @@ export class Light implements IObject {
     constructor(color: Vector3, intensity: number) {
 
         this._color = color;
-        this.intensity = intensity * 50;
+        this.intensity = intensity;
         this.guid = crypto.randomUUID();
         this.name = 'Point Light';
         this.transform = new Transform();

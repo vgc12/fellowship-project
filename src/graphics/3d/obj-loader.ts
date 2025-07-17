@@ -57,6 +57,9 @@ export class OBJLoader {
 
                 this._result = []
                 this._vertexData = [];
+                this._vertices = [];
+                this._normals = [];
+                this._uvs = [];
 
             } else if (line.startsWith('v ')) {
 

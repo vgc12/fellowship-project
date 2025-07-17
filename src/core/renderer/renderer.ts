@@ -287,7 +287,8 @@ export class Renderer {
             bindGroupLayouts: [
                 $WGPU.frameBindGroupLayout,
                 $WGPU.gBufferBindGroupLayout,
-                $WGPU.lightBindGroupLayout
+                $WGPU.lightBindGroupLayout,
+                $WGPU.skyBindGroupLayout,
             ]
         });
 
@@ -450,7 +451,7 @@ export class Renderer {
 
         this.skyPassEncoder = this.commandEncoder.beginRenderPass(skyPassDescriptor);
 
-        
+
         this.skyPassEncoder.setPipeline(this.skyPipeline);
         this.skyPassEncoder.setBindGroup(0, this.skyBindGroup);
         // Draw fullscreen quad
@@ -534,6 +535,7 @@ export class Renderer {
         this.lightingPassEncoder.setBindGroup(0, this.frameBindGroup);
         this.lightingPassEncoder.setBindGroup(1, this.gBufferBindGroup);
         this.lightingPassEncoder.setBindGroup(2, this.lightBindGroup);
+        this.lightingPassEncoder.setBindGroup(3, this.skyBindGroup);
 
         // Draw fullscreen quad
         this.lightingPassEncoder.setVertexBuffer(0, this.fullscreenVertexBuffer);

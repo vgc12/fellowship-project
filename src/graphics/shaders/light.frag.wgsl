@@ -26,12 +26,12 @@ struct LightData{
 }
 
 
-fn fresnelSchlick(F0: vec3f, viewDir: vec3f, h : vec3f ) -> vec3f {
-    return F0 + (vec3(1.0) - F0) * pow(1.0- max(dot(viewDir, h), 0.0), 5.0);
+fn fresnelSchlick(cosTheta: f32, F0: vec3f) -> vec3f {
+    return F0 + (1.0 - F0) * pow(clamp(1.0-cosTheta,0.0,1.0),5.0);
 }
 
 
-fn geometrySchlick(roughness: f32, NdotV : f32) -> f32 {
+fn geometrySchlick( NdotV : f32, roughness: f32,) -> f32 {
     let r = (roughness + 1.0);
     let k = (r * r) / 8.0;
     let num = NdotV;
@@ -41,17 +41,17 @@ fn geometrySchlick(roughness: f32, NdotV : f32) -> f32 {
 }
 
 
-fn GeometrySmith(roughness : f32, normal : vec3f, viewDir : vec3f, lightDir : vec3f) -> f32 {
+fn GeometrySmith( normal : vec3f, viewDir : vec3f, lightDir : vec3f, roughness : f32) -> f32 {
     let NdotV = max(dot(normal, viewDir), 0.0);
     let NdotL = max(dot(normal, lightDir), 0.0);
-    let ggx2 = geometrySchlick(roughness, NdotV);
-    let ggx1 = geometrySchlick(roughness, NdotL);
+    let ggx2 = geometrySchlick(NdotV, roughness);
+    let ggx1 = geometrySchlick(NdotL, roughness);
     return ggx1 * ggx2;
 
 }
 
 
-fn DistributionGGX(normal: vec3f, halfVector: vec3f, roughness: f32) -> f32 {
+fn DistributionGGX( normal: vec3f, halfVector: vec3f, roughness : f32) -> f32 {
     let a = roughness * roughness;
     let numerator = a * a;
     let NdotH = max(dot(normal, halfVector), 0.0);
@@ -71,32 +71,34 @@ fn calculatePointLight(pointLight : Light,
     metallic: f32,
     roughness: f32) -> vec3f {
 
-        var lightPosition : vec3f = pointLight.position;
-        var lightColor : vec3f = pointLight.color;
-        var lightIntensity : f32 = pointLight.intensity;
-        // directional light
+       var lightPosition : vec3f = pointLight.position;
+       var lightIntensity : f32 = pointLight.intensity ;
+       var lightColor : vec3f = pointLight.color * lightIntensity;
+
+
         var l : vec3f = normalize(lightPosition - worldPosition);
 
         var h : vec3f = normalize(l + viewDir); // Half-vector
-
-        let kS : vec3f = fresnelSchlick(F0, viewDir, h);
-        let kD : vec3f = (vec3(1.0) - kS) * (1.0 - metallic) ;
-
-        let lambert = albedo / pi;
-
-        let numerator = DistributionGGX(worldNormal, h, roughness) * GeometrySmith(roughness, worldNormal, viewDir, l) * kS;
-        let denominator = max( 4.0 * max(dot(viewDir, worldNormal), 0.0) * max(dot(l, worldNormal), 0.0) , 0.000001);
-        let specular = numerator / denominator;
-
         let lightDistance = length(lightPosition - worldPosition);
         let attenuation = 1.0 / (lightDistance * lightDistance);
-        let radiance = lightColor * lightIntensity * attenuation;
-        let brdf = kD * lambert.xyz + specular;
-        let NdotL = max(dot(worldNormal, l), 0.0);
-        let outgoingLight =  brdf * radiance * NdotL;
+        let radiance = lightColor * attenuation * lightIntensity;
 
-        return outgoingLight;
+        let ndf = DistributionGGX(worldNormal, h, roughness);
+        let g = GeometrySmith(worldNormal, h, l, roughness);
+        let f = fresnelSchlick(max(dot(h, viewDir),0.0), F0);
+
+        let kS = f;
+        var kD = vec3f(1.0) - kS;
+        kD *= max(1.0 - metallic, 0.1);
+
+        let NdotL = max(dot(worldNormal,l),0.0);
+        let numerator = ndf * g * f;
+        let denominator = 4.0 * max(dot(worldNormal, viewDir),0.0) * NdotL + 0.0001;
+        let specular = numerator/denominator;
+
+        return (kD * albedo.xyz / pi + specular) * radiance * NdotL ;
 }
+
 
 fn calculateSpotLight(
     light: Light,
@@ -107,11 +109,13 @@ fn calculateSpotLight(
     albedo : vec4f,
     metallic: f32,
     roughness: f32) -> vec3f {
-    var lightPosition : vec3f = light.position;
-    var lightColor : vec3f = light.color;
-    var lightIntensity : f32 = light.intensity;
 
-// Calculate direction from light to fragment
+    var lightPosition : vec3f = light.position;
+    var lightIntensity : f32 = light.intensity ;
+    var lightColor : vec3f = light.color * lightIntensity;
+
+
+    // Calculate direction from light to fragment
     var lightToFragment = normalize( worldPosition - lightPosition);
 
     // Compare with light's forward direction
@@ -126,58 +130,30 @@ fn calculateSpotLight(
         return vec3f(0.0); // Outside the spotlight cone, no contribution
     }
 
-    let intensity = smoothstep( outerAngle, innerAngle, theta); // Smoothstep for soft edges
+    let attenuation = smoothstep( outerAngle, innerAngle, theta); // Smoothstep for soft edges
 
-    // Rest of your lighting calculations...
-    var l : vec3f = normalize(lightPosition - worldPosition);
-    var h : vec3f = normalize(l + viewDir);
-
-    let kS : vec3f = fresnelSchlick(F0, viewDir, h);
-    let kD : vec3f = (vec3(1.0) - kS) * (1.0 - metallic);
-
-    let lambert = albedo / pi;
-
-    let numerator = DistributionGGX(worldNormal, h, roughness) * GeometrySmith(roughness, worldNormal, viewDir, l) * kS;
-    let denominator = max(4.0 * max(dot(viewDir, worldNormal), 0.0) * max(dot(l, worldNormal), 0.0), 0.000001);
-    let specular = numerator / denominator;
-
-
-    let lightDistance = length(lightPosition - worldPosition);
-    let attenuation = 1.0 / (lightDistance * lightDistance);
-    let radiance = lightColor * lightIntensity *  attenuation ; // Apply spotlight attenuation
-    let brdf = (intensity * kD * lambert.xyz) + (specular * intensity);
-    let NdotL = max(dot(worldNormal, l), 0.0);
-    let outgoingLight = brdf * radiance * NdotL ; // Apply spotlight intensity
-
-    return outgoingLight ;// Scale by spotlight intensity
-
-}
-
-
-fn calculateDirectionalLight(light: Light, worldPosition: vec3f, worldNormal: vec3f, viewDir: vec3f, F0: vec3f, albedo : vec4f, metallic: f32, roughness: f32) -> vec3f {
-    var lightColor : vec3f = light.color;
-    var lightIntensity : f32 = light.intensity;
-
-    // directional light
-    var l : vec3f = normalize(light.forward);
+     var l : vec3f = normalize(lightPosition - worldPosition);
 
     var h : vec3f = normalize(l + viewDir); // Half-vector
+    let lightDistance = length(lightPosition - worldPosition);
 
-    let kS : vec3f = fresnelSchlick(F0, viewDir, h);
-    let kD : vec3f = (vec3(1.0) - kS) * (1.0 - metallic) ;
+    let radiance = lightColor * attenuation * lightIntensity;
 
-    let lambert = albedo / pi;
+    let ndf = DistributionGGX(worldNormal, h, roughness);
+    let g = GeometrySmith(worldNormal, h, l, roughness);
+    let f = fresnelSchlick(max(dot(h, viewDir),0.0), F0);
 
-    let numerator = DistributionGGX(worldNormal, h, roughness) * GeometrySmith(roughness, worldNormal, viewDir, l) * kS;
-    let denominator = max( 4.0 * max(dot(viewDir, worldNormal), 0.0) * max(dot(l, worldNormal), 0.0) , 0.000001);
-    let specular = numerator / denominator;
+    let kS = f;
+    var kD = vec3f(1.0) - kS;
+    kD *= max(1.0 - metallic, 0.1);
 
-    let radiance = lightColor * lightIntensity;
-    let brdf = kD * lambert.xyz + specular;
-    let NdotL = max(dot(worldNormal, l), 0.0);
-    let outgoingLight =  brdf * radiance * NdotL;
+    let NdotL = max(dot(worldNormal,l),0.0);
+    let numerator = ndf * g * f;
+    let denominator = 4.0 * max(dot(worldNormal, viewDir),0.0) * NdotL + 0.0001;
+    let specular = numerator/denominator;
 
-    return outgoingLight;
+    return (kD * albedo.xyz / pi + specular) * radiance * NdotL ;
+
 }
 
 @group(0) @binding(0) var<uniform> camera: Transform;
@@ -191,8 +167,8 @@ fn calculateDirectionalLight(light: Light, worldPosition: vec3f, worldNormal: ve
 @binding(0) @group(2) var<storage, read> lights: array<Light>;
 @binding(1) @group(2) var<uniform> lightData: LightData;
 
-@group(0) @binding(1) var skyTexture: texture_cube<f32>;
-@group(0) @binding(2) var skySampler: sampler;
+@group(3) @binding(1) var skyTexture: texture_cube<f32>;
+@group(3) @binding(2) var skySampler: sampler;
 
 
 
@@ -209,8 +185,8 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
 
     let albedo = textureLoad(gBufferAlbedo, c, 0); // Sample the albedo texture
     let metallic = textureLoad(gBufferMetallicRoughnessAO, c, 0).g; // Sample the metallic texture
-    let roughness = textureLoad(gBufferMetallicRoughnessAO, c, 0).r; // Sample the roughness texture
-    let ao = textureLoad(gBufferMetallicRoughnessAO, c, 0).b; // Sample the ambient occlusion texture
+    let roughness = max(textureLoad(gBufferMetallicRoughnessAO, c, 0).r, 0.04); // Sample the roughness texture
+   // let ao = textureLoad(gBufferMetallicRoughnessAO, c, 0).g; // Sample the ambient occlusion texture
     let worldNormal = textureLoad(gBufferNormal, c, 0).xyz; // Sample the normal texture
     let worldPosition = textureLoad(gBufferPosition, c, 0).xyz; // Sample the world position texture
 
@@ -218,6 +194,7 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
     let F0 : vec3f = mix(vec3(0.04), albedo.xyz, metallic);
     var L0 : vec3f = vec3f(0.0);
     var v : vec3f = normalize(camera.cameraPosition.xyz - worldPosition);
+
 
 
     for (var i = 0; i < lightData.length; i++) {
@@ -229,10 +206,7 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
                    L0 +=  calculatePointLight(light, worldPosition, worldNormal, v, F0, albedo,  metallic, roughness);
                 }
                 case 1: {
-                  L0 +=  calculateSpotLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness);
-                }
-                case 2: {
-                   L0 +=  calculateDirectionalLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness);
+                   L0 +=  calculateSpotLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness);
                 }
                 default :
                 {
@@ -245,12 +219,14 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
 
     let eyeToSurfaceDir = worldPosition - camera.cameraPosition.xyz;
 
+    let fresnel = pow(1.0 - max(dot(normalize(v), worldNormal), 0.0), 5.0);
+
     let reflectionDir = reflect(eyeToSurfaceDir, worldNormal);
 
+    let reflect = textureSample(skyTexture,  skySampler, reflectionDir );
 
-
-    let ambient = albedo.xyz * ao * 0.1; // Ambient light contribution
-    var color =  L0 + vec3f(emissivity); // Combine all contributions
+    let ambient = mix(albedo.xyz *0.01, reflect.xyz, fresnel); // Ambient light contribution
+    var color =  L0 + vec3f(emissivity) + ambient; // Combine all contributions
     color = color / (color + vec3f(1.0)); // Simple tone mapping
     color = pow(color, vec3f(1.0 / 2.2)); // Gamma correction
     return vec4f(color,1.0);
