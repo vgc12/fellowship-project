@@ -11,6 +11,25 @@ import {Light} from "@/scene/point-light.ts";
 
 
 class WebGPUSingleton {
+    get lightShadowInformationBindGroups(): Map<string, GPUBindGroup> {
+        return this._lightShadowInformationBindGroups;
+    }
+
+    set lightShadowInformationBindGroups(value: Map<string, GPUBindGroup>) {
+        this._lightShadowInformationBindGroups = value;
+    }
+
+
+    get shadowDepthTextures(): Map<string, GPUTexture> {
+        return this._shadowDepthTextures;
+    }
+
+    shadowInformationBindGroupLayout: GPUBindGroupLayout;
+
+    get shadowBindGroupLayout(): GPUBindGroupLayout {
+        return this._shadowBindGroupLayout;
+    }
+
     get skyBindGroupLayout(): GPUBindGroupLayout {
         return this._skyBindGroupLayout;
     }
@@ -24,15 +43,13 @@ class WebGPUSingleton {
     }
 
 
-    private _lightBindGroupLayout: GPUBindGroupLayout;
-
-    private _lights: Light[];
-
     get lights() {
         return this._lights;
     }
 
     addLight(light: Light) {
+        this.createShadowCubeMap(light);
+        this.setUpShadowBindGroup(light)
         this._lights.push(light);
     }
 
@@ -75,6 +92,31 @@ class WebGPUSingleton {
     // and this
     private _skyBindGroupLayout: GPUBindGroupLayout;
 
+    private _lightBindGroupLayout: GPUBindGroupLayout;
+
+    private _shadowBindGroupLayout: GPUBindGroupLayout;
+
+    private _shadowDepthTextures: Map<string, GPUTexture> = new Map();
+    private _lightShadowInformationBindGroups: Map<string, GPUBindGroup> = new Map();
+
+    private shadowMapSize: number = 1024;
+
+    private _lights: Light[];
+
+    private createShadowCubeMap(light: Light) {
+
+
+        const shadowDepthTexture = $WGPU.device.createTexture({
+            label: `Shadow Depth Texture ${light.guid}`,
+            size: [this.shadowMapSize, this.shadowMapSize, 6],
+            format: 'depth32float',
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+            dimension: '2d'
+        });
+
+        this._shadowDepthTextures.set(light.guid, shadowDepthTexture);
+
+    }
 
     static get Instance(): WebGPUSingleton {
         if (!this._instance) {
@@ -156,6 +198,97 @@ class WebGPUSingleton {
         this.createLightBindGroupLayout();
         this.createGBufferBindGroupLayout();
         this.createSkyBindGroupLayout();
+        this.createShadowBindGroupLayout();
+        this.createShadowInformationBindGroupLayout();
+    }
+
+    createShadowInformationBindGroupLayout() {
+        this.shadowInformationBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            label: "Shadow Information Bind Group Layout",
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: {
+                    viewDimension: "cube",
+                    sampleType: 'depth'
+                },
+            },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: {
+                        type: 'non-filtering'
+                    }
+                }]
+        })
+    }
+
+
+    setUpShadowBindGroup(light: Light) {
+
+        const viewDescriptor: GPUTextureViewDescriptor = {
+            format: "depth32float",
+            aspect: "all",
+            dimension: "cube",
+            baseMipLevel: 0,
+            baseArrayLayer: 0,
+            mipLevelCount: 1,
+            arrayLayerCount: 6,
+        }
+        const samplerDescriptor: GPUSamplerDescriptor = {
+            addressModeU: "repeat",
+            addressModeV: "repeat",
+        };
+        const sampler = $WGPU.device.createSampler(samplerDescriptor)
+
+        const bindGroup = $WGPU.device.createBindGroup({
+            layout: this.shadowInformationBindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: (this.shadowDepthTextures.get(light.guid) as GPUTexture).createView(viewDescriptor)
+                },
+                {
+                    binding: 1,
+                    resource: sampler
+                }
+
+
+            ]
+        })
+        this._lightShadowInformationBindGroups.set(light.guid, bindGroup);
+        //this.lightShadowInformationBindGroups.
+    }
+
+    private createShadowBindGroupLayout() {
+        this._shadowBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            label: "Shadow Bind Group Layout",
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {
+                    type: "uniform"
+                }
+            },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'read-only-storage',
+                        hasDynamicOffset: false
+                    }
+                },
+                {
+                    binding: 2,
+                    visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: "uniform"
+                    }
+                }
+
+
+            ]
+        })
     }
 
     private createLightBindGroupLayout() {
@@ -232,6 +365,7 @@ class WebGPUSingleton {
     }
 
     private createGBufferBindGroupLayout() {
+
         this._gBufferBindGroupLayout = $WGPU.device.createBindGroupLayout({
             label: "G-Buffer Bind Group Layout",
             entries: [

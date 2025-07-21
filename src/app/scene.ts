@@ -40,11 +40,11 @@ export class Scene {
         await Material.default.initialize();
 
         this.pointLight = new PointLight(new Vector3(1, 1, 1), 2);
-        this.spotLight = new SpotLight(new Vector3(1, 1, 1), 2, 4, 60);
+        //this.spotLight = new SpotLight(new Vector3(1, 1, 1), 2, 4, 60);
 
-        this.spotLight.transform.position.set(0, 3, 4)
+        // this.spotLight.transform.position.set(0, 3, 4)
 
-        Quaternion.euler(30, 0, 0, this.spotLight.transform.rotation);
+        //Quaternion.euler(30, 0, 0, this.spotLight.transform.rotation);
 
 
         await this.renderer.initialize();

@@ -20,6 +20,8 @@ export class ShaderBuilder {
 
     private _bufferLayouts: GPUVertexBufferLayout[];
 
+    private _label: string;
+
     constructor() {
 
         this.clear();
@@ -30,6 +32,7 @@ export class ShaderBuilder {
         this._vertexCode = '';
         this._fragmentCode = '';
         this._colorTargetStates = [];
+        this._label = "";
     }
 
     addVertexBufferLayout(vertexBuffer: GPUVertexBufferLayout) {
@@ -56,13 +59,20 @@ export class ShaderBuilder {
         return this;
     }
 
+    addLabel(label: string) {
+        this._label = label;
+        return this;
+    }
+
 
     build(): Shader {
         this._fragmentModule = $WGPU.device.createShaderModule({
+            label: this._label + " fragment",
             code: this._fragmentCode,
         });
 
         this._vertexModule = $WGPU.device.createShaderModule({
+            label: this._label + " vertex",
             code: this._vertexCode,
         });
 

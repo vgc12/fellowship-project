@@ -30,6 +30,8 @@ export class Light implements IObject {
         this.guid = crypto.randomUUID();
         this.name = 'Point Light';
         this.transform = new Transform();
+        this.range = 25;
+
         $WGPU.addLight(this);
         $WGPU.addObject(this);
     }
@@ -41,7 +43,9 @@ export class Light implements IObject {
     guid: string;
     name: string;
     transform: Transform;
-    lightType: LightType
+    lightType: LightType;
+    range: number;
+
 }
 
 

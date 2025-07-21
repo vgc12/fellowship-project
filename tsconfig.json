@@ -10,7 +10,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "strictPropertyInitialization": false,
-"esModuleInterop": true,
+    "esModuleInterop": true,
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

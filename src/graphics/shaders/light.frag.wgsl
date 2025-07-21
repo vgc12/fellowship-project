@@ -1,20 +1,12 @@
 const pi: f32 = 3.1415926535897932384626433832795;
 
-struct Transform{
-
-    view: mat4x4<f32>,
-    projection: mat4x4<f32>,
-    cameraPosition: vec4f,
-
-
-}
 
 struct Light{
     position: vec3f,
     intensity: f32,
     color: vec3f,
     lightType: f32,
-    params: vec4f, // x: radius / width, y: height, z: spotangle, w: unused
+    params: vec4f, // x: radius / width, y: height, z: unused w: range
     up:vec3f,
     right:vec3f,
     forward: vec3f,
@@ -22,7 +14,22 @@ struct Light{
 }
 
 struct LightData{
+    cameraPosition: vec3f,
     length: i32,
+}
+
+fn sampleShadowCube(worldPos: vec3<f32>, lightPos: vec3<f32>, farPlane: f32) -> f32 {
+    let fragToLight =  lightPos - worldPos;
+    let currentDepth = length(fragToLight) / farPlane;
+
+    // Sample the shadow cube map
+   let shadowDepth = textureSample(shadowCubeMap, shadowDepthSampler, fragToLight);
+
+    // Add bias to prevent shadow acne
+    let bias = 0.005;
+    let shadow = select(0.0, 1.0, currentDepth - bias > shadowDepth);
+
+    return shadowDepth;
 }
 
 
@@ -56,8 +63,6 @@ fn DistributionGGX( normal: vec3f, halfVector: vec3f, roughness : f32) -> f32 {
     let numerator = a * a;
     let NdotH = max(dot(normal, halfVector), 0.0);
     let denominator = pow((NdotH * NdotH) * (numerator - 1.0) + 1.0, 2.0) * pi;
-
-
     return numerator / denominator;
 }
 
@@ -81,6 +86,7 @@ fn calculatePointLight(pointLight : Light,
         var h : vec3f = normalize(l + viewDir); // Half-vector
         let lightDistance = length(lightPosition - worldPosition);
         let attenuation = 1.0 / (lightDistance * lightDistance);
+        let shadowFactor = 1.0- sampleShadowCubePCF(worldPosition, lightPosition, 2);
         let radiance = lightColor * attenuation * lightIntensity;
 
         let ndf = DistributionGGX(worldNormal, h, roughness);
@@ -96,7 +102,7 @@ fn calculatePointLight(pointLight : Light,
         let denominator = 4.0 * max(dot(worldNormal, viewDir),0.0) * NdotL + 0.0001;
         let specular = numerator/denominator;
 
-        return (kD * albedo.xyz / pi + specular) * radiance * NdotL ;
+        return (kD * albedo.xyz / pi + specular) * radiance * NdotL * shadowFactor;
 }
 
 
@@ -156,7 +162,8 @@ fn calculateSpotLight(
 
 }
 
-@group(0) @binding(0) var<uniform> camera: Transform;
+@group(0) @binding(0) var shadowCubeMap: texture_depth_cube;
+@group(0) @binding(1) var shadowDepthSampler : sampler;
 
 @group(1) @binding(0) var gBufferAlbedo: texture_2d<f32>;
 @group(1) @binding(1) var gBufferNormal: texture_2d<f32>;
@@ -169,6 +176,8 @@ fn calculateSpotLight(
 
 @group(3) @binding(1) var skyTexture: texture_cube<f32>;
 @group(3) @binding(2) var skySampler: sampler;
+
+
 
 
 
@@ -193,7 +202,7 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
     let emissivity : f32 = 0.0;
     let F0 : vec3f = mix(vec3(0.04), albedo.xyz, metallic);
     var L0 : vec3f = vec3f(0.0);
-    var v : vec3f = normalize(camera.cameraPosition.xyz - worldPosition);
+    var v : vec3f = normalize(lightData.cameraPosition - worldPosition);
 
 
 
@@ -201,23 +210,23 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
         let light = lights[i];
 
          switch (i32(light.lightType)) {
-                case 0: {
+            case 0: {
 
-                   L0 +=  calculatePointLight(light, worldPosition, worldNormal, v, F0, albedo,  metallic, roughness);
-                }
-                case 1: {
-                   L0 +=  calculateSpotLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness);
-                }
-                default :
-                {
-                   L0 += vec3f(0.0);
-                }
+               L0 +=  calculatePointLight(light, worldPosition, worldNormal, v, F0, albedo,  metallic, roughness);
+            }
+            case 1: {
+               L0 +=  calculateSpotLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness);
+            }
+            default :
+            {
+               L0 += vec3f(0.0);
+            }
         }
 
 
     }
 
-    let eyeToSurfaceDir = worldPosition - camera.cameraPosition.xyz;
+    let eyeToSurfaceDir = worldPosition - lightData.cameraPosition;
 
     let fresnel = pow(1.0 - max(dot(normalize(v), worldNormal), 0.0), 5.0);
 
@@ -225,10 +234,15 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
 
     let reflect = textureSample(skyTexture,  skySampler, reflectionDir );
 
+    //let shadowFactor =  sampleShadowCubePCF(worldPosition, lights[0].position, 25);
+    let fragToLight =  lights[0].position - worldPosition ;
+    let shadowFactor = textureSample(shadowCubeMap, shadowDepthSampler, fragToLight);
     let ambient = mix(albedo.xyz *0.01, reflect.xyz, fresnel); // Ambient light contribution
     var color =  L0 + vec3f(emissivity) + ambient; // Combine all contributions
     color = color / (color + vec3f(1.0)); // Simple tone mapping
     color = pow(color, vec3f(1.0 / 2.2)); // Gamma correction
+
+    let o = vec3f(shadowFactor);
     return vec4f(color,1.0);
 
 

@@ -31,7 +31,7 @@ export class SkyMaterial {
         const samplerDescriptor: GPUSamplerDescriptor = {
             addressModeU: "repeat",
             addressModeV: "repeat",
-            magFilter: "linear",
+            magFilter: "nearest",
             minFilter: "nearest",
             mipmapFilter: "nearest",
             maxAnisotropy: 1

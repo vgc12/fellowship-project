@@ -8,32 +8,40 @@ export class Input {
     set sensitivity(value: number) {
         this._sensitivity = value;
     }
+
     get scrollMovementY(): number {
         return this._scrollMovementY;
     }
+
     get movementY(): number {
         return this._movementY;
     }
+
     get movementX(): number {
         return this._movementX;
     }
+
     get canvas(): HTMLCanvasElement {
         return this._canvas;
     }
+
     get altKeyPressed(): boolean {
         return this._altKeyPressed;
     }
+
     get pointerLocked(): boolean {
         return this._pointerLocked;
     }
+
     get shiftKeyPressed(): boolean {
         return this._shiftKeyPressed;
     }
+
     private _shiftKeyPressed: boolean = false;
+
     get middleMouseButtonPressed(): boolean {
         return this._middleMouseButtonPressed;
     }
-
 
 
     private _altKeyPressed: boolean = false;
@@ -46,14 +54,13 @@ export class Input {
     private _sensitivity: number = 50;
 
 
-
     private static _instance: Input;
 
     initialize() {
 
         this._canvas = $WGPU.canvas
 
-        let mouseTimer = 0;
+        let mouseTimer: number = 0;
         document.onmousemove = (e) => {
             this._movementX = e.movementX;
             this._movementY = e.movementY;
@@ -80,18 +87,16 @@ export class Input {
         document.onkeyup = async (e) => {
             this._altKeyPressed = e.altKey;
             this._shiftKeyPressed = e.shiftKey;
-            this.unlockPointerFromCanvas() ;
+            this.unlockPointerFromCanvas();
         }
 
         this._canvas.onmousedown = (e) => {
-            if( e.button === 1) { // Middle mouse button
+            if (e.button === 1) { // Middle mouse button
                 this._middleMouseButtonPressed = true;
 
                 this.lockPointerToCanvas();
             }
         }
-
-
 
 
         document.onmouseup = (e) => {
@@ -100,10 +105,8 @@ export class Input {
                 this.unlockPointerFromCanvas();
             }
         }
-
         let mouseWheelTimer = 0;
-        this._canvas.onwheel = (ev) =>
-        {
+        this._canvas.onwheel = (ev) => {
             this._scrollMovementY = ev.deltaY;
             clearTimeout(mouseWheelTimer);
 
@@ -111,7 +114,6 @@ export class Input {
                 this._scrollMovementY = 0;
             }, 10);
         }
-
 
     }
 
