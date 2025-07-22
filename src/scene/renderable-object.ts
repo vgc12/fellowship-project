@@ -4,8 +4,8 @@ import type {IRenderable} from "./IRenderable.ts";
 import  {Transform } from "../core/math/transform.ts";
 import {type Mat4, mat4} from "wgpu-matrix";
 import {convertToRadians} from "../core/math/math-util.ts";
-import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 import { Material } from "@/graphics/3d/material.ts";
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 export class RenderableObject implements IObject, IRenderable {
     get guid(): string {
@@ -50,8 +50,8 @@ export class RenderableObject implements IObject, IRenderable {
 
         mat4.translate(this._modelMatrix, this._transform.position.toArray, this._modelMatrix);
         this._mesh = new Mesh();
-        $WGPU.addRenderableObject(this);
-        $WGPU.addObject(this);
+        $SCENE_MANAGER.currentScene.addRenderableObject(this);
+        $SCENE_MANAGER.currentScene.addObject(this);
 
         this.material = Material.default;
 

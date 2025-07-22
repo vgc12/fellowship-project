@@ -10,7 +10,7 @@ import {ShaderBuilder} from "@/graphics/shader-utils/shader-builder.ts";
 import {Light, lightType} from "@/scene/point-light.ts";
 import type {SpotLight} from "@/scene/spot-light.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
-
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 export class Renderer {
 
@@ -350,12 +350,12 @@ export class Renderer {
     private writeLightBuffer() {
         const lightArray = this.createLightArray();
         $WGPU.device.queue.writeBuffer(this.lightStorageBuffer, 0, lightArray as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.lightUniformBuffer, 0, new Int32Array([$WGPU.lights.length]));
+        $WGPU.device.queue.writeBuffer(this.lightUniformBuffer, 0, new Int32Array([$SCENE_MANAGER.currentScene.lights.length]));
     }
 
     private createModelMatrixArray() {
-        for (let renderableIndex = 0; renderableIndex < $WGPU.renderableObjects.length; renderableIndex++) {
-            const renderable = $WGPU.renderableObjects[renderableIndex];
+        for (let renderableIndex = 0; renderableIndex < $SCENE_MANAGER.currentScene.renderableObjects.length; renderableIndex++) {
+            const renderable = $SCENE_MANAGER.currentScene.renderableObjects[renderableIndex];
             for (let MATRIX_POSITION = 0; MATRIX_POSITION < renderable.modelMatrix.length; MATRIX_POSITION++) {
                 this.modelMatrices[16 * renderableIndex + MATRIX_POSITION] = renderable.modelMatrix[MATRIX_POSITION];
             }
@@ -376,7 +376,7 @@ export class Renderer {
             FORWARD_VECTOR: 20
         } as const;
 
-        const lights = $WGPU.lights;
+        const lights = $SCENE_MANAGER.currentScene.lights;
         const lightArray = new Float32Array(LIGHT_STRIDE * lights.length);
 
         function setVector(vector: number[], offset: number, padding: number = 0) {
@@ -390,7 +390,7 @@ export class Renderer {
 
         function setLightParams(offset: number, light: Light) {
             lightArray.fill(0, offset, offset + 4);
-            if (light.lightType === lightType.AREA) {
+            if (light.lightType === lightType.SPOT) {
                 const l = light as SpotLight;
                 lightArray[offset] = l.innerAngleRadians;
                 lightArray[offset + 1] = l.outerAngleRadians;
@@ -501,7 +501,7 @@ export class Renderer {
         this.geometryPassEncoder.setBindGroup(0, this.frameBindGroup);
 
         let objectsDrawn = 0;
-        $WGPU.renderableObjects.forEach((renderable) => {
+        $SCENE_MANAGER.currentScene.renderableObjects.forEach((renderable) => {
             this.geometryPassEncoder.setBindGroup(1, renderable.material.bindGroup);
 
             if (renderable.mesh.indexBuffer && renderable.mesh.indices?.length !== 0) {

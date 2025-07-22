@@ -3,14 +3,16 @@
 
 import {Camera} from "@/scene/Camera.ts";
 
-import {type RenderableObject} from "@/scene/renderable-object.ts";
-import type {IObject} from "@/scene/IObject.ts";
 
 import {CameraController} from "@/Controls/camera-controller.ts";
 import {Light} from "@/scene/point-light.ts";
+import {Renderer} from "@/core/renderer/renderer.ts";
 
 
 class WebGPUSingleton {
+    get renderer(): Renderer {
+        return this._renderer;
+    }
     get skyBindGroupLayout(): GPUBindGroupLayout {
         return this._skyBindGroupLayout;
     }
@@ -28,9 +30,6 @@ class WebGPUSingleton {
 
     private _lights: Light[];
 
-    get lights() {
-        return this._lights;
-    }
 
     addLight(light: Light) {
         this._lights.push(light);
@@ -53,8 +52,6 @@ class WebGPUSingleton {
     private _adapter: GPUAdapter | null = null;
     private _canvas: HTMLCanvasElement;
     private _windowDimensions = {width: 0, height: 0};
-    private _renderableObjects: RenderableObject[] = [];
-    private _objects: IObject[] = [];
 
     private _mainCamera: Camera | null = null;
     private _cameraController: CameraController;
@@ -97,13 +94,8 @@ class WebGPUSingleton {
         return this._vertexBufferLayout;
     }
 
-    addObject(object: IObject) {
-        this._objects.push(object);
-    }
 
-    get objects(): IObject[] {
-        return this._objects;
-    }
+
 
 
     get device(): GPUDevice {
@@ -133,9 +125,7 @@ class WebGPUSingleton {
         return this._adapter;
     }
 
-    get renderableObjects(): RenderableObject[] {
-        return this._renderableObjects;
-    }
+    private _renderer = new Renderer();
 
     async initialize(): Promise<void> {
         if (this._device) return;
@@ -148,6 +138,7 @@ class WebGPUSingleton {
 
         this.initializeBindGroupLayouts();
 
+        await this._renderer.initialize();
     }
 
     private initializeBindGroupLayouts() {
@@ -366,10 +357,6 @@ class WebGPUSingleton {
         }
     }
 
-    addRenderableObject(object: RenderableObject) {
-        this._renderableObjects.push(object);
-
-    }
 
 
 }

@@ -228,7 +228,7 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
     let ambient = mix(albedo.xyz *0.01, reflect.xyz, fresnel); // Ambient light contribution
     var color =  L0 + vec3f(emissivity) + ambient; // Combine all contributions
     color = color / (color + vec3f(1.0)); // Simple tone mapping
-    color = pow(color, vec3f(1.0 / 2.2)); // Gamma correction
+    color = pow(color, vec3f(1.0 / 1.3)); // Gamma correction
     return vec4f(color,1.0);
 
 

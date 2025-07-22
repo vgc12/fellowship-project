@@ -1,67 +1,71 @@
-﻿import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
-import {$TIME} from "../utils/time.ts";
-import {Material} from "@/graphics/3d/material.ts";
-import {$INPUT} from "@/Controls/input.ts";
-import {Vector3} from "@/core/math/vector3.ts";
-import {Renderer} from "@/core/renderer/renderer.ts";
-import {PointLight} from "@/scene/point-light.ts";
-import {SpotLight} from "@/scene/spot-light.ts";
-import {Quaternion} from "@/core/math/quaternion.ts";
+﻿import {Renderer} from "@/core/renderer/renderer.ts";
+import type {IObject} from "@/scene/IObject.ts";
+import type {IRenderable} from "@/scene/IRenderable.ts";
+import  {type RenderableObject} from "@/scene/renderable-object.ts";
+import  {type Light} from "@/scene/point-light.ts";
 
 
-export class Scene {
 
-    renderer: Renderer;
 
-    constructor() {
+
+export abstract class Scene {
+    get lights(): Light[] {
+        return this._lights;
+    }
+    get renderableObjects(): IRenderable[] {
+        return this._renderableObjects;
+    }
+
+    get objects(): IObject[] {
+        return this._objects;
+    }
+
+    addRenderableObject(renderable: RenderableObject) {
+        this._renderableObjects.push(renderable);
+    }
+
+
+
+    addObject(object: IObject) {
+        this._objects.push(object);
+    }
+
+    addLight(light: Light) {
+        this._lights.push(light);
+    }
+
+
+
+
+    protected renderer: Renderer;
+    private _objects: IObject[] = [];
+    private _renderableObjects: RenderableObject[];
+    private _lights: Light[];
+
+
+
+
+    protected constructor() {
         this.renderer = new Renderer();
+        this._objects = [];
+        this._renderableObjects = [];
+        this._lights = [];
 
     }
 
-    pointLight: PointLight;
-    spotLight: SpotLight;
-
-    async initialize() {
-        await $WGPU.initialize();
-        $INPUT.initialize();
-
-        Material.default = new Material();
-
-        const albedoFile = await Material.getFile('./img/default_albedo.png');
-        const roughnessFile = await Material.getFile('./img/default_roughness.png');
-        const metallicFile = await Material.getFile('./img/default_metallic.png');
-        const normalFile = await Material.getFile('./img/default_normal.png');
-
-        Material.default.albedoFile = albedoFile
-        Material.default.roughnessFile = roughnessFile;
-        Material.default.metallicFile = metallicFile;
-        Material.default.normalFile = normalFile;
-
-        await Material.default.initialize();
-
-        this.pointLight = new PointLight(new Vector3(1, 1, 1), 2);
-        this.spotLight = new SpotLight(new Vector3(1, 1, 1), 2, 4, 60);
-
-        this.spotLight.transform.position.set(0, 3, 4)
-
-        Quaternion.euler(30, 0, 0, this.spotLight.transform.rotation);
-
-
-        await this.renderer.initialize();
-        $TIME.initialize();
-
-
-    }
+    protected abstract updateScene() : void;
+    abstract cleanup() : void;
 
     run = async () => {
 
 
-        $WGPU.objects.forEach(o => {
+        this.objects.forEach(o => {
             o.update()
 
         });
 
         this.renderer.update();
+
 
         requestAnimationFrame(this.run)
 
@@ -71,4 +75,50 @@ export class Scene {
 
 }
 
+export class SandBoxScene extends Scene {
+    cleanup(): void {
+
+    }
+
+    constructor() {
+        super();
+
+    }
+
+    protected updateScene(): void {
+
+    }
+
+}
+
+export class TVScene extends Scene {
+    cleanup(): void {
+
+    }
+
+    constructor() {
+        super();
+
+    }
+
+    protected updateScene(): void {
+
+    }
+
+}
+
+export class SpaceScene extends Scene {
+    cleanup(): void {
+
+    }
+
+    constructor() {
+        super();
+
+    }
+
+    protected updateScene(): void {
+
+    }
+}
 

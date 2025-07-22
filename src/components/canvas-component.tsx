@@ -1,5 +1,9 @@
 import {useEffect, useRef} from "react";
-import {Scene} from "../app/scene.ts";
+import {SandBoxScene } from "../app/scene.ts";
+import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+import {$INPUT} from "@/Controls/input.ts";
+import {$TIME} from "@/utils/time.ts";
+import {Material} from "@/graphics/3d/material.ts";
 
 export function CanvasComponent() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -9,7 +13,18 @@ export function CanvasComponent() {
         const initializeScene = async () => {
             // This runs AFTER the component has rendered
             if (canvasRef.current) {
-                const app = new Scene();
+                await $WGPU.initialize();
+                $INPUT.initialize();
+                $TIME.initialize();
+
+                Material.default = new Material();
+                Material.default.albedoFile = await Material.getFile('./img/default_albedo.png');
+                Material.default.roughnessFile = await Material.getFile('./img/default_roughness.png');
+                Material.default.metallicFile = await Material.getFile('./img/default_metallic.png');
+                Material.default.normalFile = await Material.getFile('./img/default_normal.png');
+                await Material.default.initialize();
+
+                const app = new SandBoxScene();
                 await app.initialize();
                 await app.run();
             }

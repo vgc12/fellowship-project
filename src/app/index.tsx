@@ -1,9 +1,17 @@
 import ReactDOM from 'react-dom/client';
 import {SceneObjectListComponent} from "../components/scene-object-list-component.tsx";
-import {type ChangeEvent, useState, useCallback} from "react";
+import {type ChangeEvent, useState, useCallback, useEffect, useRef} from "react";
 import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
 import {CanvasComponent} from "@/components/canvas-component.tsx";
+
+import {useSceneManager} from "@/components/use-scene-manager.tsx";
+import type {IObject} from "@/scene/IObject.ts";
+import {SceneNavigator} from "@/components/scene-navigator-component.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+import {$INPUT} from "@/Controls/input.ts";
+import {$TIME} from "@/utils/time.ts";
+import {Material} from "@/graphics/3d/material.ts";
+import {SandBoxScene} from "@/app/scene.ts";
 
 
 function App () {
@@ -24,14 +32,52 @@ function App () {
         }
     }, [loadedFiles]);
 
+    const {
+        currentScene,
+        isLoading,
+
+        switchScene,
+
+    } = useSceneManager();
+
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+
+    useEffect(() => {
+        const initializeScene = async () => {
+
+            if (canvasRef.current) {
+                await $WGPU.initialize();
+                $INPUT.initialize();
+                $TIME.initialize();
+
+                Material.default = new Material();
+                Material.default.albedoFile = await Material.getFile('./img/default_albedo.png');
+                Material.default.roughnessFile = await Material.getFile('./img/default_roughness.png');
+                Material.default.metallicFile = await Material.getFile('./img/default_metallic.png');
+                Material.default.normalFile = await Material.getFile('./img/default_normal.png');
+                await Material.default.initialize();
+            }
+        };
+
+        initializeScene();
+    }, []);
 
     return (<div id='app' className={" bg-gray-900  "}>
         <div className={"m-4 flex p-4"}>
-            <CanvasComponent></CanvasComponent>
+
+            <div className={"mr-4 "}>
+                <canvas className={""} ref={canvasRef} width={1200} height={600} id="canvas-main"/>
+            </div>
+
         <div className={"flex-1/2 "}>
 
 
-            <SceneObjectListComponent objects={$WGPU.objects}></SceneObjectListComponent>
+            <SceneObjectListComponent objects={currentScene?.objects as IObject[]}></SceneObjectListComponent>
+            <SceneNavigator activeScene={'SandBoxScene'} isLoading={false} setActiveScene={(id: string) => {
+               switchScene(id);
+                } }></SceneNavigator>
             <div className={"text-center p-4"}>
                 <label   className={`
                     text-white bg-gray-700 hover:bg-gray-500 focus:outline-none 

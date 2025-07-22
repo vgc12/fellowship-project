@@ -1,12 +1,12 @@
 ﻿import {type Vector3} from "@/core/math/vector3.ts";
 import type {IObject} from "@/scene/IObject.ts";
 import {Transform} from "@/core/math/transform.ts";
-import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 
 export const lightType = {
     POINT: 0,
-    AREA: 1
+    SPOT: 1
 } as const;
 
 export type LightType = typeof lightType[keyof typeof lightType];
@@ -30,8 +30,8 @@ export class Light implements IObject {
         this.guid = crypto.randomUUID();
         this.name = 'Point Light';
         this.transform = new Transform();
-        $WGPU.addLight(this);
-        $WGPU.addObject(this);
+        $SCENE_MANAGER.currentScene.addLight(this);
+        $SCENE_MANAGER.currentScene.addObject(this);
     }
 
     update() {

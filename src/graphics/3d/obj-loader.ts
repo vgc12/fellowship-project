@@ -17,7 +17,7 @@ export class OBJLoader {
     private static _uvs: Vec2[] = [];
     private static _normals: Vec2[] = [];
     private static _result: number[] = [];
-    private static _vertexData: IVertexData[] = []; // Store structured vertex data
+    private static _vertexData: IVertexData[] = [];
 
 
     static async loadMeshes(file: File) {
@@ -57,13 +57,12 @@ export class OBJLoader {
 
                 this._result = []
                 this._vertexData = [];
-                this._vertices = [];
-                this._normals = [];
-                this._uvs = [];
+
 
             } else if (line.startsWith('v ')) {
 
                 this.processVertex(line)
+
             } else if (line.startsWith('f ')) {
 
                 this.processFace(line);
@@ -81,15 +80,23 @@ export class OBJLoader {
 
         }
 
+        this._vertices = [];
+        this._uvs = [];
+        this._normals = [];
+        this._result = [];
+        this._vertexData = [];
     }
 
+    // Fixes bug if there are multiple spaces in the line.
+    // Returns an array of numbers from the line.
+    private static getNumberArray(line: string) {
+        return line.match(/-*\d*\.\d*/g)?.map(parseFloat) || [];
+    }
 
     // Processes a vertex line, which starts with 'v' and contains 3 float values.
     static processVertex(vertex: string) {
-
-        const vertexParts = vertex.replace("\n", "").split(' ').slice(1);
-
-        this._vertices.push(vec3.fromValues(parseFloat(vertexParts[0]), parseFloat(vertexParts[1]), parseFloat(vertexParts[2])));
+        const vertexParts = this.getNumberArray(vertex);
+        this._vertices.push(vec3.fromValues(vertexParts[0], vertexParts[1], vertexParts[2]));
     }
 
     // Pairs a vertex with its proper UV coordinate.
@@ -98,6 +105,7 @@ export class OBJLoader {
          * 1/1/1
          * where the first number is the vertex index,
          * the second number is the uv index,
+         * and the third number is the normal index.
          */
         const descriptor = vertexDescription.split('/');
 
@@ -136,9 +144,15 @@ export class OBJLoader {
 
         // Process each triangle (every 3 vertices)
         for (let i = 0; i < vertices.length; i += 3) {
+
+            if( i + 2 >= vertices.length) {
+                console.warn(`Skipping incomplete triangle at index ${i}. Not enough vertices.`);
+                continue; // Skip if there are not enough vertices for a triangle
+            }
+
             const v0 = vertices[i];
-            const v1 = vertices[i + 1];
-            const v2 = vertices[i + 2];
+            const v1 = vertices[i+1];
+            const v2 = vertices[i+2];
 
             // Position deltas
             const edge0 = vec3.sub(v1.position, v0.position);
@@ -172,13 +186,11 @@ export class OBJLoader {
                 inverseDeterminant
             );
 
-            //const normal = vec3.normalize(vec3.cross(edge0, edge1));
-
             // Accumulate for each vertex of the triangle
             for (let j = 0; j < 3; j++) {
                 const idx = i + j;
-                vec3.add(tangents[idx], tangent, tangents[idx]);
-                vec3.add(bitangents[idx], bitangent, bitangents[idx]);
+                tangents[idx] = tangent
+                bitangents[idx] = bitangent
             }
 
 
@@ -247,15 +259,15 @@ export class OBJLoader {
 
 
     static processUV(line: string) {
-        const uvParts = line.split(' ').slice(1);
+        const uvParts = this.getNumberArray(line);
 
-        this._uvs.push(vec2.fromValues(parseFloat(uvParts[0]), 1 - parseFloat(uvParts[1])));
+        this._uvs.push(vec2.fromValues(uvParts[0], 1 - uvParts[1]));
 
     }
 
 
     private static processNormal(line: string) {
-        const normalParts = line.split(' ').slice(1);
-        this._normals.push(vec3.fromValues(parseFloat(normalParts[0]), parseFloat(normalParts[1]), parseFloat(normalParts[2])));
+        const normalParts = this.getNumberArray(line);
+        this._normals.push(vec3.fromValues(normalParts[0], normalParts[1], normalParts[2]));
     }
 }

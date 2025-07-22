@@ -1,7 +1,6 @@
 ﻿import type {IObject} from "@/scene/IObject.ts";
 import {Transform} from "../core/math/transform.ts";
 import {Camera} from "@/scene/Camera.ts";
-import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {$TIME} from "@/utils/time.ts";
 import {Vector3} from "@/core/math/vector3.ts";
 import {$INPUT} from "@/Controls/input.ts";
@@ -13,6 +12,7 @@ import {CameraFirstPersonState} from "@/Controls/states/camera-first-person-stat
 import {IdleState} from "@/Controls/states/idle-state.ts";
 import {CameraPanState} from "@/Controls/states/camera-pan-state.ts";
 import {CameraOrbitState} from "@/Controls/states/camera-orbit-state.ts";
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 export class ZoomState implements IState {
     private readonly _cameraController: CameraController;
@@ -93,9 +93,7 @@ export class CameraController implements IObject {
 
         this.setUpStateMachine();
 
-
-
-        $WGPU.addObject(this);
+        $SCENE_MANAGER.currentScene.addObject(this);
     }
 
     setUpStateMachine() {
