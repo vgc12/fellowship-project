@@ -1,41 +1,45 @@
 ﻿import type {Scene} from "@/app/scene.ts";
-import {lightType} from "@/scene/point-light.ts";
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 interface SceneNavigatorProps {
-    activeScene: SceneTypes;
+    activeScene: Scene;
     isLoading: boolean;
     setActiveScene: (id: string) => void;
 }
 
 
-
-export const SceneNavigator = (props: SceneNavigatorProps) =>
-{
+export const SceneNavigator = (props: SceneNavigatorProps) => {
 
     return (
         <>
-            <SceneButtonComponent sceneName={Scenes.SandBox} activeScene={props.activeScene}
-                                  setActiveScene={props.setActiveScene}></SceneButtonComponent>
+            {
+                $SCENE_MANAGER.scenes.map((scn) => {
+                    return (<SceneButtonComponent key={scn.guid} sceneName={scn.name} sceneGUID={scn.guid}
+                                                  activeSceneName={props.activeScene.name}
+                                                  setActiveScene={props.setActiveScene}></SceneButtonComponent>)
+                })
+            }
+
         </>
     );
 };
 
 type SceneButtonComponentProps = {
-    sceneName: SceneTypes;
-    activeScene: SceneTypes;
+    sceneName: string;
+    sceneGUID: string;
+    activeSceneName: string;
     setActiveScene: (id: string) => void;
 }
 
-const SceneButtonComponent = (props: SceneButtonComponentProps) =>
-{
-    const {sceneName, activeScene, setActiveScene} = props;
+const SceneButtonComponent = (props: SceneButtonComponentProps) => {
+    const {sceneName, activeSceneName, sceneGUID, setActiveScene} = props;
 
     return (
         <button
             key={sceneName}
-            onClick={() => setActiveScene(sceneName)}
+            onClick={() => setActiveScene(sceneGUID)}
             className={`p-3 rounded-lg transition-all duration-200 ${
-                activeScene === sceneName
+                activeSceneName === sceneName
                     ? 'bg-blue-600 text-white shadow-lg'
                     : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
             }`}

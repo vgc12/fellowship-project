@@ -5,14 +5,16 @@ import {Camera} from "@/scene/Camera.ts";
 
 
 import {CameraController} from "@/Controls/camera-controller.ts";
-import {Light} from "@/scene/point-light.ts";
 import {Renderer} from "@/core/renderer/renderer.ts";
+import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
+import {Material} from "@/graphics/3d/material.ts";
 
 
 class WebGPUSingleton {
     get renderer(): Renderer {
         return this._renderer;
     }
+
     get skyBindGroupLayout(): GPUBindGroupLayout {
         return this._skyBindGroupLayout;
     }
@@ -28,12 +30,6 @@ class WebGPUSingleton {
 
     private _lightBindGroupLayout: GPUBindGroupLayout;
 
-    private _lights: Light[];
-
-
-    addLight(light: Light) {
-        this._lights.push(light);
-    }
 
     get cameraController(): CameraController {
         return this._cameraController;
@@ -95,9 +91,6 @@ class WebGPUSingleton {
     }
 
 
-
-
-
     get device(): GPUDevice {
         if (!this._device) throw new Error('Device not initialized');
         return this._device;
@@ -127,16 +120,43 @@ class WebGPUSingleton {
 
     private _renderer = new Renderer();
 
+    async InitializeDefaultSkyMaterial() {
+        const urls = [
+            "img/sky/px.png",  //x+
+            "img/sky/nx.png",   //x-
+            "img/sky/py.png",   //y+
+            "img/sky/ny.png",  //y-
+            "img/sky/pz.png", //z+
+            "img/sky/nz.png",    //z-
+        ]
+
+        SkyMaterial.default = new SkyMaterial();
+        await SkyMaterial.default.initialize(urls);
+    }
+
+    async InitializeDefaultMaterial() {
+        Material.default = new Material();
+        Material.default.albedoFile = await Material.getFile('./img/default_albedo.png');
+        Material.default.roughnessFile = await Material.getFile('./img/default_roughness.png');
+        Material.default.metallicFile = await Material.getFile('./img/default_metallic.png');
+        Material.default.normalFile = await Material.getFile('./img/default_normal.png');
+        await Material.default.initialize();
+    }
+
+
     async initialize(): Promise<void> {
         if (this._device) return;
         await this.createWebGPURequirements();
 
         this.createSceneObjects();
 
+        await this.InitializeDefaultSkyMaterial();
+
 
         this.createVertexBufferLayout();
 
         this.initializeBindGroupLayouts();
+        await this.InitializeDefaultMaterial();
 
         await this._renderer.initialize();
     }
@@ -298,7 +318,7 @@ class WebGPUSingleton {
             height: this._canvas.height
         }
 
-        this._lights = [];
+
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
         this._device = await this._adapter.requestDevice({
             requiredLimits: {
@@ -356,7 +376,6 @@ class WebGPUSingleton {
             ]
         }
     }
-
 
 
 }

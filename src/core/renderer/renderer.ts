@@ -57,6 +57,7 @@ export class Renderer {
     geometryPassEncoder: GPURenderPassEncoder;
     lightingPassEncoder: GPURenderPassEncoder;
     skyPassEncoder: GPURenderPassEncoder;
+    skyBoxMaterial: SkyMaterial;
 
 
     async initialize() {
@@ -68,6 +69,7 @@ export class Renderer {
         this.modelMatrices = new Float32Array(16 * 1024);
 
         await this.setupGBuffer();
+
         await this.setupBuffers();
         await this.setupBindGroups();
         await this.setupPipelines();
@@ -209,18 +211,7 @@ export class Renderer {
             ]
         });
 
-        const urls = [
-            "img/sky/px.png",  //x+
-            "img/sky/nx.png",   //x-
-            "img/sky/py.png",   //y+
-            "img/sky/ny.png",  //y-
-            "img/sky/pz.png", //z+
-            "img/sky/nz.png",    //z-
-        ]
-
-        SkyMaterial.default = new SkyMaterial();
-        await SkyMaterial.default.initialize(urls);
-
+        this.skyBoxMaterial = this.skyBoxMaterial ?? SkyMaterial.default;
         this.skyBindGroup = $WGPU.device.createBindGroup({
             layout: $WGPU.skyBindGroupLayout,
             entries: [
@@ -230,11 +221,11 @@ export class Renderer {
                 },
                 {
                     binding: 1,
-                    resource: SkyMaterial.default.view,
+                    resource: this.skyBoxMaterial.view,
                 },
                 {
                     binding: 2,
-                    resource: SkyMaterial.default.sampler
+                    resource: this.skyBoxMaterial.sampler
                 }
             ]
         })
