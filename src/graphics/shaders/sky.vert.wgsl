@@ -1,35 +1,25 @@
-struct Camera {
-   forwards: vec3<f32>,
-   fov: f32,
-   right: vec3<f32>,
-   aspectRatio: f32,
-   up: vec3<f32>
-}
+struct Uniforms {
+  viewDirectionProjectionInverse: mat4x4f,
+};
 
-@group(0) @binding(0) var<uniform> camera: Camera;
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) pos: vec4f,
+};
 
-struct VertexOutput {
-    @builtin(position) Position : vec4<f32>,
-    @location(0) direction : vec3<f32>,
-}
-
-const positions = array<vec2<f32>, 6>(
-    vec2<f32>( 1.0,  1.0),
-    vec2<f32>( 1.0, -1.0),
-    vec2<f32>(-1.0, -1.0),
-    vec2<f32>( 1.0,  1.0),
-    vec2<f32>(-1.0, -1.0),
-    vec2<f32>(-1.0,  1.0)
-);
+@group(0) @binding(0) var<uniform> uni: Uniforms;
+@group(0) @binding(2) var ourSampler: sampler;
+@group(0) @binding(1) var ourTexture: texture_cube<f32>;
 
 @vertex
-fn main(@builtin(vertex_index) VertexIndex : u32) -> VertexOutput {
-
-    var output : VertexOutput;
-    output.Position = vec4<f32>(positions[VertexIndex], 1, 1);
-    var x: f32 = positions[VertexIndex].x  ;
-    var y: f32 = positions[VertexIndex].y;
-
-    output.direction = normalize(camera.forwards + x * camera.right + y * camera.up);
-    return output;
+fn main(@builtin(vertex_index) vNdx: u32) -> VSOutput {
+  let pos = array(
+    vec2f(-1, 3),
+    vec2f(-1,-1),
+    vec2f( 3,-1),
+  );
+  var vsOut: VSOutput;
+  vsOut.position = vec4f(pos[vNdx], 1, 1);
+  vsOut.pos = vsOut.position;
+  return vsOut;
 }

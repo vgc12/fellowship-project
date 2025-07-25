@@ -42,7 +42,7 @@ function App() {
                 $INPUT.initialize();
                 $TIME.initialize();
    
-
+                $SCENE_MANAGER.initializeAllScenes()
             }
         };
 

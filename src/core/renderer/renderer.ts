@@ -149,7 +149,7 @@ export class Renderer {
         this.cameraBuffer = $WGPU.device.createBuffer({
             label: "camera buffer",
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-            size: 4 * 4 * 3
+            size: 4 * 4 * 4
         });
     }
 
@@ -236,13 +236,13 @@ export class Renderer {
     private async setupPipelines() {
         const shaderBuilder = new ShaderBuilder();
 
-        const ShaderEntryPoint = 'main' as const; // the name of the main function in all shaders
+        const shaderEntryPoint = 'main' as const; // the name of the main function in all shaders
 
         // Geometry pass pipeline (writes to G-Buffer)
         const geometryShader = shaderBuilder
-            .setVertexCode(deferredVertexShader, ShaderEntryPoint)
+            .setVertexCode(deferredVertexShader, shaderEntryPoint)
             .addVertexBufferLayout($WGPU.vertexBufferLayout as GPUVertexBufferLayout)
-            .setFragmentCode(deferredFragmentShader, ShaderEntryPoint)
+            .setFragmentCode(deferredFragmentShader, shaderEntryPoint)
             .addColorFormat('rgba8unorm-srgb')
             .addColorFormat('rgba16float')
             .addColorFormat('rgba8unorm')
@@ -269,8 +269,8 @@ export class Renderer {
 
 
         const lightingShader = shaderBuilder
-            .setVertexCode(lightingVertexShader, ShaderEntryPoint)
-            .setFragmentCode(lightingFragmentShader, ShaderEntryPoint)
+            .setVertexCode(lightingVertexShader, shaderEntryPoint)
+            .setFragmentCode(lightingFragmentShader, shaderEntryPoint)
             .addColorFormat($WGPU.format)
             .build();
 
@@ -293,10 +293,10 @@ export class Renderer {
             primitive: {topology: 'triangle-list'}
         });
 
-
         const skyShader = shaderBuilder
-            .setVertexCode(skyVertexShader, ShaderEntryPoint)
-            .setFragmentCode(skyFragmentShader, ShaderEntryPoint)
+            .addLabel("Sky Shader")
+            .setVertexCode(skyVertexShader, shaderEntryPoint)
+            .setFragmentCode(skyFragmentShader, shaderEntryPoint)
             .addColorFormat($WGPU.format)
             .build();
 
@@ -334,12 +334,14 @@ export class Renderer {
     }
 
     private writeCameraBuffer() {
+        /*
         $WGPU.device.queue.writeBuffer(this.cameraBuffer, 0, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.forward.toArray)) as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 12, new Float32Array([Math.tan(convertToRadians($WGPU.mainCamera.fov) / 2)]) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 12, new Float32Array([convertToRadians($WGPU.mainCamera.fov)]) as ArrayBuffer);
         $WGPU.device.queue.writeBuffer(this.cameraBuffer, 16, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.right.toArray)) as ArrayBuffer);
         $WGPU.device.queue.writeBuffer(this.cameraBuffer, 28, new Float32Array([$WGPU.windowDimensions.width / $WGPU.windowDimensions.height]) as ArrayBuffer);
         $WGPU.device.queue.writeBuffer(this.cameraBuffer, 32, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.up.toArray)) as ArrayBuffer)
-
+*/
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 0, $WGPU.mainCamera.inverseViewProjectionMatrix as ArrayBuffer);
     }
 
     private writeLightBuffer() {
@@ -452,7 +454,7 @@ export class Renderer {
         this.skyPassEncoder.setBindGroup(0, this.skyBindGroup);
         // Draw fullscreen quad
         this.skyPassEncoder.setVertexBuffer(0, this.fullscreenVertexBuffer);
-        this.skyPassEncoder.draw(6, 1, 0, 0);
+        this.skyPassEncoder.draw(3, 1, 0, 0);
         this.skyPassEncoder.end();
     }
 

@@ -20,10 +20,10 @@ export class SandBoxScene extends Scene {
 
     async initialize(): Promise<void> {
 
-        const objFile = await fileFromURL('./media/models/textures/corridor.obj');
+        const objFile = await fileFromURL('./media/models/corridor/corridor.obj');
         await OBJLoader.loadMeshes(objFile);
 
-        const texturePath = './media/models/textures/';
+        const texturePath = './media/models/corridor/';
         const materialNames = [
             'Fenetre',
             'Sac',

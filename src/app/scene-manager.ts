@@ -35,6 +35,20 @@ export class SceneManager {
     }
 
 
+    async initializeAllScenes() {
+        try {
+            for (const scene of this._scenes) {
+                if (!scene.initialized) {
+                    this._currentScene = scene;
+                    await scene.initialize();
+                }
+            }
+            this._currentScene = this._scenes[0];
+        } catch (error) {
+            console.error('Failed to initialize all scenes:', error);
+        }
+    }
+
     async switchToScene(sceneGUID: string, onLoadingChange?: (loading: boolean) => void) {
         try {
             onLoadingChange?.(true);
@@ -51,9 +65,7 @@ export class SceneManager {
 
 
             if (this._currentScene) {
-                if (!this._currentScene.initialized) {
-                    await this._currentScene.initialize();
-                }
+
                 await this._currentScene.run();
             }
 

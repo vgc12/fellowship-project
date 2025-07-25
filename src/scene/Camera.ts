@@ -86,7 +86,11 @@ export class Camera implements IObject {
             1000
         );
         const viewProjectionMatrix = mat4.create();
-        mat4.multiply(this._projectionMatrix, this._viewMatrix, viewProjectionMatrix);
+        const tempView = mat4.clone(this._viewMatrix);
+        tempView[12] = 0;
+        tempView[13] = 0;
+        tempView[14] = 0;
+        mat4.multiply(this._projectionMatrix, tempView, viewProjectionMatrix);
         mat4.invert(viewProjectionMatrix, this.inverseViewProjectionMatrix)
     }
 }
