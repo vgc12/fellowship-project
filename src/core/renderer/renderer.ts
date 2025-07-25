@@ -11,6 +11,8 @@ import {Light, lightType} from "@/scene/point-light.ts";
 import type {SpotLight} from "@/scene/spot-light.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
 import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
+import {convertToRadians} from "@/core/math/math-util.ts";
+import {mat4, vec3} from "wgpu-matrix";
 
 export class Renderer {
 
@@ -332,9 +334,11 @@ export class Renderer {
     }
 
     private writeCameraBuffer() {
-        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 0, new Float32Array($WGPU.mainCamera.transform.forward.normalized.toArray) as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 16, new Float32Array($WGPU.mainCamera.transform.right.normalized.toArray) as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 32, new Float32Array($WGPU.mainCamera.transform.up.normalized.toArray) as ArrayBuffer)
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 0, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.forward.toArray)) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 12, new Float32Array([Math.tan(convertToRadians($WGPU.mainCamera.fov) / 2)]) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 16, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.right.toArray)) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 28, new Float32Array([$WGPU.windowDimensions.width / $WGPU.windowDimensions.height]) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 32, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.up.toArray)) as ArrayBuffer)
 
     }
 
@@ -426,6 +430,7 @@ export class Renderer {
         const textureView = $WGPU.context.getCurrentTexture().createView();
 
         const skyPassDescriptor: GPURenderPassDescriptor = {
+            label: "Sky Render Pass",
             colorAttachments: [{
                 view: textureView,
                 clearValue: [0.0, 0.0, 0.0, 0.0],
@@ -453,6 +458,7 @@ export class Renderer {
 
     private renderGeometryPass() {
         const geometryPassDescriptor: GPURenderPassDescriptor = {
+            label: 'Geometry Pass',
             colorAttachments: [
                 {
                     view: this.gBufferViews.albedo, // albedo

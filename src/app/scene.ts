@@ -1,8 +1,9 @@
 ﻿import type {IObject} from "@/scene/IObject.ts";
-import type {IRenderable} from "@/scene/IRenderable.ts";
+
 import {type RenderableObject} from "@/scene/renderable-object.ts";
 import {type Light} from "@/scene/point-light.ts";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+
 
 export abstract class Scene {
     get guid(): string {
@@ -21,9 +22,10 @@ export abstract class Scene {
         return this._lights;
     }
 
-    get renderableObjects(): IRenderable[] {
+    get renderableObjects(): RenderableObject[] {
         return this._renderableObjects;
     }
+
 
     get objects(): IObject[] {
         return this._objects;
@@ -42,13 +44,17 @@ export abstract class Scene {
         this._lights.push(light);
     }
 
+    get initialized() {
+        return this._initialized;
+    }
 
-    private _objects: IObject[];
-    private _renderableObjects: RenderableObject[];
-    private _lights: Light[];
+
+    private readonly _objects: IObject[];
+    private readonly _renderableObjects: RenderableObject[];
+    private readonly _lights: Light[];
     private _name: string;
-    private _guid: string;
-
+    private readonly _guid: string;
+    protected readonly _initialized: boolean;
 
     protected constructor() {
 
@@ -62,6 +68,10 @@ export abstract class Scene {
 
     protected abstract updateScene(): void;
 
+    async initialize() {
+
+    }
+
     abstract cleanup(): void;
 
     run = async () => {
@@ -74,6 +84,7 @@ export abstract class Scene {
 
         $WGPU.renderer.update();
 
+        this.updateScene();
 
         requestAnimationFrame(this.run)
 
@@ -83,50 +94,10 @@ export abstract class Scene {
 
 }
 
-export class SandBoxScene extends Scene {
-    cleanup(): void {
-
-    }
-
-    constructor() {
-        super();
-        this.name = 'Sandbox Scene';
-    }
-
-    protected updateScene(): void {
-
-    }
-
-}
-
-export class TVScene extends Scene {
-    cleanup(): void {
-
-    }
-
-    constructor() {
-        super();
-        this.name = 'Television Scene';
-    }
-
-    protected updateScene(): void {
-
-    }
-
-}
-
-export class SpaceScene extends Scene {
-    cleanup(): void {
-
-    }
-
-    constructor() {
-        super();
-        this.name = 'Space Scene';
-    }
-
-    protected updateScene(): void {
-
-    }
-}
+export type MaterialFiles = {
+    albedoFile: File,
+    roughnessFile: File,
+    metallicFile: File,
+    normalFile: File
+};
 

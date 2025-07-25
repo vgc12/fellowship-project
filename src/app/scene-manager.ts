@@ -1,4 +1,7 @@
-﻿import {SandBoxScene, type Scene, SpaceScene, TVScene} from "@/app/scene.ts";
+﻿import {type Scene} from "@/app/scene.ts";
+import {SandBoxScene} from "@/app/sand-box-scene.ts";
+import {TvScene} from "@/app/tv-scene.ts";
+import {SpaceScene} from "@/app/space-scene.ts";
 
 
 export class SceneManager {
@@ -18,17 +21,19 @@ export class SceneManager {
     private _currentScene: Scene;
 
 
-    private _scenes: Scene[];
+    private readonly _scenes: Scene[];
 
     constructor() {
         this._scenes = [
             new SandBoxScene(),
-            new TVScene(),
+            new TvScene(),
             new SpaceScene()
         ]
 
+
         this._currentScene = this._scenes[0];
     }
+
 
     async switchToScene(sceneGUID: string, onLoadingChange?: (loading: boolean) => void) {
         try {
@@ -46,7 +51,9 @@ export class SceneManager {
 
 
             if (this._currentScene) {
-
+                if (!this._currentScene.initialized) {
+                    await this._currentScene.initialize();
+                }
                 await this._currentScene.run();
             }
 

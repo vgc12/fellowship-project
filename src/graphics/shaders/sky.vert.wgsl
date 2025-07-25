@@ -1,6 +1,8 @@
 struct Camera {
    forwards: vec3<f32>,
+   fov: f32,
    right: vec3<f32>,
+   aspectRatio: f32,
    up: vec3<f32>
 }
 
@@ -25,7 +27,7 @@ fn main(@builtin(vertex_index) VertexIndex : u32) -> VertexOutput {
 
     var output : VertexOutput;
     output.Position = vec4<f32>(positions[VertexIndex], 1, 1);
-    var x: f32 = positions[VertexIndex].x;
+    var x: f32 = positions[VertexIndex].x  ;
     var y: f32 = positions[VertexIndex].y;
 
     output.direction = normalize(camera.forwards + x * camera.right + y * camera.up);

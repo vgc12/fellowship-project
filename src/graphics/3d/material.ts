@@ -1,7 +1,44 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+import type {MaterialFiles} from "@/app/scene.ts";
+import {fileFromURL, imageExists} from "@/lib/utils.ts";
+import {type imageFileType, ImageFileTypes} from "@/components/texture-input-component.tsx";
 
 
 export class Material {
+
+
+    static async getImageFiles(imageName: string, folderPath: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal']) {
+        const files: MaterialFiles = {};
+        for (const materialType of materialTypes) {
+            const fullPath = folderPath + imageName + '_' + materialType
+            let extension = '';
+            for (const e of ['.png', '.jpeg', '.jpg']) {
+                if (await imageExists(fullPath + e)) {
+                    extension = e
+                }
+            }
+
+            files[(materialType.toString().toLowerCase() + 'File') as imageFileType] = await fileFromURL(fullPath + extension);
+
+        }
+        return files;
+    }
+
+    /**
+     @param nameOfTexture The name of the texture before the texture type. in the example something_albedo.png nameOfTexture should be 'something'
+     @param pathToTextures The path in which the textures can be found
+     * @param materialTypes The types of files to search for. for example ['Albedo', 'Roughness' 'Metallic', 'Normal']
+     */
+    static async createFromFolderPath(nameOfTexture: string, pathToTextures: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal']) {
+        const files = await this.getImageFiles(nameOfTexture, pathToTextures, materialTypes)
+        const material = new Material();
+        ImageFileTypes.forEach((c) => {
+            material[c] = files[c];
+        })
+        return material
+    }
+
+
     get sampler(): GPUSampler {
         return this._sampler;
     }
@@ -15,11 +52,6 @@ export class Material {
         this._normalFile = value;
     }
 
-    static async getFile(url: string): Promise<File> {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return new File([blob], url.split('/').pop() || 'default_albedo.png');
-    }
 
     private _roughnessMetallicAOView: GPUTextureView;
 
@@ -71,6 +103,7 @@ export class Material {
     private _metallicFile: File;
     private _roughnessFile: File;
     private _normalFile: File;
+
 
     imageBitmapToImageData(imageBitmap: ImageBitmap): ImageData {
         const offscreenCanvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);

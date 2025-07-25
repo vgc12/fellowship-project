@@ -7,6 +7,7 @@ import {SceneNavigator} from "@/components/scene-navigator-component.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {$INPUT} from "@/Controls/input.ts";
 import {$TIME} from "@/utils/time.ts";
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
                 await $WGPU.initialize();
                 $INPUT.initialize();
                 $TIME.initialize();
+   
 
             }
         };
@@ -58,7 +60,7 @@ function App() {
         <div className={"m-4 flex p-4"}>
 
             <div className={"mr-4 "}>
-                <canvas className={""} ref={canvasRef} width={1200} height={600} id="canvas-main"/>
+                <canvas className={""} ref={canvasRef} width={1920} height={1080} id="canvas-main"/>
             </div>
 
             <div className={"flex-1/2 "}>

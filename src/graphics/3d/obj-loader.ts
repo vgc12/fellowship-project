@@ -2,6 +2,7 @@ import {MeshBuilder} from "./mesh.ts";
 import {RenderableObject} from "@/scene/renderable-object.ts";
 import {vec2, type Vec2, vec3, type Vec3} from "wgpu-matrix";
 
+
 interface IVertexData {
     position: Vec3;
     uv: Vec2;
@@ -29,6 +30,8 @@ export class OBJLoader {
 
         let name: string = ""
 
+        let materialName: string = "";
+
 
         for (let i = 0; i < lines.length; i++) {
 
@@ -36,14 +39,9 @@ export class OBJLoader {
             const line = lines[i];
 
 
-            if (line.startsWith('o ')) {
-                name = line.substring(2);
-            }
-
-            if (i + 1 == lines.length || (line.startsWith('o ') && this._vertices.length > 0)) {
+            if (i + 1 == lines.length || (line.startsWith('o ') && this._vertexData.length > 0)) {
 
                 this.calculateTangents(this._vertexData);
-
 
                 const mesh = meshBuilder
                     .setVertices(this._result)
@@ -51,14 +49,17 @@ export class OBJLoader {
 
 
                 const renderableObject = new RenderableObject();
+
+                renderableObject.materialName = materialName;
                 renderableObject.mesh = mesh;
-
                 renderableObject.name = name
-
                 this._result = []
                 this._vertexData = [];
+                name = line.substring(2);
 
 
+            } else if (line.startsWith('o ')) {
+                name = line.substring(2);
             } else if (line.startsWith('v ')) {
 
                 this.processVertex(line)
@@ -75,6 +76,9 @@ export class OBJLoader {
 
                 this.processUV(line)
 
+            } else if (line.startsWith('usemtl')) {
+                materialName = line.replace(" ", '').slice(6, line.length);
+
             }
 
 
@@ -86,6 +90,7 @@ export class OBJLoader {
         this._result = [];
         this._vertexData = [];
     }
+
 
     // Fixes bug if there are multiple spaces in the line.
     // Returns an array of numbers from the line.
@@ -145,14 +150,14 @@ export class OBJLoader {
         // Process each triangle (every 3 vertices)
         for (let i = 0; i < vertices.length; i += 3) {
 
-            if( i + 2 >= vertices.length) {
+            if (i + 2 >= vertices.length) {
                 console.warn(`Skipping incomplete triangle at index ${i}. Not enough vertices.`);
                 continue; // Skip if there are not enough vertices for a triangle
             }
 
             const v0 = vertices[i];
-            const v1 = vertices[i+1];
-            const v2 = vertices[i+2];
+            const v1 = vertices[i + 1];
+            const v2 = vertices[i + 2];
 
             // Position deltas
             const edge0 = vec3.sub(v1.position, v0.position);

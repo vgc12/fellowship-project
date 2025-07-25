@@ -12,6 +12,7 @@ export const ImageFileTypes: imageFileType[] = [
     'normalFile'
 ];
 
+
 export function TextureInputComponent(props: { object: RenderableObject, textureType: imageFileType }) {
 
     const [texture, setTexture] = useState<string>(`./img/default_${props.textureType.slice(0, props.textureType.length - 4)}.png`);

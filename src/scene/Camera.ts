@@ -45,7 +45,7 @@ export class Camera implements IObject {
     private _projectionMatrix: Mat4;
     private _fov: number = 90;
     private readonly _guid: string;
-
+    inverseViewProjectionMatrix: Mat4;
 
     constructor() {
 
@@ -55,6 +55,7 @@ export class Camera implements IObject {
 
         this._projectionMatrix = mat4.create();
 
+        this.inverseViewProjectionMatrix = mat4.create();
 
         this._guid = crypto.randomUUID();
 
@@ -84,8 +85,9 @@ export class Camera implements IObject {
             0.1,
             1000
         );
-
-
+        const viewProjectionMatrix = mat4.create();
+        mat4.multiply(this._projectionMatrix, this._viewMatrix, viewProjectionMatrix);
+        mat4.invert(viewProjectionMatrix, this.inverseViewProjectionMatrix)
     }
 }
 

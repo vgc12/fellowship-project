@@ -8,6 +8,7 @@ import {CameraController} from "@/Controls/camera-controller.ts";
 import {Renderer} from "@/core/renderer/renderer.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
 import {Material} from "@/graphics/3d/material.ts";
+import {fileFromURL} from "@/lib/utils.ts";
 
 
 class WebGPUSingleton {
@@ -120,14 +121,16 @@ class WebGPUSingleton {
 
     private _renderer = new Renderer();
 
+
     async InitializeDefaultSkyMaterial() {
+        const path = './media/defaults/sky-material/';
         const urls = [
-            "img/sky/px.png",  //x+
-            "img/sky/nx.png",   //x-
-            "img/sky/py.png",   //y+
-            "img/sky/ny.png",  //y-
-            "img/sky/pz.png", //z+
-            "img/sky/nz.png",    //z-
+            path + "px.png",  //x+
+            path + "nx.png",   //x-
+            path + "py.png",   //y+
+            path + "ny.png",  //y-
+            path + "pz.png", //z+
+            path + "nz.png",    //z-
         ]
 
         SkyMaterial.default = new SkyMaterial();
@@ -135,11 +138,12 @@ class WebGPUSingleton {
     }
 
     async InitializeDefaultMaterial() {
+        const path = './media/defaults/material/'
         Material.default = new Material();
-        Material.default.albedoFile = await Material.getFile('./img/default_albedo.png');
-        Material.default.roughnessFile = await Material.getFile('./img/default_roughness.png');
-        Material.default.metallicFile = await Material.getFile('./img/default_metallic.png');
-        Material.default.normalFile = await Material.getFile('./img/default_normal.png');
+        Material.default.albedoFile = await fileFromURL(path + 'default_albedo.png');
+        Material.default.roughnessFile = await fileFromURL(path + 'default_roughness.png');
+        Material.default.metallicFile = await fileFromURL(path + 'default_metallic.png');
+        Material.default.normalFile = await fileFromURL(path + 'default_normal.png');
         await Material.default.initialize();
     }
 
@@ -379,6 +383,7 @@ class WebGPUSingleton {
 
 
 }
+
 
 // A singleton that contains several common objects that are used throughout the project.
 export const $WGPU = WebGPUSingleton.Instance;
