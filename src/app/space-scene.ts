@@ -2,6 +2,8 @@
 import {fileFromURL} from "@/lib/utils.ts";
 import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
 import {Material} from "@/graphics/3d/material.ts";
+import {Vector3} from "@/core/math/vector3.ts";
+import {PointLight} from "@/scene/point-light.ts";
 
 export class SpaceScene extends Scene {
     cleanup(): void {
@@ -20,17 +22,12 @@ export class SpaceScene extends Scene {
             'Space_ship_interior_base',
             'Space_ship_phone_and_speed_control'
         ];
-        const materials = new Map<string, Material>();
-        for (const m of materialNames) {
-            const material = await Material.createFromFolderPath(m, texturePath, ['Albedo', 'Metallic', 'Roughness', 'Normal']);
-            await material.initialize();
-            materials.set(m, material);
-        }
+        const materialTypes = ['Albedo', 'Metallic', 'Roughness', 'Normal'];
 
+        await this.initializeSceneMaterials(materialNames, texturePath, materialTypes)
 
-        this.renderableObjects.forEach(r => {
-            r.material = materials.get(r.materialName) ?? Material.default;
-        })
+        new PointLight(new Vector3(1, 1, 1), 100);
+        this._initialized = true;
     }
 
     constructor() {

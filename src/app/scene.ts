@@ -3,9 +3,18 @@
 import {type RenderableObject} from "@/scene/renderable-object.ts";
 import {type Light} from "@/scene/point-light.ts";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+import {Material} from "@/graphics/3d/material.ts";
+
 
 
 export abstract class Scene {
+    get running(): boolean {
+        return this._running;
+    }
+
+    set running(value: boolean) {
+        this._running = value;
+    }
     get guid(): string {
         return this._guid;
     }
@@ -54,7 +63,9 @@ export abstract class Scene {
     private readonly _lights: Light[];
     private _name: string;
     private readonly _guid: string;
-    protected readonly _initialized: boolean;
+    protected  _initialized: boolean;
+    private _running: boolean;
+
 
     protected constructor() {
 
@@ -64,18 +75,60 @@ export abstract class Scene {
         this._name = 'Default Scene'
         this._guid = crypto.randomUUID();
 
+
     }
 
-    protected abstract updateScene(): void;
+    protected abstract updateScene( ): void;
+
+    // this used to be not as complex, but it would genuinely take 6 seconds to do this per scene which is about 20 seconds of waiting
+    // to initialize all scenes its around 6-10 seconds total (depending on your pc);
+    protected async initializeSceneMaterials(materialNames: string[], texturePath: string, materialTypes: string[] = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity']) {
+        const materials = new Map<string,Material>();
+
+        const materialPromises = materialNames.map(async (m) => {
+
+            const material = await Material.createFromFolderPath(m, texturePath, materialTypes);
+
+            // does not need to be awaited
+            material.initialize();
+
+            return { name: m, material };
+        });
+
+        const results = await Promise.all(materialPromises);
+
+        results.forEach(m => {
+            materials.set(m.name, m.material);
+        })
+
+        this.renderableObjects.forEach(r => {
+            r.material = materials.get(r.materialName) ?? Material.default;
+        })
+    }
 
     async initialize() {
+        if(!this._objects.includes($WGPU.mainCamera)){
+            this._objects.push($WGPU.mainCamera);
+        }
 
+        if(!this._objects.includes($WGPU.cameraController)){
+            this._objects.push($WGPU.cameraController);
+        }
+    }
+    async start() {
+        this._running = true
+        await this.run();
     }
 
-    abstract cleanup(): void;
+    cleanup() {
+        this._running = false;
+    }
+
+
 
     run = async () => {
 
+        if(!this._running) return;
 
         this.objects.forEach(o => {
             o.update()
@@ -86,8 +139,8 @@ export abstract class Scene {
 
         this.updateScene();
 
-        requestAnimationFrame(this.run)
 
+        requestAnimationFrame(this.run)
 
     };
 
@@ -98,6 +151,8 @@ export type MaterialFiles = {
     albedoFile: File,
     roughnessFile: File,
     metallicFile: File,
-    normalFile: File
+    normalFile: File,
+    aoFile: File,
+    opacityFile: File
 };
 

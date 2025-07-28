@@ -59,7 +59,7 @@ export class Camera implements IObject {
 
         this._guid = crypto.randomUUID();
 
-        $SCENE_MANAGER.currentScene.addObject(this);
+       
 
 
     }

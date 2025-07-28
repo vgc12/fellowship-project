@@ -69,7 +69,8 @@ fn calculatePointLight(pointLight : Light,
     F0: vec3f,
     albedo: vec4f,
     metallic: f32,
-    roughness: f32) -> vec3f {
+    roughness: f32,
+    alpha: f32) -> vec3f {
 
        var lightPosition : vec3f = pointLight.position;
        var lightIntensity : f32 = pointLight.intensity ;
@@ -96,7 +97,7 @@ fn calculatePointLight(pointLight : Light,
         let denominator = 4.0 * max(dot(worldNormal, viewDir),0.0) * NdotL + 0.0001;
         let specular = numerator/denominator;
 
-        return (kD * albedo.xyz / pi + specular) * radiance * NdotL ;
+        return ((kD * albedo.xyz / pi)*alpha + specular) * radiance * NdotL ;
 }
 
 
@@ -108,7 +109,8 @@ fn calculateSpotLight(
     F0: vec3f,
     albedo : vec4f,
     metallic: f32,
-    roughness: f32) -> vec3f {
+    roughness: f32,
+    alpha: f32) -> vec3f {
 
     var lightPosition : vec3f = light.position;
     var lightIntensity : f32 = light.intensity ;
@@ -152,7 +154,7 @@ fn calculateSpotLight(
     let denominator = 4.0 * max(dot(worldNormal, viewDir),0.0) * NdotL + 0.0001;
     let specular = numerator/denominator;
 
-    return (kD * albedo.xyz / pi + specular) * radiance * NdotL ;
+    return ((kD * albedo.xyz / pi)*alpha + specular) * radiance * NdotL ;
 
 }
 
@@ -186,7 +188,8 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
     let albedo = textureLoad(gBufferAlbedo, c, 0); // Sample the albedo texture
     let metallic = textureLoad(gBufferMetallicRoughnessAO, c, 0).g; // Sample the metallic texture
     let roughness = max(textureLoad(gBufferMetallicRoughnessAO, c, 0).r, 0.04); // Sample the roughness texture
-   // let ao = textureLoad(gBufferMetallicRoughnessAO, c, 0).g; // Sample the ambient occlusion texture
+    let ao = textureLoad(gBufferMetallicRoughnessAO, c, 0).b; // Sample the ambient occlusion texture
+    let opacity = textureLoad(gBufferMetallicRoughnessAO, c, 0).a; // Sample the opacity texture
     let worldNormal = textureLoad(gBufferNormal, c, 0).xyz; // Sample the normal texture
     let worldPosition = textureLoad(gBufferPosition, c, 0).xyz; // Sample the world position texture
 
@@ -203,10 +206,10 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
          switch (i32(light.lightType)) {
                 case 0: {
 
-                   L0 +=  calculatePointLight(light, worldPosition, worldNormal, v, F0, albedo,  metallic, roughness);
+                   L0 +=  calculatePointLight(light, worldPosition, worldNormal, v, F0, albedo,  metallic, roughness, opacity);
                 }
                 case 1: {
-                   L0 +=  calculateSpotLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness);
+                   L0 +=  calculateSpotLight(light, worldPosition, worldNormal, v, F0, albedo, metallic, roughness, opacity);
                 }
                 default :
                 {
@@ -225,11 +228,12 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
 
     let reflect = textureSample(skyTexture,  skySampler, reflectionDir );
 
-    let ambient = mix(albedo.xyz *0.01, reflect.xyz, fresnel); // Ambient light contribution
+    let ambient = mix(albedo.xyz *0.01, reflect.xyz, fresnel) ; // Ambient light contribution
     var color =  L0 + vec3f(emissivity) + ambient; // Combine all contributions
     color = color / (color + vec3f(1.0)); // Simple tone mapping
+
     color = pow(color, vec3f(1.0 / 1.3)); // Gamma correction
-    return vec4f(color,1.0);
+    return vec4f(color,opacity);
 
 
 }

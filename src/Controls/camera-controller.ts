@@ -100,7 +100,6 @@ export class CameraController implements IObject {
 
         this.setUpStateMachine();
 
-        $SCENE_MANAGER.currentScene.addObject(this);
     }
 
     setUpStateMachine() {
@@ -232,7 +231,7 @@ export class CameraController implements IObject {
     }
 
     clampOrbitRadius() {
-        this._orbitRadius = clamp(this._orbitRadius + $INPUT.scrollMovementY * $TIME.deltaTime, 1, 100);
+        this._orbitRadius = clamp(this._orbitRadius + $INPUT.scrollMovementY * $TIME.deltaTime, 1, 10000);
     }
 
 

@@ -26,6 +26,7 @@ fn main(fragment: FragmentInput) -> GBufferOutput {
     let metallic = textureSample(metallicRoughnessAo, texSampler, fragment.texCoord).r; // Sample the metallic texture
     let roughness = textureSample(metallicRoughnessAo, texSampler, fragment.texCoord).g; // Sample the roughness texture
     let ao = textureSample(metallicRoughnessAo, texSampler, fragment.texCoord).b; // Sample the ambient occlusion texture
+    let opacity = textureSample(metallicRoughnessAo, texSampler, fragment.texCoord).a; // Sample the opacity texture
     let normal = textureSample(normalTexture, texSampler, fragment.texCoord); // Sample the normal texture
 
    let t = normalize(fragment.tangent);
@@ -40,7 +41,7 @@ fn main(fragment: FragmentInput) -> GBufferOutput {
 
     output.albedo = vec4<f32>(albedo.xyz, 1.0);
     output.normal = vec4f(worldNormal,1.0);
-    output.metallicRoughnessAo = vec4<f32>(metallic, roughness, ao, 1.0);
+    output.metallicRoughnessAo = vec4<f32>(metallic, roughness, ao, opacity);
 
     output.position = vec4<f32>(fragment.worldPosition, 1.0);
 

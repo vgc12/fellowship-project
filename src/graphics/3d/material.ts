@@ -1,40 +1,64 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
-import type {MaterialFiles} from "@/app/scene.ts";
 import {fileFromURL, imageExists} from "@/lib/utils.ts";
-import {type imageFileType, ImageFileTypes} from "@/components/texture-input-component.tsx";
+import {type imageFileType} from "@/components/texture-input-component.tsx";
 
 
 export class Material {
-
-
-    static async getImageFiles(imageName: string, folderPath: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal']) {
-        const files: MaterialFiles = {};
-        for (const materialType of materialTypes) {
-            const fullPath = folderPath + imageName + '_' + materialType
-            let extension = '';
-            for (const e of ['.png', '.jpeg', '.jpg']) {
-                if (await imageExists(fullPath + e)) {
-                    extension = e
-                }
-            }
-
-            files[(materialType.toString().toLowerCase() + 'File') as imageFileType] = await fileFromURL(fullPath + extension);
-
-        }
-        return files;
+    get aoFile(): File {
+        return this._aoFile;
     }
 
+    set aoFile(value: File) {
+        this._aoFile = value;
+    }
+
+    // this may be the best im going to get this.
+    static async getImageFiles(imageName: string, folderPath: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity']) {
+
+
+        return await Promise.all(
+            materialTypes.map(async (materialType) =>
+            {
+                const fullPath = folderPath + imageName + '_' + materialType;
+
+
+                const extensionChecks = ['.png', '.jpeg', '.jpg'].map(async (ext) =>
+                {
+                    const exists = await imageExists(fullPath + ext);
+                    return exists ? ext : null;
+                });
+
+                const extensions = await Promise.all(extensionChecks);
+                const foundExtension = extensions.find(ext => ext !== null);
+
+                if (foundExtension) {
+                    const file = await fileFromURL(fullPath + foundExtension);
+                    return {
+                        key: (materialType.toLowerCase() + 'File') as imageFileType,
+                        file
+                    };
+                }
+                return null;
+            })
+        );
+    }
     /**
      @param nameOfTexture The name of the texture before the texture type. in the example something_albedo.png nameOfTexture should be 'something'
      @param pathToTextures The path in which the textures can be found
-     * @param materialTypes The types of files to search for. for example ['Albedo', 'Roughness' 'Metallic', 'Normal']
+     @param materialTypes The types of files to search for. for example ['Albedo', 'Roughness' 'Metallic', 'Normal']
      */
-    static async createFromFolderPath(nameOfTexture: string, pathToTextures: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal']) {
+    static async createFromFolderPath(nameOfTexture: string, pathToTextures: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity']) {
+
         const files = await this.getImageFiles(nameOfTexture, pathToTextures, materialTypes)
+
         const material = new Material();
-        ImageFileTypes.forEach((c) => {
-            material[c] = files[c];
+
+        files.forEach(f => {
+            if(f){
+                material[f.key] = f.file;
+            }
         })
+
         return material
     }
 
@@ -50,6 +74,13 @@ export class Material {
 
     set normalFile(value: File) {
         this._normalFile = value;
+    }
+
+    get opacityFile(): File {
+        return this._opacityFile;
+    }
+    set opacityFile(value: File) {
+        this._opacityFile = value;
     }
 
 
@@ -99,10 +130,12 @@ export class Material {
     private _sampler: GPUSampler;
     private _bindGroup: GPUBindGroup;
     private _albedoFile: File;
+    private _aoFile: File;
 
     private _metallicFile: File;
     private _roughnessFile: File;
     private _normalFile: File;
+    private _opacityFile: File;
 
 
     imageBitmapToImageData(imageBitmap: ImageBitmap): ImageData {
@@ -115,18 +148,21 @@ export class Material {
         return ctx.getImageData(0, 0, imageBitmap.width, imageBitmap.height);
     }
 
-    packTextures(metallicData: ImageData, roughnessData: ImageData) {
+    packTextures(metallicData: ImageData | undefined,
+                 roughnessData: ImageData | undefined,
+                 aoData: ImageData | undefined,
+                 opacityData: ImageData | undefined): ImageData{
 
-        const width = metallicData.width;
-        const height = metallicData.height;
+        const width = roughnessData?.width ?? 1024;
+        const height=roughnessData?.height ?? 1024;
         const packedData = new Uint8ClampedArray(width * height * 4);
 
         for (let i = 0; i < width * height; i++) {
             const o = i * 4;
-            packedData[o] = roughnessData.data[o];   // R channel (roughness)
-            packedData[o + 1] = metallicData.data[o];     // G channel (metallic)
-            packedData[o + 2] = 255;          // B channel (AO)
-            packedData[o + 3] = 255;                      // A channel
+            packedData[o] = roughnessData?.data[o] ?? 0;   // R channel (roughness)
+            packedData[o + 1] = metallicData?.data[o] ?? 0;     // G channel (metallic)
+            packedData[o + 2] = aoData?.data[o] ?? 255;          // B channel (AO)
+            packedData[o + 3] = opacityData?.data[0] ?? 255;                      // A opacity
         }
 
 
@@ -134,23 +170,39 @@ export class Material {
     }
 
     async initialize() {
-        const albedoImageBitmap = await createImageBitmap(this._albedoFile)
-        const roughnessImageBitmap = await createImageBitmap(this._roughnessFile);
-        const metallicImageBitmap = await createImageBitmap(this._metallicFile);
+        let albedoImageBitmap, roughnessImageBitmap,metallicImageBitmap,normalImageBitmap : ImageBitmap | undefined = undefined;
+        let roughnessData, metallicData, aoData, opacityData: ImageData | undefined = undefined;
+        if(this._albedoFile) {
+            albedoImageBitmap = await createImageBitmap(this._albedoFile)
+        }
 
-        const normalImageBitmap = await createImageBitmap(this._normalFile);
+        if(this._roughnessFile) {
+            roughnessImageBitmap = await createImageBitmap(this._roughnessFile);
+            roughnessData = this.imageBitmapToImageData(roughnessImageBitmap);
+        }
+        if(this._metallicFile) {
+            metallicImageBitmap = await createImageBitmap(this._metallicFile);
+            metallicData = this.imageBitmapToImageData(metallicImageBitmap);
+        }
+        if(this._normalFile) {
+            normalImageBitmap = await createImageBitmap(this._normalFile);
+        }
 
-        const roughnessData = this.imageBitmapToImageData(roughnessImageBitmap);
-        const metallicData = this.imageBitmapToImageData(metallicImageBitmap);
+        if(this._aoFile){
+            aoData = this.imageBitmapToImageData(await createImageBitmap(this._aoFile));
+        }
+        if(this._opacityFile) {
+            opacityData = this.imageBitmapToImageData(await createImageBitmap(this._opacityFile));
+        }
 
 
-        const roughnessMetallicAO = await createImageBitmap(this.packTextures(metallicData, roughnessData));
+        const roughnessMetallicAO = await createImageBitmap(this.packTextures(metallicData, roughnessData, aoData, opacityData));
 
 
         const albedoTextureDescriptor: GPUTextureDescriptor = {
             size: {
-                width: albedoImageBitmap.width,
-                height: albedoImageBitmap.height,
+                width: albedoImageBitmap?.width ?? 1024,
+                height: albedoImageBitmap?.height ?? 1024,
             },
 
             format: navigator.gpu.getPreferredCanvasFormat(),
@@ -159,8 +211,8 @@ export class Material {
 
         const normalTextureDescriptor: GPUTextureDescriptor = {
             size: {
-                width: normalImageBitmap.width,
-                height: normalImageBitmap.height,
+                width: normalImageBitmap?.width ?? 1024,
+                height: normalImageBitmap?.height ?? 1024,
             },
             format: navigator.gpu.getPreferredCanvasFormat(),
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
@@ -180,7 +232,9 @@ export class Material {
         this._albedoTexture = $WGPU.device.createTexture(albedoTextureDescriptor);
         this._normalTexture = $WGPU.device.createTexture(normalTextureDescriptor);
         this._roughnessMetallicAOTexture = $WGPU.device.createTexture(roughnessMetallicAOTextureDescriptor);
-
+        if(albedoImageBitmap === undefined || normalImageBitmap === undefined ) {
+            throw new Error('Failed to create textures. Please check the texture descriptors and ensure the GPU supports the required formats.');
+        }
         this.loadImageBitmap(albedoImageBitmap, this._albedoTexture, 0);
         this.loadImageBitmap(normalImageBitmap, this._normalTexture, 0);
         this.loadImageBitmap(roughnessMetallicAO, this._roughnessMetallicAOTexture, 0);

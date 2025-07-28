@@ -1,7 +1,8 @@
 ﻿import {type Scene} from "@/app/scene.ts";
 import {SandBoxScene} from "@/app/sand-box-scene.ts";
-import {TvScene} from "@/app/tv-scene.ts";
+import {BathroomScene} from "@/app/bathroom-scene.ts";
 import {SpaceScene} from "@/app/space-scene.ts";
+
 
 
 export class SceneManager {
@@ -26,7 +27,7 @@ export class SceneManager {
     constructor() {
         this._scenes = [
             new SandBoxScene(),
-            new TvScene(),
+            new BathroomScene(),
             new SpaceScene()
         ]
 
@@ -43,6 +44,7 @@ export class SceneManager {
                     await scene.initialize();
                 }
             }
+            console.log('All scenes initialized');
             this._currentScene = this._scenes[0];
         } catch (error) {
             console.error('Failed to initialize all scenes:', error);
@@ -52,21 +54,19 @@ export class SceneManager {
     async switchToScene(sceneGUID: string, onLoadingChange?: (loading: boolean) => void) {
         try {
             onLoadingChange?.(true);
-
-            if (this._currentScene) {
-                this._currentScene.cleanup();
-            }
-
             this._scenes.forEach(scn => {
-                if (scn.guid == sceneGUID) {
-                    this._currentScene = scn;
+                if (!(scn.guid == sceneGUID && scn.initialized)) {
+                    return;
                 }
+
+                this._currentScene.cleanup();
+                this._currentScene = scn;
+
             });
 
 
             if (this._currentScene) {
-
-                await this._currentScene.run();
+                await this._currentScene.start();
             }
 
 

@@ -1,6 +1,5 @@
 ﻿import {fileFromURL} from "@/lib/utils.ts";
 
-import {Material} from "@/graphics/3d/material.ts";
 import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
 import {PointLight} from "@/scene/point-light.ts";
 import {Vector3} from "@/core/math/vector3.ts";
@@ -19,7 +18,7 @@ export class SandBoxScene extends Scene {
 
 
     async initialize(): Promise<void> {
-
+        await super.initialize();
         const objFile = await fileFromURL('./media/models/corridor/corridor.obj');
         await OBJLoader.loadMeshes(objFile);
 
@@ -36,23 +35,15 @@ export class SandBoxScene extends Scene {
             'Porte_D',
             'Porte_G'
         ];
-        const materials = new Map<string, Material>();
-        for (const m of materialNames) {
-            const material = await Material.createFromFolderPath(m, texturePath);
-            await material.initialize();
-            materials.set(m, material);
-        }
 
-
-        this.renderableObjects.forEach(r => {
-            r.material = materials.get(r.materialName) ?? Material.default;
-        })
+        await this.initializeSceneMaterials(materialNames, texturePath)
 
         const l1 = new PointLight(new Vector3(1, 1, 1), 100);
         l1.transform.position.set(-59.1, 198.1, 75.3);
         new PointLight(new Vector3(1, 1, 1), 50);
-    }
 
+        this._initialized = true;
+    }
 
     protected updateScene(): void {
 
