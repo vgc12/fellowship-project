@@ -1,6 +1,7 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {fileFromURL, imageExists} from "@/lib/utils.ts";
 import {type imageFileType} from "@/components/texture-input-component.tsx";
+import {generateMips, numMipLevels} from "@/graphics/shader-utils/mipmap-generator.ts";
 
 
 export class Material {
@@ -225,7 +226,7 @@ export class Material {
                 width: albedoImageBitmap?.width ?? 1024,
                 height: albedoImageBitmap?.height ?? 1024,
             },
-
+            mipLevelCount: numMipLevels(albedoImageBitmap?.width ?? 1024, albedoImageBitmap?.height ?? 1024),
             format: navigator.gpu.getPreferredCanvasFormat(),
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
         }
@@ -235,6 +236,7 @@ export class Material {
                 width: emissiveImageBitmap?.width ?? 1024,
                 height: emissiveImageBitmap?.height ?? 1024,
             },
+            mipLevelCount: numMipLevels(emissiveImageBitmap?.width ?? 1024, emissiveImageBitmap?.height ?? 1024),
             format: navigator.gpu.getPreferredCanvasFormat(),
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
         }
@@ -244,6 +246,7 @@ export class Material {
                 width: normalImageBitmap?.width ?? 1024,
                 height: normalImageBitmap?.height ?? 1024,
             },
+            mipLevelCount: numMipLevels(normalImageBitmap?.width ?? 1024, normalImageBitmap?.height ?? 1024),
             format: navigator.gpu.getPreferredCanvasFormat(),
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
 
@@ -254,6 +257,7 @@ export class Material {
                 width: roughnessMetallicAO.width,
                 height: roughnessMetallicAO.height,
             },
+            mipLevelCount: numMipLevels(roughnessMetallicAO.width, roughnessMetallicAO.height),
             format: navigator.gpu.getPreferredCanvasFormat(),
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
         }
@@ -265,10 +269,10 @@ export class Material {
         if(albedoImageBitmap === undefined || normalImageBitmap === undefined ) {
             throw new Error('Failed to create textures. Please check the texture descriptors and ensure the GPU supports the required formats.');
         }
-        this.loadImageBitmap(albedoImageBitmap, this._albedoTexture, 0);
-        this.loadImageBitmap(normalImageBitmap, this._normalTexture, 0);
-        this.loadImageBitmap(roughnessMetallicAO, this._roughnessMetallicAOTexture, 0);
-        this.loadImageBitmap(emissiveImageBitmap, this._emissiveTexture, 0);
+        this.loadImageBitmap(albedoImageBitmap, this._albedoTexture);
+        this.loadImageBitmap(normalImageBitmap, this._normalTexture);
+        this.loadImageBitmap(roughnessMetallicAO, this._roughnessMetallicAOTexture);
+        this.loadImageBitmap(emissiveImageBitmap, this._emissiveTexture);
 
         const viewDescriptor: GPUTextureViewDescriptor = {
             format: navigator.gpu.getPreferredCanvasFormat(),
@@ -319,16 +323,19 @@ export class Material {
     }
 
 
-    loadImageBitmap(imageBitmap: ImageBitmap, texture: GPUTexture, mipLevel: number) {
+    loadImageBitmap(imageBitmap: ImageBitmap, texture: GPUTexture) {
 
         $WGPU.device.queue.copyExternalImageToTexture(
             {source: imageBitmap},
             {
                 texture: texture,
-                mipLevel: mipLevel
             },
             {width: imageBitmap.width, height: imageBitmap.height}
         )
+
+        if(texture.mipLevelCount > 1){
+            generateMips($WGPU.device, texture);
+        }
     }
 
 
