@@ -4,10 +4,16 @@ import {type RenderableObject} from "@/scene/renderable-object.ts";
 import {type Light} from "@/scene/point-light.ts";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {Material} from "@/graphics/3d/material.ts";
+import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
+import {CameraController} from "@/Controls/camera-controller.ts";
+
 
 
 
 export abstract class Scene {
+    get skyMaterial(){
+        return this._skyMaterial;
+    }
     get running(): boolean {
         return this._running;
     }
@@ -65,6 +71,9 @@ export abstract class Scene {
     private readonly _guid: string;
     protected  _initialized: boolean;
     private _running: boolean;
+    protected _skyMaterial: SkyMaterial;
+    protected cameraController: CameraController;
+
 
 
     protected constructor() {
@@ -74,6 +83,7 @@ export abstract class Scene {
         this._lights = [];
         this._name = 'Default Scene'
         this._guid = crypto.randomUUID();
+        this._skyMaterial = SkyMaterial.default;
 
 
     }
@@ -82,7 +92,7 @@ export abstract class Scene {
 
     // this used to be not as complex, but it would genuinely take 6 seconds to do this per scene which is about 20 seconds of waiting
     // to initialize all scenes its around 6-10 seconds total (depending on your pc);
-    protected async initializeSceneMaterials(materialNames: string[], texturePath: string, materialTypes: string[] = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity']) {
+    protected async initializeSceneMaterials(materialNames: string[], texturePath: string, materialTypes: string[] = ['albedo', 'roughness', 'metallic', 'normal', 'emissive', 'opacity']) {
         const materials = new Map<string,Material>();
 
         const materialPromises = materialNames.map(async (m) => {
@@ -107,12 +117,15 @@ export abstract class Scene {
     }
 
     async initialize() {
+        this._skyMaterial = SkyMaterial.default;
+
         if(!this._objects.includes($WGPU.mainCamera)){
             this._objects.push($WGPU.mainCamera);
         }
 
         if(!this._objects.includes($WGPU.cameraController)){
-            this._objects.push($WGPU.cameraController);
+            this.cameraController = new CameraController($WGPU.mainCamera);
+            this._objects.push(this.cameraController);
         }
     }
     async start() {

@@ -4,16 +4,11 @@ import lightingVertexShader from '../../graphics/shaders/light.vert.wgsl';
 import lightingFragmentShader from '../../graphics/shaders/light.frag.wgsl';
 import skyVertexShader from '../../graphics/shaders/sky.vert.wgsl';
 import skyFragmentShader from '../../graphics/shaders/sky.frag.wgsl';
-
 import {$WGPU} from '../webgpu/webgpu-singleton.ts';
 import {ShaderBuilder} from "@/graphics/shader-utils/shader-builder.ts";
 import {Light, lightType} from "@/scene/point-light.ts";
 import type {SpotLight} from "@/scene/spot-light.ts";
-import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
 import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
-import {convertToRadians} from "@/core/math/math-util.ts";
-import {mat4, vec3} from "wgpu-matrix";
-
 export class Renderer {
 
     gBufferTextures: {
@@ -22,6 +17,7 @@ export class Renderer {
         metallicRoughnessAO: GPUTexture;
         position: GPUTexture;
         depth: GPUTexture;
+        emissive: GPUTexture;
     };
 
 
@@ -31,6 +27,7 @@ export class Renderer {
         metallicRoughnessAO: GPUTextureView;
         position: GPUTextureView;
         depth: GPUTextureView;
+        emissive: GPUTextureView;
     }
 
 
@@ -42,7 +39,7 @@ export class Renderer {
     objectUniformBuffer: GPUBuffer;
     frameBindGroup: GPUBindGroup;
     gBufferBindGroup: GPUBindGroup;
-    skyBindGroup: GPUBindGroup;
+
 
     objectStorageBuffer: GPUBuffer;
     lightStorageBuffer: GPUBuffer;
@@ -59,7 +56,7 @@ export class Renderer {
     geometryPassEncoder: GPURenderPassEncoder;
     lightingPassEncoder: GPURenderPassEncoder;
     skyPassEncoder: GPURenderPassEncoder;
-    skyBoxMaterial: SkyMaterial;
+
 
 
     async initialize() {
@@ -108,6 +105,11 @@ export class Renderer {
                 size: windowDimensions,
                 format: 'depth32float',
                 usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+            }),
+            emissive: $WGPU.device.createTexture({
+                size: windowDimensions,
+                format: 'rgba8unorm',
+                usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
             })
         };
 
@@ -117,7 +119,8 @@ export class Renderer {
             position: this.gBufferTextures.position.createView(),
             normal: this.gBufferTextures.normal.createView(),
             metallicRoughnessAO: this.gBufferTextures.metallicRoughnessAO.createView(),
-            depth: this.gBufferTextures.depth.createView()
+            depth: this.gBufferTextures.depth.createView(),
+            emissive: this.gBufferTextures.emissive.createView()
         };
     }
 
@@ -208,29 +211,17 @@ export class Renderer {
                 {
                     binding: 4,
                     resource: this.gBufferViews.depth
+                },
+                {
+                    binding: 5,
+                    resource: this.gBufferViews.emissive
                 }
 
             ]
         });
 
-        this.skyBoxMaterial = this.skyBoxMaterial ?? SkyMaterial.default;
-        this.skyBindGroup = $WGPU.device.createBindGroup({
-            layout: $WGPU.skyBindGroupLayout,
-            entries: [
-                {
-                    binding: 0,
-                    resource: {buffer: this.cameraBuffer}
-                },
-                {
-                    binding: 1,
-                    resource: this.skyBoxMaterial.view,
-                },
-                {
-                    binding: 2,
-                    resource: this.skyBoxMaterial.sampler
-                }
-            ]
-        })
+
+
     }
 
     private async setupPipelines() {
@@ -247,6 +238,7 @@ export class Renderer {
             .addColorFormat('rgba16float')
             .addColorFormat('rgba8unorm')
             .addColorFormat('rgba32float')
+            .addColorFormat('rgba8unorm')
             .build();
 
         const geometryPipelineLayout = $WGPU.device.createPipelineLayout({
@@ -297,7 +289,7 @@ export class Renderer {
             .addLabel("Sky Shader")
             .setVertexCode(skyVertexShader, shaderEntryPoint)
             .setFragmentCode(skyFragmentShader, shaderEntryPoint)
-            .addColorFormat($WGPU.format)
+            .addColorFormat($WGPU.format, true) // with alpha
             .build();
 
         const skyPipelineLayout = $WGPU.device.createPipelineLayout({
@@ -451,7 +443,7 @@ export class Renderer {
 
 
         this.skyPassEncoder.setPipeline(this.skyPipeline);
-        this.skyPassEncoder.setBindGroup(0, this.skyBindGroup);
+        this.skyPassEncoder.setBindGroup(0, $SCENE_MANAGER.currentScene.skyMaterial.bindGroup);
         // Draw fullscreen quad
         this.skyPassEncoder.setVertexBuffer(0, this.fullscreenVertexBuffer);
         this.skyPassEncoder.draw(3, 1, 0, 0);
@@ -482,6 +474,12 @@ export class Renderer {
                 },
                 {
                     view: this.gBufferViews.position,
+                    clearValue: [0, 0, 0, 0],
+                    loadOp: 'clear',
+                    storeOp: 'store'
+                },
+                {
+                    view: this.gBufferViews.emissive,
                     clearValue: [0, 0, 0, 0],
                     loadOp: 'clear',
                     storeOp: 'store'
@@ -534,10 +532,11 @@ export class Renderer {
         this.lightingPassEncoder.setBindGroup(0, this.frameBindGroup);
         this.lightingPassEncoder.setBindGroup(1, this.gBufferBindGroup);
         this.lightingPassEncoder.setBindGroup(2, this.lightBindGroup);
-        this.lightingPassEncoder.setBindGroup(3, this.skyBindGroup);
+        this.lightingPassEncoder.setBindGroup(3, $SCENE_MANAGER.currentScene.skyMaterial.bindGroup);
 
         // Draw fullscreen quad
         this.lightingPassEncoder.setVertexBuffer(0, this.fullscreenVertexBuffer);
+
         this.lightingPassEncoder.draw(6, 1, 0, 0);
 
         this.lightingPassEncoder.end();

@@ -122,7 +122,7 @@ class WebGPUSingleton {
     private _renderer = new Renderer();
 
 
-    async InitializeDefaultSkyMaterial() {
+    async initializeDefaultSkyMaterial() {
         const path = './media/defaults/sky-material/';
         const urls = [
             path + "px.png",  //x+
@@ -134,16 +134,18 @@ class WebGPUSingleton {
         ]
 
         SkyMaterial.default = new SkyMaterial();
+
         await SkyMaterial.default.initialize(urls);
     }
 
-    async InitializeDefaultMaterial() {
+    async initializeDefaultMaterial() {
         const path = './media/defaults/material/'
         Material.default = new Material();
         Material.default.albedoFile = await fileFromURL(path + 'default_albedo.png');
         Material.default.roughnessFile = await fileFromURL(path + 'default_roughness.png');
         Material.default.metallicFile = await fileFromURL(path + 'default_metallic.png');
         Material.default.normalFile = await fileFromURL(path + 'default_normal.png');
+        Material.default.emissiveFile = await fileFromURL(path + 'default_emissive.png');
         await Material.default.initialize();
     }
 
@@ -154,15 +156,16 @@ class WebGPUSingleton {
 
         this.createSceneObjects();
 
-        await this.InitializeDefaultSkyMaterial();
+
 
 
         this.createVertexBufferLayout();
 
         this.initializeBindGroupLayouts();
-        await this.InitializeDefaultMaterial();
+        await this.initializeDefaultMaterial();
 
         await this._renderer.initialize();
+        await this.initializeDefaultSkyMaterial();
     }
 
     private initializeBindGroupLayouts() {
@@ -241,6 +244,11 @@ class WebGPUSingleton {
                     binding: 3,
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: {}
+                },
+                {
+                    binding: 4,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {}
                 }
             ]
         })
@@ -274,6 +282,11 @@ class WebGPUSingleton {
                     binding: 4,
                     visibility: GPUShaderStage.FRAGMENT,  // depth
                     texture: {sampleType: 'depth'}
+                },
+                {
+                    binding: 5,
+                    visibility: GPUShaderStage.FRAGMENT, // emissive
+                    texture: {sampleType: 'float'}
                 }
 
             ]
@@ -331,6 +344,8 @@ class WebGPUSingleton {
         });
         this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
         this._format = navigator.gpu.getPreferredCanvasFormat();
+
+
 
         this._context.configure({
             format: this.format,

@@ -27,7 +27,7 @@ export function SceneObjectListComponent(props: { objects: IObject[] }) {
 
     if (selectedObject == null) {
         component = <></>;
-    } else if (selectedObject.guid === $WGPU.cameraController.guid) {
+    } else if (selectedObject.constructor.name === 'CameraController') {
         component = <CameraControllerComponent key={selectedObject.guid} object={selectedObject as CameraController}/>;
     } else if (selectedObject.constructor.name === 'SpotLight') {
 

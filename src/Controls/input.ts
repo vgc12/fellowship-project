@@ -63,7 +63,7 @@ export class Input {
             mouseTimer = setTimeout(() => {
                 this._movementX = 0;
                 this._movementY = 0;
-            }, 10);
+            }, 1);
 
         }
 

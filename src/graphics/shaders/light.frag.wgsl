@@ -165,6 +165,7 @@ fn calculateSpotLight(
 @group(1) @binding(2) var gBufferMetallicRoughnessAO: texture_2d<f32>;
 @group(1) @binding(3) var gBufferPosition: texture_2d<f32>;
 @group(1) @binding(4) var gBufferDepth: texture_depth_2d;
+@group(1) @binding(5) var gBufferEmissive: texture_2d<f32>;
 
 @binding(0) @group(2) var<storage, read> lights: array<Light>;
 @binding(1) @group(2) var<uniform> lightData: LightData;
@@ -192,8 +193,8 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
     let opacity = textureLoad(gBufferMetallicRoughnessAO, c, 0).a; // Sample the opacity texture
     let worldNormal = textureLoad(gBufferNormal, c, 0).xyz; // Sample the normal texture
     let worldPosition = textureLoad(gBufferPosition, c, 0).xyz; // Sample the world position texture
+    let emissivity = textureLoad(gBufferEmissive, c, 0).xyz; // Sample the emissive texture
 
-    let emissivity : f32 = 0.0;
     let F0 : vec3f = mix(vec3(0.04), albedo.xyz, metallic);
     var L0 : vec3f = vec3f(0.0);
     var v : vec3f = normalize(camera.cameraPosition.xyz - worldPosition);
@@ -220,6 +221,7 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
 
     }
 
+
     let eyeToSurfaceDir = worldPosition - camera.cameraPosition.xyz;
 
     let fresnel = pow(1.0 - max(dot(normalize(v), worldNormal), 0.0), 5.0);
@@ -229,11 +231,11 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
     let reflect = textureSample(skyTexture,  skySampler, reflectionDir );
 
     let ambient = mix(albedo.xyz *0.01, reflect.xyz, fresnel) ; // Ambient light contribution
-    var color =  L0 + vec3f(emissivity) + ambient; // Combine all contributions
+    var color =  L0 + ambient; // Combine all contributions
     color = color / (color + vec3f(1.0)); // Simple tone mapping
 
     color = pow(color, vec3f(1.0 / 1.3)); // Gamma correction
-    return vec4f(color,opacity);
+    return  vec4f(color + emissivity  ,opacity);
 
 
 }

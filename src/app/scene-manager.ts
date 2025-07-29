@@ -1,7 +1,8 @@
 ﻿import {type Scene} from "@/app/scene.ts";
 import {SandBoxScene} from "@/app/sand-box-scene.ts";
-import {BathroomScene} from "@/app/bathroom-scene.ts";
+import {RoomScene} from "@/app/room-scene.ts";
 import {SpaceScene} from "@/app/space-scene.ts";
+import {RobotScene} from "@/app/robot-scene.ts";
 
 
 
@@ -27,8 +28,9 @@ export class SceneManager {
     constructor() {
         this._scenes = [
             new SandBoxScene(),
-            new BathroomScene(),
-            new SpaceScene()
+            new RoomScene(),
+            new SpaceScene(),
+            new RobotScene(),
         ]
 
 

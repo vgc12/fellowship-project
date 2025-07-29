@@ -51,10 +51,32 @@ export class ShaderBuilder {
         return this;
     }
 
-    addColorFormat(format: GPUTextureFormat) {
-        this._colorTargetStates.push({
-            format: format,
-        });
+    addColorFormat(format: GPUTextureFormat, withAlpha : boolean = false) {
+
+        if (withAlpha) {
+
+            this._colorTargetStates.push({
+                format: format,
+                blend: {
+                    color: {
+                        operation: 'add',
+                        srcFactor: 'src-alpha',
+                        dstFactor: 'one-minus-src-alpha',
+                    },
+                    alpha: {
+                        operation: 'add',
+                        srcFactor: 'one',
+                        dstFactor: 'zero',
+                    },
+                },
+            });
+        }
+        else
+        {
+            this._colorTargetStates.push({
+                format: format,
+            });
+        }
         return this;
     }
 
@@ -79,7 +101,8 @@ export class ShaderBuilder {
         this._fragmentState = {
             entryPoint: this._fragmentEntryPoint,
             module: this._fragmentModule,
-            targets: this._colorTargetStates,
+            targets:  this._colorTargetStates,
+
         };
 
         const shader: Shader = {

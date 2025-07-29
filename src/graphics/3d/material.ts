@@ -4,6 +4,13 @@ import {type imageFileType} from "@/components/texture-input-component.tsx";
 
 
 export class Material {
+    get emissiveFile(): File {
+        return this._emissiveFile;
+    }
+
+    set emissiveFile(value: File) {
+        this._emissiveFile = value;
+    }
     get aoFile(): File {
         return this._aoFile;
     }
@@ -13,7 +20,7 @@ export class Material {
     }
 
     // this may be the best im going to get this.
-    static async getImageFiles(imageName: string, folderPath: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity']) {
+    static async getImageFiles(imageName: string, folderPath: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity', 'emissive']) {
 
 
         return await Promise.all(
@@ -47,7 +54,7 @@ export class Material {
      @param pathToTextures The path in which the textures can be found
      @param materialTypes The types of files to search for. for example ['Albedo', 'Roughness' 'Metallic', 'Normal']
      */
-    static async createFromFolderPath(nameOfTexture: string, pathToTextures: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity']) {
+    static async createFromFolderPath(nameOfTexture: string, pathToTextures: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity', 'emissive']) {
 
         const files = await this.getImageFiles(nameOfTexture, pathToTextures, materialTypes)
 
@@ -124,18 +131,21 @@ export class Material {
 
     private _albedoTexture: GPUTexture;
     private _normalTexture: GPUTexture;
+    private _emissiveTexture: GPUTexture;
     private _roughnessMetallicAOTexture: GPUTexture;
     private _albedoView: GPUTextureView;
     private _normalView: GPUTextureView;
+    private _emissiveView: GPUTextureView;
     private _sampler: GPUSampler;
     private _bindGroup: GPUBindGroup;
+
     private _albedoFile: File;
     private _aoFile: File;
-
     private _metallicFile: File;
     private _roughnessFile: File;
     private _normalFile: File;
     private _opacityFile: File;
+    private _emissiveFile: File;
 
 
     imageBitmapToImageData(imageBitmap: ImageBitmap): ImageData {
@@ -170,7 +180,11 @@ export class Material {
     }
 
     async initialize() {
-        let albedoImageBitmap, roughnessImageBitmap,metallicImageBitmap,normalImageBitmap : ImageBitmap | undefined = undefined;
+        let albedoImageBitmap,
+            roughnessImageBitmap,
+            metallicImageBitmap,
+            normalImageBitmap,
+            emissiveImageBitmap: ImageBitmap | undefined = undefined;
         let roughnessData, metallicData, aoData, opacityData: ImageData | undefined = undefined;
         if(this._albedoFile) {
             albedoImageBitmap = await createImageBitmap(this._albedoFile)
@@ -191,9 +205,16 @@ export class Material {
         if(this._aoFile){
             aoData = this.imageBitmapToImageData(await createImageBitmap(this._aoFile));
         }
+
         if(this._opacityFile) {
             opacityData = this.imageBitmapToImageData(await createImageBitmap(this._opacityFile));
         }
+
+        if(!this._emissiveFile) {
+            this._emissiveFile = await fileFromURL('./media/defaults/material/default_emissive.png');
+        }
+
+        emissiveImageBitmap = await createImageBitmap(this._emissiveFile);
 
 
         const roughnessMetallicAO = await createImageBitmap(this.packTextures(metallicData, roughnessData, aoData, opacityData));
@@ -209,6 +230,15 @@ export class Material {
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
         }
 
+        const emissiveTextureDescriptor: GPUTextureDescriptor = {
+            size: {
+                width: emissiveImageBitmap?.width ?? 1024,
+                height: emissiveImageBitmap?.height ?? 1024,
+            },
+            format: navigator.gpu.getPreferredCanvasFormat(),
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+        }
+
         const normalTextureDescriptor: GPUTextureDescriptor = {
             size: {
                 width: normalImageBitmap?.width ?? 1024,
@@ -218,7 +248,6 @@ export class Material {
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
 
         }
-
 
         const roughnessMetallicAOTextureDescriptor: GPUTextureDescriptor = {
             size: {
@@ -231,6 +260,7 @@ export class Material {
 
         this._albedoTexture = $WGPU.device.createTexture(albedoTextureDescriptor);
         this._normalTexture = $WGPU.device.createTexture(normalTextureDescriptor);
+        this._emissiveTexture = $WGPU.device.createTexture(emissiveTextureDescriptor);
         this._roughnessMetallicAOTexture = $WGPU.device.createTexture(roughnessMetallicAOTextureDescriptor);
         if(albedoImageBitmap === undefined || normalImageBitmap === undefined ) {
             throw new Error('Failed to create textures. Please check the texture descriptors and ensure the GPU supports the required formats.');
@@ -238,6 +268,7 @@ export class Material {
         this.loadImageBitmap(albedoImageBitmap, this._albedoTexture, 0);
         this.loadImageBitmap(normalImageBitmap, this._normalTexture, 0);
         this.loadImageBitmap(roughnessMetallicAO, this._roughnessMetallicAOTexture, 0);
+        this.loadImageBitmap(emissiveImageBitmap, this._emissiveTexture, 0);
 
         const viewDescriptor: GPUTextureViewDescriptor = {
             format: navigator.gpu.getPreferredCanvasFormat(),
@@ -246,6 +277,7 @@ export class Material {
         }
         this._albedoView = this._albedoTexture.createView(viewDescriptor);
         this._normalView = this._normalTexture.createView(viewDescriptor);
+        this._emissiveView = this._emissiveTexture.createView(viewDescriptor);
         this._roughnessMetallicAOView = this._roughnessMetallicAOTexture.createView(viewDescriptor);
         const samplerDescriptor: GPUSamplerDescriptor = {
             addressModeU: "mirror-repeat",
@@ -276,6 +308,10 @@ export class Material {
                 {
                     binding: 3,
                     resource: this._sampler
+                },
+                {
+                    binding: 4,
+                    resource: this._emissiveView
                 }
             ]
         })
