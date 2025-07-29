@@ -36,6 +36,7 @@ export class MeshBuilder {
         return this;
     }
 
+
     setIndices(indices: number[]): MeshBuilder {
         this._indices = new Uint16Array( indices);
 
@@ -48,7 +49,6 @@ export class MeshBuilder {
         if (!this._vertices) {
             throw new Error('Vertices must be provided');
         }
-
 
         this._fullBufferData = new Float32Array(this._vertices);
 
@@ -92,7 +92,7 @@ export class MeshBuilder {
     }
 
     private calculateVertexCount(): number {
-        /* In theory, this should get the amount of vertices
+        /*  this should get the amount of vertices
             if i have an array that has a position: vec3 and a texture coordinate: vec2 (this is a random array)
               x y z u v
             [

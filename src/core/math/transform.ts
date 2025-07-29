@@ -3,8 +3,6 @@ import {Quaternion} from "@/core/math/quaternion.ts";
 
 
 
-
-
 export class Transform {
     get scale(): Vector3 {
         return this._scale;
@@ -28,6 +26,7 @@ export class Transform {
     }
 
     set rotation(value: Quaternion) {
+
         this._rotation = value;
     }
     get up(): Vector3 {
@@ -60,6 +59,7 @@ export class Transform {
     constructor() {
         this._position = new Vector3(0,0,0);
 
+
         this.rotation = new Quaternion();
         this.rotation.addCallback( this.onRotationChanged);
         this._scale = new Vector3(1, 1, 1);
@@ -89,6 +89,7 @@ export class Transform {
         this._up.set(
             -rm.r1c2, rm.r2c2, -rm.r3c2
         )
+
 
     }
 

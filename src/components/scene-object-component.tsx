@@ -1,7 +1,7 @@
-import {Vector3InputComponent} from "./vector3-input-component.tsx";
+import {VectorInputComponent} from "./vector-input-component.tsx";
 
 
-import {TextureInputComponent} from "@/components/texture-input-component.tsx";
+import {ImageFileTypes, TextureInputComponent} from "@/components/texture-input-component.tsx";
 import type {RenderableObject} from "@/scene/renderable-object.ts";
 
 
@@ -30,15 +30,23 @@ function SceneObjectComponent(props: { object: RenderableObject }) {
                         const values = transformKey === 'rotation' ?
                             props.object.transform[transformKey]['eulerAngles'] :
                             props.object.transform[transformKey];
-                        return <Vector3InputComponent  label={label} values={values.toArray} onChange={
+                        return <VectorInputComponent label={label} values={values.toArray} onChange={
                             (val, axis) => {
-                                values[axis] = val;
+                                values[axis as 'x' | 'y' | 'z'] = val;
                             }
                         }/>
-                    } )}
+                    } )
+                }
 
-                </div>
-          <TextureInputComponent object={props.object} />
+            </div>
+
+            {
+                ImageFileTypes.map ((type) => {
+                    return <TextureInputComponent object={props.object} textureType={type} />
+                })
+            }
+
+
         </div>
         </li>
     )

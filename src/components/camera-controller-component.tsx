@@ -10,11 +10,9 @@ function renderForVectorUpdate(vector: Vector3) {
     const forceRender = useCallback(() => forceUpdate(), []);
 
 
-    useEffect(() =>
-    {
+    useEffect(() => {
 
-        const forceUpdate = () =>
-        {
+        const forceUpdate = () => {
             forceRender();
         }
 
@@ -40,18 +38,15 @@ function SceneObjectComponent(props: { object: CameraController }) {
 
                     {
 
-                        ['x', 'y'].map((val) =>
-                        {
+                        ['x', 'y'].map((val) => {
 
                             return <>
                                 <h1>{val == 'x' ? 'Vertical Rotation' : 'Horizontal Rotation'}</h1>
                                 <Slider className={cn(["w-2/3"])} step={0.1} min={0} max={361}
-                                        value={[props.object.orbitRotation[val as Axis] % 360]} onValueCommit={() =>
-                                {
+                                        value={[props.object.orbitRotation[val as Axis] % 360]} onValueCommit={() => {
 
                                     props.object.changedBySlider = false;
-                                }} defaultValue={[props.object.orbitRotation[val as Axis]]} onValueChange={(e) =>
-                                {
+                                }} defaultValue={[props.object.orbitRotation[val as Axis]]} onValueChange={(e) => {
 
 
                                     props.object.changedBySlider = true;

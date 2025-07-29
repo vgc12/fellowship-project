@@ -5,14 +5,14 @@ export class Vector3 {
         this._sqrMagnitude = this._x * this._x + this._y * this._y + this._z * this._z;
         return this._sqrMagnitude;
     }
-    private _sqrMagnitude: number;
 
+    private _sqrMagnitude: number;
 
 
     private _x: number = 0;
     private _y: number = 0;
     private _z: number = 0;
-    private _onChange: Array< (x: number, y: number, z: number) => void>;
+    private _onChange: ((x: number, y: number, z: number) => void) [];
     private _toArray: [number, number, number] = [this._x, this._y, this._z];
     private _normalized: Vector3;
     private _magnitude: number;
@@ -34,11 +34,13 @@ export class Vector3 {
         this._sqrMagnitude = 0;
 
         this.flagRecalculations();
-        this._onChange = new Array<(x: number, y: number, z: number) => void>();
-        if(onChange) {
+        this._onChange = [];
+        if (onChange) {
             this._onChange.push(onChange);
+
         }
     }
+
     sharesValuesWith(vector: Vector3): boolean {
         return this._x === vector.x && this._y === vector.y && this._z === vector.z;
     }
@@ -50,8 +52,9 @@ export class Vector3 {
     }
 
     get onChange(): Array<(x: number, y: number, z: number) => void> {
-            return this._onChange
+        return this._onChange
     }
+
     get x(): number {
         return this._x;
     }
@@ -68,9 +71,11 @@ export class Vector3 {
     }
 
     set y(value: number) {
+
         this._y = value;
         this.flagRecalculations()
-        this._onChange.forEach( c => c?.(this._x, this._y, this._z));
+
+        this._onChange.forEach(c => c?.(this._x, this._y, this._z));
     }
 
 
@@ -79,9 +84,10 @@ export class Vector3 {
     }
 
     set z(value: number) {
+
         this._z = value;
         this.flagRecalculations()
-        this._onChange.forEach( c => c?.(this._x, this._y, this._z));
+        this._onChange.forEach(c => c?.(this._x, this._y, this._z));
     }
 
 
@@ -90,7 +96,7 @@ export class Vector3 {
         this._y = y;
         this._z = z;
         this.flagRecalculations()
-        this._onChange.forEach( c => c?.(this._x, this._y, this._z));
+        this._onChange.forEach(c => c?.(this._x, this._y, this._z));
     }
 
     setFromArray(array: [number, number, number]) {
@@ -98,7 +104,7 @@ export class Vector3 {
         this._y = array[1];
         this._z = array[2];
         this.flagRecalculations()
-        this._onChange.forEach( c => c?.(this._x, this._y, this._z));
+        this._onChange.forEach(c => c?.(this._x, this._y, this._z));
     }
 
 
@@ -118,7 +124,7 @@ export class Vector3 {
     }
 
     get normalized(): Vector3 {
-        if(!this._normalized) {
+        if (!this._normalized) {
             this._normalized = new Vector3(this._x, this._y, this._z);
         }
 
@@ -148,8 +154,7 @@ export class Vector3 {
         if (!out) {
 
             out = new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
-        }
-        else {
+        } else {
             out.set(a.x + b.x, a.y + b.y, a.z + b.z);
         }
 
@@ -175,7 +180,7 @@ export class Vector3 {
     }
 
 
-    static multiplyScalar(vec : Vector3, scalar: number, out?: Vector3) {
+    static multiplyScalar(vec: Vector3, scalar: number, out?: Vector3) {
         if (!out) {
             out = new Vector3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
         } else {

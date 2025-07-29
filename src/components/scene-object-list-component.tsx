@@ -5,10 +5,13 @@ import {RenderableObject} from "@/scene/renderable-object.ts";
 import type {IObject} from "@/scene/IObject.ts";
 import type {CameraController} from "@/Controls/camera-controller.ts";
 import CameraControllerComponent from "@/components/camera-controller-component.tsx";
+import SpotLightComponent from "@/components/spot-light-component.tsx";
+import type {SpotLight} from "@/scene/spot-light.ts";
+import PointLightComponent from "./point-light-component.tsx";
+import type {PointLight} from "@/scene/point-light.ts";
 
 
-
-export function SceneObjectListComponent(props: {objects: IObject[]}) {
+export function SceneObjectListComponent(props: { objects: IObject[] }) {
 
     if (props.objects.length === 0) {
         return <></>
@@ -16,7 +19,7 @@ export function SceneObjectListComponent(props: {objects: IObject[]}) {
 
     const [selectedObject, setSelectedObject] = useState<IObject | null>(null);
 
-    const buttonClicked = (o: IObject) =>{
+    const buttonClicked = (o: IObject) => {
         setSelectedObject(o);
     }
     let component: JSX.Element;
@@ -24,20 +27,24 @@ export function SceneObjectListComponent(props: {objects: IObject[]}) {
 
     if (selectedObject == null) {
         component = <></>;
-    }
-    else if(selectedObject.guid === $WGPU.cameraController.guid){
+    } else if (selectedObject.guid === $WGPU.cameraController.guid) {
         component = <CameraControllerComponent key={selectedObject.guid} object={selectedObject as CameraController}/>;
-    }
-    else {
+    } else if (selectedObject.constructor.name === 'SpotLight') {
+
+        component = <SpotLightComponent key={selectedObject.guid} object={selectedObject as SpotLight}/>;
+    } else if (selectedObject.constructor.name === 'PointLight') {
+
+        component = <PointLightComponent key={selectedObject.guid} object={selectedObject as PointLight}/>;
+    } else {
         component = <SceneObjectComponent key={selectedObject.guid} object={selectedObject as RenderableObject}/>;
     }
 
     return (
 
-       <div className={" bg-gray-800 text-white p-4 mb-8 rounded-md text-center flex flex-col " }>
+        <div className={" bg-gray-800 text-white p-4 mb-8 rounded-md text-center flex flex-col "}>
             {component}
             {props.objects.map(o => {
-                if( o.guid !== $WGPU.mainCamera.guid) {
+                if (o.guid !== $WGPU.mainCamera.guid) {
                     return <button key={o.guid} className={`
                     text-white bg-gray-700 hover:bg-gray-500 focus:outline-none 
                     focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm 
