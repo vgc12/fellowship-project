@@ -12,7 +12,6 @@ import {CameraFirstPersonState} from "@/Controls/states/camera-first-person-stat
 import {IdleState} from "@/Controls/states/idle-state.ts";
 import {CameraPanState} from "@/Controls/states/camera-pan-state.ts";
 import {CameraOrbitState} from "@/Controls/states/camera-orbit-state.ts";
-import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 export class ZoomState implements IState {
     private readonly _cameraController: CameraController;

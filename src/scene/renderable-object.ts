@@ -5,7 +5,7 @@ import {Transform} from "../core/math/transform.ts";
 import {type Mat4, mat4} from "wgpu-matrix";
 import {convertToRadians} from "../core/math/math-util.ts";
 import {Material} from "@/graphics/3d/material.ts";
-import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
+
 
 export class RenderableObject implements IObject, IRenderable {
     get materialName(): string {
@@ -59,8 +59,7 @@ export class RenderableObject implements IObject, IRenderable {
 
         mat4.translate(this._modelMatrix, this._transform.position.toArray, this._modelMatrix);
         this._mesh = new Mesh();
-        $SCENE_MANAGER.currentScene.addRenderableObject(this);
-        $SCENE_MANAGER.currentScene.addObject(this);
+
 
         this.material = Material.default;
 

@@ -4,7 +4,6 @@ import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
 import {Vector3} from "@/core/math/vector3.ts";
 import {PointLight} from "@/scene/point-light.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
-import {SpotLight} from "@/scene/spot-light.ts";
 
 export class SpaceScene extends Scene {
     cleanup(): void {
@@ -14,7 +13,8 @@ export class SpaceScene extends Scene {
     async initialize(): Promise<void> {
         await super.initialize();
         const objFile = await fileFromURL('./media/models/spaceship/corridor.obj');
-        await OBJLoader.loadMeshes(objFile);
+        const ro = await OBJLoader.loadMeshes(objFile)
+        this.addRenderableObjectArray(ro)
 
         const texturePath = './media/models/spaceship/';
         const materialNames = [
@@ -24,7 +24,7 @@ export class SpaceScene extends Scene {
 
         await this.initializeSceneMaterials(materialNames, texturePath, materialTypes)
 
-       this._skyMaterial = new SkyMaterial();
+        this._skyMaterial = new SkyMaterial();
 
         const path = './media/models/spaceship/skybox/';
         const urls = [
@@ -40,6 +40,8 @@ export class SpaceScene extends Scene {
 
         const p1 = new PointLight(new Vector3(1, 1, 1), 3);
         p1.transform.position.set(-9.7, .5, 0);
+
+        this.addLight(p1);
 
         this._initialized = true;
     }

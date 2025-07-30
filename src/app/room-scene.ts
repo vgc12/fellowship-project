@@ -22,10 +22,12 @@ export class RoomScene extends Scene {
         await super.initialize();
 
 
-        const materialTypes =  ['Albedo', 'Metallic', 'Roughness', 'Normal', 'Opacity', 'AO', 'Emissive']
+        const materialTypes = ['Albedo', 'Metallic', 'Roughness', 'Normal', 'Opacity', 'AO', 'Emissive']
 
         const objFile = await fileFromURL('./media/models/room/room.obj');
-        await OBJLoader.loadMeshes(objFile);
+        const ro = await OBJLoader.loadMeshes(objFile);
+
+        this.addRenderableObjectArray(ro)
 
 
         const roomTexturePath = './media/models/room/';
@@ -60,8 +62,11 @@ export class RoomScene extends Scene {
         l1.transform.position.set(-5.5, .4, -0.1);
         const l2 = new PointLight(new Vector3(1, 1, 1), 6);
         l2.transform.position.set(-3.1, 3.2, 0.5);
-        this.cameraController.transform.position.set(0, 2, 0);
-        this.cameraController.orbitRadius = 4
+
+        this.addLight(l1);
+        this.addLight(l2);
+
+
         this._initialized = true;
 
 

@@ -157,8 +157,6 @@ class WebGPUSingleton {
         this.createSceneObjects();
 
 
-
-
         this.createVertexBufferLayout();
 
         this.initializeBindGroupLayouts();
@@ -335,7 +333,7 @@ class WebGPUSingleton {
             height: this._canvas.height
         }
 
-
+      
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
         this._device = await this._adapter.requestDevice({
             requiredLimits: {
@@ -346,11 +344,10 @@ class WebGPUSingleton {
         this._format = navigator.gpu.getPreferredCanvasFormat();
 
 
-
         this._context.configure({
             format: this.format,
             device: $WGPU.device,
-            alphaMode: 'premultiplied',
+            alphaMode: 'opaque',
         });
     }
 

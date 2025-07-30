@@ -5,15 +5,12 @@ import {type Light} from "@/scene/point-light.ts";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {Material} from "@/graphics/3d/material.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
-import {CameraController} from "@/Controls/camera-controller.ts";
-
-
-
 
 export abstract class Scene {
-    get skyMaterial(){
+    get skyMaterial() {
         return this._skyMaterial;
     }
+
     get running(): boolean {
         return this._running;
     }
@@ -21,6 +18,7 @@ export abstract class Scene {
     set running(value: boolean) {
         this._running = value;
     }
+
     get guid(): string {
         return this._guid;
     }
@@ -46,17 +44,16 @@ export abstract class Scene {
         return this._objects;
     }
 
-    addRenderableObject(renderable: RenderableObject) {
-        this._renderableObjects.push(renderable);
+
+    addRenderableObjectArray(arr: RenderableObject[]) {
+        this._objects.push(...arr);
+        this._renderableObjects.push(...arr);
     }
 
-
-    addObject(object: IObject) {
-        this._objects.push(object);
-    }
 
     addLight(light: Light) {
         this._lights.push(light);
+        this._objects.push(light);
     }
 
     get initialized() {
@@ -69,11 +66,9 @@ export abstract class Scene {
     private readonly _lights: Light[];
     private _name: string;
     private readonly _guid: string;
-    protected  _initialized: boolean;
+    protected _initialized: boolean;
     private _running: boolean;
     protected _skyMaterial: SkyMaterial;
-    protected cameraController: CameraController;
-
 
 
     protected constructor() {
@@ -88,12 +83,12 @@ export abstract class Scene {
 
     }
 
-    protected abstract updateScene( ): void;
+    protected abstract updateScene(): void;
 
     // this used to be not as complex, but it would genuinely take 6 seconds to do this per scene which is about 20 seconds of waiting
     // to initialize all scenes its around 6-10 seconds total (depending on your pc);
     protected async initializeSceneMaterials(materialNames: string[], texturePath: string, materialTypes: string[] = ['albedo', 'roughness', 'metallic', 'normal', 'emissive', 'opacity']) {
-        const materials = new Map<string,Material>();
+        const materials = new Map<string, Material>();
 
         const materialPromises = materialNames.map(async (m) => {
 
@@ -102,7 +97,7 @@ export abstract class Scene {
             // does not need to be awaited
             material.initialize();
 
-            return { name: m, material };
+            return {name: m, material};
         });
 
         const results = await Promise.all(materialPromises);
@@ -119,15 +114,16 @@ export abstract class Scene {
     async initialize() {
         this._skyMaterial = SkyMaterial.default;
 
-        if(!this._objects.includes($WGPU.mainCamera)){
+        if (!this._objects.includes($WGPU.mainCamera)) {
             this._objects.push($WGPU.mainCamera);
         }
 
-        if(!this._objects.includes($WGPU.cameraController)){
-            this.cameraController = new CameraController($WGPU.mainCamera);
-            this._objects.push(this.cameraController);
+        if (!this._objects.includes($WGPU.cameraController)) {
+
+            this._objects.push($WGPU.cameraController);
         }
     }
+
     async start() {
         this._running = true
         await this.run();
@@ -138,10 +134,9 @@ export abstract class Scene {
     }
 
 
-
     run = async () => {
 
-        if(!this._running) return;
+        if (!this._running) return;
 
         this.objects.forEach(o => {
             o.update()

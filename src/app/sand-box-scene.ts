@@ -18,9 +18,9 @@ export class SandBoxScene extends Scene {
         await super.initialize();
 
 
-        const l1 = new PointLight(new Vector3(1, 1, 1), 100);
-        l1.transform.position.set(-59.1, 198.1, 75.3);
-        new PointLight(new Vector3(1, 1, 1), 50);
+        const l1 = new PointLight(new Vector3(1, 1, 1), 50);
+
+        this.addLight(l1);
 
         this._initialized = true;
     }

@@ -9,6 +9,7 @@ import {ShaderBuilder} from "@/graphics/shader-utils/shader-builder.ts";
 import {Light, lightType} from "@/scene/point-light.ts";
 import type {SpotLight} from "@/scene/spot-light.ts";
 import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
+
 export class Renderer {
 
     gBufferTextures: {
@@ -56,7 +57,6 @@ export class Renderer {
     geometryPassEncoder: GPURenderPassEncoder;
     lightingPassEncoder: GPURenderPassEncoder;
     skyPassEncoder: GPURenderPassEncoder;
-
 
 
     async initialize() {
@@ -221,7 +221,6 @@ export class Renderer {
         });
 
 
-
     }
 
     private async setupPipelines() {
@@ -289,7 +288,7 @@ export class Renderer {
             .addLabel("Sky Shader")
             .setVertexCode(skyVertexShader, shaderEntryPoint)
             .setFragmentCode(skyFragmentShader, shaderEntryPoint)
-            .addColorFormat($WGPU.format, true) // with alpha
+            .addColorFormat($WGPU.format)
             .build();
 
         const skyPipelineLayout = $WGPU.device.createPipelineLayout({

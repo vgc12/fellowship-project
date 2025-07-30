@@ -41,7 +41,7 @@ function App() {
                 await $WGPU.initialize();
                 $INPUT.initialize();
                 $TIME.initialize();
-   
+
                 $SCENE_MANAGER.initializeAllScenes()
             }
         };

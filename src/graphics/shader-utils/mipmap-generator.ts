@@ -1,14 +1,15 @@
-﻿export const numMipLevels = (...sizes : number[]) => {
+﻿export const numMipLevels = (...sizes: number[]) => {
     const maxSize = Math.max(...sizes);
     return 1 + Math.log2(maxSize) | 0;
 };
 
 export const generateMips = (() => {
-    let sampler : GPUSampler;
-    let module : GPUShaderModule;
+    let sampler: GPUSampler;
+    let module: GPUShaderModule;
+    // @ts-ignore
     const pipelineByFormat: Record<GPUTextureFormat, GPURenderPipeline> = {};
 
-    return function generateMips(device:GPUDevice, texture:GPUTexture) {
+    return function generateMips(device: GPUDevice, texture: GPUTexture) {
         if (!module) {
             module = device.createShaderModule({
                 label: 'textured quad shaders for mip level generation',
@@ -63,7 +64,7 @@ export const generateMips = (() => {
                 },
                 fragment: {
                     module,
-                    targets: [{ format: texture.format }],
+                    targets: [{format: texture.format}],
                 },
             });
         }
@@ -78,7 +79,7 @@ export const generateMips = (() => {
             const bindGroup = device.createBindGroup({
                 layout: pipeline.getBindGroupLayout(0),
                 entries: [
-                    { binding: 0, resource: sampler },
+                    {binding: 0, resource: sampler},
                     {
                         binding: 1,
                         resource: texture.createView({
@@ -89,7 +90,7 @@ export const generateMips = (() => {
                 ],
             });
 
-            const renderPassDescriptor : GPURenderPassDescriptor = {
+            const renderPassDescriptor: GPURenderPassDescriptor = {
                 label: 'our basic canvas renderPass',
                 colorAttachments: [
                     {

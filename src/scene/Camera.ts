@@ -4,7 +4,6 @@ import {Transform} from "../core/math/transform.ts";
 import {convertToRadians} from "../core/math/math-util.ts";
 import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
 import {Vector3} from "@/core/math/vector3.ts";
-import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 
 export class Camera implements IObject {
@@ -58,8 +57,6 @@ export class Camera implements IObject {
         this.inverseViewProjectionMatrix = mat4.create();
 
         this._guid = crypto.randomUUID();
-
-       
 
 
     }

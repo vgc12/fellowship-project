@@ -1,7 +1,6 @@
 ﻿import {type Vector3} from "@/core/math/vector3.ts";
 import type {IObject} from "@/scene/IObject.ts";
 import {Transform} from "@/core/math/transform.ts";
-import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 
 export const lightType = {
@@ -30,8 +29,7 @@ export class Light implements IObject {
         this.guid = crypto.randomUUID();
         this.name = 'Point Light';
         this.transform = new Transform();
-        $SCENE_MANAGER.currentScene.addLight(this);
-        $SCENE_MANAGER.currentScene.addObject(this);
+
     }
 
     update() {

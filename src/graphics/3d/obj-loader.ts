@@ -32,6 +32,8 @@ export class OBJLoader {
 
         let materialName: string = "";
 
+        const renderableObjects: RenderableObject[] = []
+
 
         for (let i = 0; i < lines.length; i++) {
 
@@ -57,6 +59,7 @@ export class OBJLoader {
                 this._vertexData = [];
                 name = line.substring(2);
 
+                renderableObjects.push(renderableObject);
 
             } else if (line.startsWith('o ')) {
                 name = line.substring(2);
@@ -89,6 +92,7 @@ export class OBJLoader {
         this._normals = [];
         this._result = [];
         this._vertexData = [];
+        return renderableObjects;
     }
 
 

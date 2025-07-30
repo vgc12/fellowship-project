@@ -5,7 +5,6 @@ import {SpaceScene} from "@/app/space-scene.ts";
 import {RobotScene} from "@/app/robot-scene.ts";
 
 
-
 export class SceneManager {
     get scenes() {
         return this._scenes;
@@ -38,14 +37,20 @@ export class SceneManager {
     }
 
 
+    // Okay now this is really the best im going to get it
     async initializeAllScenes() {
         try {
-            for (const scene of this._scenes) {
-                if (!scene.initialized) {
-                    this._currentScene = scene;
-                    await scene.initialize();
+
+            const initPromises: Promise<void>[] = [];
+
+            for (const _scene of this._scenes) {
+                if (!_scene.initialized) {
+                    initPromises.push(_scene.initialize());
                 }
             }
+
+            await Promise.all(initPromises);
+
             console.log('All scenes initialized');
             this._currentScene = this._scenes[0];
         } catch (error) {

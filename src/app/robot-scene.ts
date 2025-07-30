@@ -19,8 +19,8 @@ export class RobotScene extends Scene {
     async initialize(): Promise<void> {
         await super.initialize();
         const objFile = await fileFromURL('./media/models/bot/bot.obj');
-        await OBJLoader.loadMeshes(objFile);
-
+        const ro = await OBJLoader.loadMeshes(objFile);
+        this.addRenderableObjectArray(ro);
         const texturePath = './media/models/bot/';
         const materialNames = [
             'robot_steampunk'
@@ -28,9 +28,9 @@ export class RobotScene extends Scene {
 
         await this.initializeSceneMaterials(materialNames, texturePath, ['albedo', 'metallic', 'roughness', 'normal', 'emissive', 'ao']);
 
-        const l1 = new PointLight(new Vector3(1, 1, 1), 100);
-        l1.transform.position.set(-59.1, 198.1, 75.3);
-        new PointLight(new Vector3(1, 1, 1), 50);
+        const l2 = new PointLight(new Vector3(1, 1, 1), 50);
+        l2.transform.position.set(0, 3, 3);
+        this.addLight(l2);
 
         this._initialized = true;
     }
