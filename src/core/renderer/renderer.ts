@@ -2,12 +2,13 @@
 import deferredFragmentShader from '../../graphics/shaders/geometry.frag.wgsl';
 import lightingVertexShader from '../../graphics/shaders/light.vert.wgsl';
 import lightingFragmentShader from '../../graphics/shaders/light.frag.wgsl';
-
+import skyVertexShader from '../../graphics/shaders/sky.vert.wgsl';
+import skyFragmentShader from '../../graphics/shaders/sky.frag.wgsl';
 import {$WGPU} from '../webgpu/webgpu-singleton.ts';
 import {ShaderBuilder} from "@/graphics/shader-utils/shader-builder.ts";
 import {Light, lightType} from "@/scene/point-light.ts";
 import type {SpotLight} from "@/scene/spot-light.ts";
-
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
 export class Renderer {
 
@@ -17,6 +18,7 @@ export class Renderer {
         metallicRoughnessAO: GPUTexture;
         position: GPUTexture;
         depth: GPUTexture;
+        emissive: GPUTexture;
     };
 
 
@@ -26,30 +28,35 @@ export class Renderer {
         metallicRoughnessAO: GPUTextureView;
         position: GPUTextureView;
         depth: GPUTextureView;
+        emissive: GPUTextureView;
     }
 
 
     geometryPipeline: GPURenderPipeline;
     lightingPipeline: GPURenderPipeline;
+    skyPipeline: GPURenderPipeline;
 
 
     objectUniformBuffer: GPUBuffer;
     frameBindGroup: GPUBindGroup;
+    gBufferBindGroup: GPUBindGroup;
+
+
     objectStorageBuffer: GPUBuffer;
     lightStorageBuffer: GPUBuffer;
     lightBindGroup: GPUBindGroup;
     lightUniformBuffer: GPUBuffer;
+    cameraBuffer: GPUBuffer;
     modelMatrices: Float32Array;
 
 
-    gBufferBindGroup: GPUBindGroup;
-    gBufferBindGroupLayout: GPUBindGroupLayout;
     fullscreenVertexBuffer: GPUBuffer;
 
 
     commandEncoder: GPUCommandEncoder;
     geometryPassEncoder: GPURenderPassEncoder;
     lightingPassEncoder: GPURenderPassEncoder;
+    skyPassEncoder: GPURenderPassEncoder;
 
 
     async initialize() {
@@ -61,6 +68,7 @@ export class Renderer {
         this.modelMatrices = new Float32Array(16 * 1024);
 
         await this.setupGBuffer();
+
         await this.setupBuffers();
         await this.setupBindGroups();
         await this.setupPipelines();
@@ -97,6 +105,11 @@ export class Renderer {
                 size: windowDimensions,
                 format: 'depth32float',
                 usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+            }),
+            emissive: $WGPU.device.createTexture({
+                size: windowDimensions,
+                format: 'rgba8unorm',
+                usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
             })
         };
 
@@ -106,7 +119,8 @@ export class Renderer {
             position: this.gBufferTextures.position.createView(),
             normal: this.gBufferTextures.normal.createView(),
             metallicRoughnessAO: this.gBufferTextures.metallicRoughnessAO.createView(),
-            depth: this.gBufferTextures.depth.createView()
+            depth: this.gBufferTextures.depth.createView(),
+            emissive: this.gBufferTextures.emissive.createView()
         };
     }
 
@@ -134,6 +148,11 @@ export class Renderer {
             label: "light uniform buffer",
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             size: 4
+        });
+        this.cameraBuffer = $WGPU.device.createBuffer({
+            label: "camera buffer",
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            size: 4 * 4 * 4
         });
     }
 
@@ -169,42 +188,9 @@ export class Renderer {
             ]
         });
 
-        // G-Buffer bind group for lighting pass
-        this.gBufferBindGroupLayout = $WGPU.device.createBindGroupLayout({
-            label: "G-Buffer Bind Group Layout",
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT, // albedo
-                    texture: {sampleType: 'float'}
-                },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT, // normal
-                    texture: {sampleType: 'float'}
-                },
-                {
-                    binding: 2,
-                    visibility: GPUShaderStage.FRAGMENT, // metallicRoughnessAO
-                    texture: {sampleType: 'float'}
-                },
-                {
-                    binding: 3,
-                    visibility: GPUShaderStage.FRAGMENT, // position
-                    texture: {sampleType: 'unfilterable-float'}
-                },
-                {
-                    binding: 4,
-                    visibility: GPUShaderStage.FRAGMENT,  // depth
-                    texture: {sampleType: 'depth'}
-                }
-
-            ]
-        });
-
 
         this.gBufferBindGroup = $WGPU.device.createBindGroup({
-            layout: this.gBufferBindGroupLayout,
+            layout: $WGPU.gBufferBindGroupLayout,
             entries: [
                 {
                     binding: 0,
@@ -225,24 +211,33 @@ export class Renderer {
                 {
                     binding: 4,
                     resource: this.gBufferViews.depth
+                },
+                {
+                    binding: 5,
+                    resource: this.gBufferViews.emissive
                 }
 
             ]
         });
+
+
     }
 
     private async setupPipelines() {
         const shaderBuilder = new ShaderBuilder();
 
+        const shaderEntryPoint = 'main' as const; // the name of the main function in all shaders
+
         // Geometry pass pipeline (writes to G-Buffer)
         const geometryShader = shaderBuilder
-            .setVertexCode(deferredVertexShader, 'main')
+            .setVertexCode(deferredVertexShader, shaderEntryPoint)
             .addVertexBufferLayout($WGPU.vertexBufferLayout as GPUVertexBufferLayout)
-            .setFragmentCode(deferredFragmentShader, 'main')
+            .setFragmentCode(deferredFragmentShader, shaderEntryPoint)
             .addColorFormat('rgba8unorm-srgb')
             .addColorFormat('rgba16float')
             .addColorFormat('rgba8unorm')
             .addColorFormat('rgba32float')
+            .addColorFormat('rgba8unorm')
             .build();
 
         const geometryPipelineLayout = $WGPU.device.createPipelineLayout({
@@ -265,8 +260,8 @@ export class Renderer {
 
 
         const lightingShader = shaderBuilder
-            .setVertexCode(lightingVertexShader, 'main')
-            .setFragmentCode(lightingFragmentShader, 'main')
+            .setVertexCode(lightingVertexShader, shaderEntryPoint)
+            .setFragmentCode(lightingFragmentShader, shaderEntryPoint)
             .addColorFormat($WGPU.format)
             .build();
 
@@ -275,8 +270,9 @@ export class Renderer {
             label: "Lighting Pipeline Layout",
             bindGroupLayouts: [
                 $WGPU.frameBindGroupLayout,
-                this.gBufferBindGroupLayout,
-                $WGPU.lightBindGroupLayout
+                $WGPU.gBufferBindGroupLayout,
+                $WGPU.lightBindGroupLayout,
+                $WGPU.skyBindGroupLayout,
             ]
         });
 
@@ -287,6 +283,33 @@ export class Renderer {
             layout: lightingPipelineLayout,
             primitive: {topology: 'triangle-list'}
         });
+
+        const skyShader = shaderBuilder
+            .addLabel("Sky Shader")
+            .setVertexCode(skyVertexShader, shaderEntryPoint)
+            .setFragmentCode(skyFragmentShader, shaderEntryPoint)
+            .addColorFormat($WGPU.format)
+            .build();
+
+        const skyPipelineLayout = $WGPU.device.createPipelineLayout({
+            label: "Sky Pipeline Layout",
+            bindGroupLayouts: [$WGPU.skyBindGroupLayout]
+        })
+
+        this.skyPipeline = await $WGPU.device.createRenderPipelineAsync({
+            label: "Sky Pipeline",
+            vertex: skyShader.vertexState,
+            fragment: skyShader.fragmentState,
+            layout: skyPipelineLayout,
+            primitive: {topology: 'triangle-list'},
+            depthStencil: {
+                depthWriteEnabled: false,
+                depthCompare: 'less-equal',
+                format: "depth32float"
+            }
+
+
+        })
     }
 
 
@@ -301,15 +324,26 @@ export class Renderer {
         $WGPU.device.queue.writeBuffer(this.objectUniformBuffer, 128, posBuffer as ArrayBuffer);
     }
 
+    private writeCameraBuffer() {
+        /*
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 0, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.forward.toArray)) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 12, new Float32Array([convertToRadians($WGPU.mainCamera.fov)]) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 16, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.right.toArray)) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 28, new Float32Array([$WGPU.windowDimensions.width / $WGPU.windowDimensions.height]) as ArrayBuffer);
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 32, new Float32Array(vec3.normalize($WGPU.mainCamera.transform.up.toArray)) as ArrayBuffer)
+*/
+        $WGPU.device.queue.writeBuffer(this.cameraBuffer, 0, $WGPU.mainCamera.inverseViewProjectionMatrix as ArrayBuffer);
+    }
+
     private writeLightBuffer() {
         const lightArray = this.createLightArray();
         $WGPU.device.queue.writeBuffer(this.lightStorageBuffer, 0, lightArray as ArrayBuffer);
-        $WGPU.device.queue.writeBuffer(this.lightUniformBuffer, 0, new Int32Array([$WGPU.lights.length]));
+        $WGPU.device.queue.writeBuffer(this.lightUniformBuffer, 0, new Int32Array([$SCENE_MANAGER.currentScene.lights.length]));
     }
 
     private createModelMatrixArray() {
-        for (let renderableIndex = 0; renderableIndex < $WGPU.renderableObjects.length; renderableIndex++) {
-            const renderable = $WGPU.renderableObjects[renderableIndex];
+        for (let renderableIndex = 0; renderableIndex < $SCENE_MANAGER.currentScene.renderableObjects.length; renderableIndex++) {
+            const renderable = $SCENE_MANAGER.currentScene.renderableObjects[renderableIndex];
             for (let MATRIX_POSITION = 0; MATRIX_POSITION < renderable.modelMatrix.length; MATRIX_POSITION++) {
                 this.modelMatrices[16 * renderableIndex + MATRIX_POSITION] = renderable.modelMatrix[MATRIX_POSITION];
             }
@@ -330,7 +364,7 @@ export class Renderer {
             FORWARD_VECTOR: 20
         } as const;
 
-        const lights = $WGPU.lights;
+        const lights = $SCENE_MANAGER.currentScene.lights;
         const lightArray = new Float32Array(LIGHT_STRIDE * lights.length);
 
         function setVector(vector: number[], offset: number, padding: number = 0) {
@@ -344,7 +378,7 @@ export class Renderer {
 
         function setLightParams(offset: number, light: Light) {
             lightArray.fill(0, offset, offset + 4);
-            if (light.lightType === lightType.AREA) {
+            if (light.lightType === lightType.SPOT) {
                 const l = light as SpotLight;
                 lightArray[offset] = l.innerAngleRadians;
                 lightArray[offset + 1] = l.outerAngleRadians;
@@ -370,21 +404,54 @@ export class Renderer {
 
     update() {
         this.writeFrameGroupBuffers();
+        this.writeCameraBuffer()
         this.writeLightBuffer();
 
         this.commandEncoder = $WGPU.device.createCommandEncoder();
 
         // GEOMETRY PASS - Render to G-Buffer
+
         this.renderGeometryPass();
 
 
         this.renderLightingPass();
-
+        this.renderSkyPass();
         $WGPU.device.queue.submit([this.commandEncoder.finish()]);
+    }
+
+    private renderSkyPass() {
+        const textureView = $WGPU.context.getCurrentTexture().createView();
+
+        const skyPassDescriptor: GPURenderPassDescriptor = {
+            label: "Sky Render Pass",
+            colorAttachments: [{
+                view: textureView,
+                clearValue: [0.0, 0.0, 0.0, 0.0],
+                loadOp: 'load',
+                storeOp: 'store'
+            }],
+            depthStencilAttachment: {
+                view: this.gBufferViews.depth,
+                depthLoadOp: 'load',
+                depthStoreOp: 'store'
+            }
+
+        };
+
+        this.skyPassEncoder = this.commandEncoder.beginRenderPass(skyPassDescriptor);
+
+
+        this.skyPassEncoder.setPipeline(this.skyPipeline);
+        this.skyPassEncoder.setBindGroup(0, $SCENE_MANAGER.currentScene.skyMaterial.bindGroup);
+        // Draw fullscreen quad
+        this.skyPassEncoder.setVertexBuffer(0, this.fullscreenVertexBuffer);
+        this.skyPassEncoder.draw(3, 1, 0, 0);
+        this.skyPassEncoder.end();
     }
 
     private renderGeometryPass() {
         const geometryPassDescriptor: GPURenderPassDescriptor = {
+            label: 'Geometry Pass',
             colorAttachments: [
                 {
                     view: this.gBufferViews.albedo, // albedo
@@ -409,6 +476,12 @@ export class Renderer {
                     clearValue: [0, 0, 0, 0],
                     loadOp: 'clear',
                     storeOp: 'store'
+                },
+                {
+                    view: this.gBufferViews.emissive,
+                    clearValue: [0, 0, 0, 0],
+                    loadOp: 'clear',
+                    storeOp: 'store'
                 }
             ],
             depthStencilAttachment: {
@@ -424,7 +497,7 @@ export class Renderer {
         this.geometryPassEncoder.setBindGroup(0, this.frameBindGroup);
 
         let objectsDrawn = 0;
-        $WGPU.renderableObjects.forEach((renderable) => {
+        $SCENE_MANAGER.currentScene.renderableObjects.forEach((renderable) => {
             this.geometryPassEncoder.setBindGroup(1, renderable.material.bindGroup);
 
             if (renderable.mesh.indexBuffer && renderable.mesh.indices?.length !== 0) {
@@ -458,9 +531,11 @@ export class Renderer {
         this.lightingPassEncoder.setBindGroup(0, this.frameBindGroup);
         this.lightingPassEncoder.setBindGroup(1, this.gBufferBindGroup);
         this.lightingPassEncoder.setBindGroup(2, this.lightBindGroup);
+        this.lightingPassEncoder.setBindGroup(3, $SCENE_MANAGER.currentScene.skyMaterial.bindGroup);
 
         // Draw fullscreen quad
         this.lightingPassEncoder.setVertexBuffer(0, this.fullscreenVertexBuffer);
+
         this.lightingPassEncoder.draw(6, 1, 0, 0);
 
         this.lightingPassEncoder.end();

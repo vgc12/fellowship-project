@@ -13,14 +13,14 @@ interface IVector3InputProps {
 
 export function
 VectorInputComponent({
-                          label,
-                          values,
-                          onChange,
-                          numberLabels = ['x', 'y', 'z'],
-                          step = 0.1,
-                          min = Number.NEGATIVE_INFINITY,
-                          max = Number.POSITIVE_INFINITY
-                      }: IVector3InputProps) {
+                         label,
+                         values,
+                         onChange,
+                         numberLabels = ['x', 'y', 'z'],
+                         step = 0.1,
+                         min = Number.NEGATIVE_INFINITY,
+                         max = Number.POSITIVE_INFINITY
+                     }: IVector3InputProps) {
     return (
         <div>
             <label>{label}</label>

@@ -1,13 +1,21 @@
-import  {Mesh } from "../graphics/3d/mesh.ts";
+import {Mesh} from "../graphics/3d/mesh.ts";
 import type {IObject} from "./IObject.ts";
 import type {IRenderable} from "./IRenderable.ts";
-import  {Transform } from "../core/math/transform.ts";
+import {Transform} from "../core/math/transform.ts";
 import {type Mat4, mat4} from "wgpu-matrix";
 import {convertToRadians} from "../core/math/math-util.ts";
-import {$WGPU} from "../core/webgpu/webgpu-singleton.ts";
-import { Material } from "@/graphics/3d/material.ts";
+import {Material} from "@/graphics/3d/material.ts";
+
 
 export class RenderableObject implements IObject, IRenderable {
+    get materialName(): string {
+        return this._materialName;
+    }
+
+    set materialName(value: string) {
+        this._materialName = value;
+    }
+
     get guid(): string {
         return this._guid;
     }
@@ -40,6 +48,7 @@ export class RenderableObject implements IObject, IRenderable {
     private readonly _transform: Transform;
     private _modelMatrix: Mat4
     private _mesh: Mesh;
+    private _materialName: string;
 
 
     constructor() {
@@ -50,33 +59,31 @@ export class RenderableObject implements IObject, IRenderable {
 
         mat4.translate(this._modelMatrix, this._transform.position.toArray, this._modelMatrix);
         this._mesh = new Mesh();
-        $WGPU.addRenderableObject(this);
-        $WGPU.addObject(this);
+
 
         this.material = Material.default;
 
     }
 
     material: Material;
-    
+
     private readonly _guid: string;
-    
 
 
     update() {
         this._modelMatrix = mat4.identity();
 
-         // Update the transformation matrix based on the transform's position, rotation, and scale
-         mat4.translate(this._modelMatrix,  this.transform.position.toArray, this._modelMatrix);
+        // Update the transformation matrix based on the transform's position, rotation, and scale
+        mat4.translate(this._modelMatrix, this.transform.position.toArray, this._modelMatrix);
 
-         const eulerAngles = this.transform.rotation.eulerAngles;
-         mat4.rotateX(this._modelMatrix, convertToRadians(eulerAngles.x), this._modelMatrix )
-         mat4.rotateY(this._modelMatrix, convertToRadians(eulerAngles.y), this._modelMatrix )
-         mat4.rotateZ(this._modelMatrix, convertToRadians(eulerAngles.z), this._modelMatrix )
-         // Apply scaling
+        const eulerAngles = this.transform.rotation.eulerAngles;
+        mat4.rotateX(this._modelMatrix, convertToRadians(eulerAngles.x), this._modelMatrix)
+        mat4.rotateY(this._modelMatrix, convertToRadians(eulerAngles.y), this._modelMatrix)
+        mat4.rotateZ(this._modelMatrix, convertToRadians(eulerAngles.z), this._modelMatrix)
+        // Apply scaling
 
 
-         mat4.scale(this._modelMatrix, this.transform.scale.toArray, this._modelMatrix)
+        mat4.scale(this._modelMatrix, this.transform.scale.toArray, this._modelMatrix)
 
 
     }

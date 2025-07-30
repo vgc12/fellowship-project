@@ -1,0 +1,96 @@
+﻿import {type Scene} from "@/app/scene.ts";
+import {SandBoxScene} from "@/app/sand-box-scene.ts";
+import {RoomScene} from "@/app/room-scene.ts";
+import {SpaceScene} from "@/app/space-scene.ts";
+import {RobotScene} from "@/app/robot-scene.ts";
+
+
+export class SceneManager {
+    get scenes() {
+        return this._scenes;
+    }
+
+    static get instance(): SceneManager {
+        if (!this._instance) {
+            this._instance = new SceneManager();
+        }
+        return this._instance;
+    }
+
+    private static _instance: SceneManager;
+
+    private _currentScene: Scene;
+
+
+    private readonly _scenes: Scene[];
+
+    constructor() {
+        this._scenes = [
+            new SandBoxScene(),
+            new RoomScene(),
+            new SpaceScene(),
+            new RobotScene(),
+        ]
+
+
+        this._currentScene = this._scenes[0];
+    }
+
+
+    // Okay now this is really the best im going to get it
+    async initializeAllScenes() {
+        try {
+
+            const initPromises: Promise<void>[] = [];
+
+            for (const _scene of this._scenes) {
+                if (!_scene.initialized) {
+                    initPromises.push(_scene.initialize());
+                }
+            }
+
+            await Promise.all(initPromises);
+
+            console.log('All scenes initialized');
+            this._currentScene = this._scenes[0];
+        } catch (error) {
+            console.error('Failed to initialize all scenes:', error);
+        }
+    }
+
+    async switchToScene(sceneGUID: string, onLoadingChange?: (loading: boolean) => void) {
+        try {
+            onLoadingChange?.(true);
+            this._scenes.forEach(scn => {
+                if (!(scn.guid == sceneGUID && scn.initialized)) {
+                    return;
+                }
+
+                this._currentScene.cleanup();
+                this._currentScene = scn;
+
+            });
+
+
+            if (this._currentScene) {
+                await this._currentScene.start();
+            }
+
+
+            onLoadingChange?.(false);
+        } catch (error) {
+            console.error('Failed to switch scene:', error);
+            onLoadingChange?.(false);
+        }
+    }
+
+
+    get currentScene() {
+        return this._currentScene;
+    }
+
+
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const $SCENE_MANAGER = SceneManager.instance;

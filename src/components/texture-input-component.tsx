@@ -3,24 +3,37 @@ import {InputComponent} from "@/components/input-component.tsx";
 import type {RenderableObject} from "@/scene/renderable-object.ts";
 import {Material} from "@/graphics/3d/material.ts";
 
-export type imageFileType = 'albedoFile' | 'metallicFile' | 'aoFile' | 'roughnessFile' | 'normalFile';
+export type imageFileType = 'albedoFile' | 'metallicFile' | 'roughnessFile' | 'normalFile' | 'aoFile' | 'opacityFile' | 'emissiveFile';
 
 export const ImageFileTypes: imageFileType[] = [
     'albedoFile',
     'metallicFile',
-    'aoFile',
     'roughnessFile',
-    'normalFile'
+    'normalFile',
+    'aoFile',
+    'opacityFile',
+    'emissiveFile'
 ];
+
 
 export function TextureInputComponent(props: { object: RenderableObject, textureType: imageFileType }) {
 
     const [texture, setTexture] = useState<string>(`./img/default_${props.textureType.slice(0, props.textureType.length - 4)}.png`);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const setImage = (material: Material, textureType: imageFileType) => {
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(material[textureType]);
+
+        fileReader.onload = () => {
+            setTexture(fileReader.result as string)
+        }
+    }
+    setImage(props.object.material, props.textureType);
     const handleOnClick = () => {
         fileInputRef.current?.click();
     }
+
 
     const handleOnChange = async (e: ChangeEvent<HTMLInputElement>) => {
 
@@ -29,14 +42,7 @@ export function TextureInputComponent(props: { object: RenderableObject, texture
 
 
         if (file.type.startsWith('image/')) {
-            const fileReader = new FileReader();
 
-            fileReader.onload = () => {
-
-                setTexture(fileReader.result as string);
-
-            }
-            fileReader.readAsDataURL(file);
 
             const material = new Material()
 
@@ -53,6 +59,7 @@ export function TextureInputComponent(props: { object: RenderableObject, texture
             await material.initialize();
 
             props.object.material = material;
+            setImage(material, props.textureType);
 
 
         }
