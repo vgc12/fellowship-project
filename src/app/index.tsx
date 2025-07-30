@@ -8,12 +8,23 @@ import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {$INPUT} from "@/Controls/input.ts";
 import {$TIME} from "@/utils/time.ts";
 import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from '@/components/ui/dialog.tsx';
+import {ThreeDot} from "react-loading-indicators";
 
 
 function App() {
 
     const [loadedFiles, setLoadedFiles] = useState<File[]>([]);
-
+    const [shouldBeOpen, setShouldBeOpen] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
 
     const handleOnChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -38,11 +49,13 @@ function App() {
         const initializeAppCore = async () => {
 
             if (canvasRef.current) {
+                setIsLoading(true)
                 await $WGPU.initialize();
                 $INPUT.initialize();
                 $TIME.initialize();
 
-                $SCENE_MANAGER.initializeAllScenes()
+                await $SCENE_MANAGER.initializeAllScenes()
+                setIsLoading(false);
             }
         };
 
@@ -51,27 +64,47 @@ function App() {
 
     const {
         currentScene,
-        isLoading,
         switchScene
-    } = useSceneManager()
+    } = useSceneManager(setIsLoading)
 
 
-    return (<div id='app' className={" bg-gray-900  "}>
+    return (<div id='app' className={"bg-gray-900"}>
+        <Dialog open={shouldBeOpen}>
+
+            <DialogContent showCloseButton={false}>
+                <DialogHeader>
+                    <DialogTitle>Select a Scene</DialogTitle>
+
+                </DialogHeader>
+                <DialogDescription className={'text-center justify-center'}>
+                    {isLoading && <ThreeDot size={"small"} color={'#000000'}></ThreeDot>}
+                    {!isLoading &&
+                        <SceneNavigator onClick={() => setShouldBeOpen(false)} activeScene={currentScene}
+                                        isLoading={isLoading}
+                                        setActiveScene={async (id: string) => {
+                                            await switchScene(id);
+                                        }}></SceneNavigator>}
+                </DialogDescription>
+            </DialogContent>
+        </Dialog>
         <div className={"m-4 flex p-4"}>
 
             <div className={"mr-4 "}>
                 <canvas className={""} ref={canvasRef} width={1920} height={1080} id="canvas-main"/>
             </div>
 
-            <div className={"flex-1/2 "}>
+            <div className={"flex-1/2"}>
 
                 {currentScene &&
                     <SceneObjectListComponent objects={currentScene.objects}></SceneObjectListComponent>}
                 {currentScene &&
-                    <SceneNavigator activeScene={currentScene} isLoading={isLoading}
+                    <SceneNavigator onClick={() => {
+                    }} activeScene={currentScene} isLoading={isLoading}
                                     setActiveScene={async (id: string) => {
                                         await switchScene(id);
                                     }}></SceneNavigator>}
+
+
                 <div className={"text-center p-4"}>
                     <label className={`
                     text-white bg-gray-700 hover:bg-gray-500 focus:outline-none 
