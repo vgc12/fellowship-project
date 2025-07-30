@@ -1,4 +1,4 @@
-﻿import  {type Vector3} from "@/core/math/vector3.ts";
+﻿import {type Vector3} from "@/core/math/vector3.ts";
 import type {IObject} from "@/scene/IObject.ts";
 import {Transform} from "@/core/math/transform.ts";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
@@ -11,7 +11,7 @@ export const lightType = {
 
 export type LightType = typeof lightType[keyof typeof lightType];
 
-export class Light implements IObject{
+export class Light implements IObject {
     get color(): Vector3 {
         return this._color;
     }
@@ -41,7 +41,7 @@ export class Light implements IObject{
     guid: string;
     name: string;
     transform: Transform;
-    lightType : LightType
+    lightType: LightType
 }
 
 

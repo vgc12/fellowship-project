@@ -1,8 +1,6 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
 
-
-
 export class Material {
     get sampler(): GPUSampler {
         return this._sampler;
@@ -17,7 +15,7 @@ export class Material {
         this._normalFile = value;
     }
 
-    static async getFile(url : string): Promise<File> {
+    static async getFile(url: string): Promise<File> {
         const response = await fetch(url);
         const blob = await response.blob();
         return new File([blob], url.split('/').pop() || 'default_albedo.png');
@@ -25,13 +23,6 @@ export class Material {
 
     private _roughnessMetallicAOView: GPUTextureView;
 
-    get aoFile(): File {
-        return this._aoFile;
-    }
-
-    set aoFile(value: File) {
-        this._aoFile = value;
-    }
 
     get roughnessFile(): File {
         return this._roughnessFile;
@@ -66,8 +57,6 @@ export class Material {
     set albedoFile(value: File) {
         this._albedoFile = value;
     }
-    
-    
 
 
     private _albedoTexture: GPUTexture;
@@ -81,7 +70,6 @@ export class Material {
 
     private _metallicFile: File;
     private _roughnessFile: File;
-    private _aoFile: File;
     private _normalFile: File;
 
     imageBitmapToImageData(imageBitmap: ImageBitmap): ImageData {
@@ -94,7 +82,7 @@ export class Material {
         return ctx.getImageData(0, 0, imageBitmap.width, imageBitmap.height);
     }
 
-    packTextures(metallicData: ImageData, roughnessData: ImageData, aoData: ImageData) {
+    packTextures(metallicData: ImageData, roughnessData: ImageData) {
 
         const width = metallicData.width;
         const height = metallicData.height;
@@ -104,8 +92,8 @@ export class Material {
             const o = i * 4;
             packedData[o] = roughnessData.data[o];   // R channel (roughness)
             packedData[o + 1] = metallicData.data[o];     // G channel (metallic)
-            packedData[o + 2] = aoData.data[o];          // B channel (AO)
-            packedData[o + 3] = 255                      // A channel
+            packedData[o + 2] = 255;          // B channel (AO)
+            packedData[o + 3] = 255;                      // A channel
         }
 
 
@@ -116,14 +104,14 @@ export class Material {
         const albedoImageBitmap = await createImageBitmap(this._albedoFile)
         const roughnessImageBitmap = await createImageBitmap(this._roughnessFile);
         const metallicImageBitmap = await createImageBitmap(this._metallicFile);
-        const aoImageBitmap = await createImageBitmap(this._aoFile);
+
         const normalImageBitmap = await createImageBitmap(this._normalFile);
 
         const roughnessData = this.imageBitmapToImageData(roughnessImageBitmap);
         const metallicData = this.imageBitmapToImageData(metallicImageBitmap);
-        const aoData = this.imageBitmapToImageData(aoImageBitmap);
 
-        const roughnessMetallicAO = await createImageBitmap(this.packTextures(metallicData, roughnessData, aoData));
+
+        const roughnessMetallicAO = await createImageBitmap(this.packTextures(metallicData, roughnessData));
 
 
         const albedoTextureDescriptor: GPUTextureDescriptor = {
