@@ -11,6 +11,7 @@ interface SceneNavigatorProps {
     activeScene: Scene;
     isLoading: boolean;
     setActiveScene: (id: string) => void;
+    vertical?: boolean;
     onClick?: () => void;
 }
 
@@ -25,26 +26,29 @@ export const SceneNavigator = (props: SceneNavigatorProps) => {
     sceneIconMap['SpaceScene'] = <FaSpaceShuttle className={classes} size={iconSize}/>
     sceneIconMap['RoomScene'] = <BsDoorOpenFill className={classes} size={iconSize}/>
     sceneIconMap['RobotScene'] = <RiRobot2Line className={classes} size={iconSize}/>
+    const components =
+        $SCENE_MANAGER.scenes.map((scn) => {
+            return (
+                <>
+
+                    <SceneButtonComponent icon={sceneIconMap[scn.constructor.name]}
+                                          vertical={props.vertical ?? false} onClick={props.onClick}
+                                          key={scn.guid} sceneName={scn.name}
+                                          sceneGUID={scn.guid}
+                                          activeSceneName={props.activeScene.name}
+                                          setActiveScene={props.setActiveScene}>
+
+                    </SceneButtonComponent>
+                </>)
+        })
+
+    const output = props.vertical ?
+        <div className={`flex flex-col justify-start `}>
+            {components}
+        </div> : <>{components}</>
 
     return (
-        <>
-            {
-                $SCENE_MANAGER.scenes.map((scn) => {
-                    return (
-                        <>
-
-                            <SceneButtonComponent icon={sceneIconMap[scn.constructor.name]} onClick={props.onClick}
-                                                  key={scn.guid} sceneName={scn.name}
-                                                  sceneGUID={scn.guid}
-                                                  activeSceneName={props.activeScene.name}
-                                                  setActiveScene={props.setActiveScene}>
-
-                            </SceneButtonComponent>
-                        </>)
-                })
-            }
-
-        </>
+        output
     );
 };
 
@@ -54,11 +58,12 @@ type SceneButtonComponentProps = {
     activeSceneName: string;
     icon: ReactElement;
     setActiveScene: (id: string) => void;
+    vertical: boolean
     onClick?: () => void;
 }
 
 const SceneButtonComponent = (props: SceneButtonComponentProps) => {
-    const {sceneName, activeSceneName, sceneGUID, icon, setActiveScene, onClick} = props;
+    const {sceneName, activeSceneName, sceneGUID, icon, vertical, setActiveScene, onClick} = props;
 
     return (
         <button
@@ -67,7 +72,7 @@ const SceneButtonComponent = (props: SceneButtonComponentProps) => {
                 onClick?.();
                 setActiveScene(sceneGUID)
             }}
-            className={`m-2 p-3 rounded-lg transition-all duration-200 ${
+            className={`m-2 ${vertical ? 'self-start' : ''} p-3 rounded-lg transition-all duration-200 ${
                 activeSceneName === sceneName
                     ? 'bg-blue-600 text-white shadow-lg'
                     : 'bg-gray-700 hover:bg-gray-600 text-gray-300'

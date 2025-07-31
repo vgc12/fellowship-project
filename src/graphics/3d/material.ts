@@ -12,6 +12,7 @@ export class Material {
     set emissiveFile(value: File) {
         this._emissiveFile = value;
     }
+
     get aoFile(): File {
         return this._aoFile;
     }
@@ -25,13 +26,11 @@ export class Material {
 
 
         return await Promise.all(
-            materialTypes.map(async (materialType) =>
-            {
+            materialTypes.map(async (materialType) => {
                 const fullPath = folderPath + imageName + '_' + materialType;
 
 
-                const extensionChecks = ['.png', '.jpeg', '.jpg'].map(async (ext) =>
-                {
+                const extensionChecks = ['.png', '.jpeg', '.jpg'].map(async (ext) => {
                     const exists = await imageExists(fullPath + ext);
                     return exists ? ext : null;
                 });
@@ -50,6 +49,7 @@ export class Material {
             })
         );
     }
+
     /**
      @param nameOfTexture The name of the texture before the texture type. in the example something_albedo.png nameOfTexture should be 'something'
      @param pathToTextures The path in which the textures can be found
@@ -62,7 +62,7 @@ export class Material {
         const material = new Material();
 
         files.forEach(f => {
-            if(f){
+            if (f) {
                 material[f.key] = f.file;
             }
         })
@@ -87,6 +87,7 @@ export class Material {
     get opacityFile(): File {
         return this._opacityFile;
     }
+
     set opacityFile(value: File) {
         this._opacityFile = value;
     }
@@ -162,10 +163,10 @@ export class Material {
     packTextures(metallicData: ImageData | undefined,
                  roughnessData: ImageData | undefined,
                  aoData: ImageData | undefined,
-                 opacityData: ImageData | undefined): ImageData{
+                 opacityData: ImageData | undefined): ImageData {
 
         const width = roughnessData?.width ?? 1024;
-        const height=roughnessData?.height ?? 1024;
+        const height = roughnessData?.height ?? 1024;
         const packedData = new Uint8ClampedArray(width * height * 4);
 
         for (let i = 0; i < width * height; i++) {
@@ -187,31 +188,33 @@ export class Material {
             normalImageBitmap,
             emissiveImageBitmap: ImageBitmap | undefined = undefined;
         let roughnessData, metallicData, aoData, opacityData: ImageData | undefined = undefined;
-        if(this._albedoFile) {
+        if (this._albedoFile) {
             albedoImageBitmap = await createImageBitmap(this._albedoFile)
         }
 
-        if(this._roughnessFile) {
+        if (this._roughnessFile) {
             roughnessImageBitmap = await createImageBitmap(this._roughnessFile);
             roughnessData = this.imageBitmapToImageData(roughnessImageBitmap);
         }
-        if(this._metallicFile) {
+        if (this._metallicFile) {
             metallicImageBitmap = await createImageBitmap(this._metallicFile);
             metallicData = this.imageBitmapToImageData(metallicImageBitmap);
         }
-        if(this._normalFile) {
+        if (this._normalFile) {
             normalImageBitmap = await createImageBitmap(this._normalFile);
         }
 
-        if(this._aoFile){
+        if (this._aoFile) {
             aoData = this.imageBitmapToImageData(await createImageBitmap(this._aoFile));
         }
 
-        if(this._opacityFile) {
-            opacityData = this.imageBitmapToImageData(await createImageBitmap(this._opacityFile));
+        if (!this._opacityFile) {
+            this._opacityFile = await fileFromURL('./media/defaults/material/default_metallic.png');
         }
 
-        if(!this._emissiveFile) {
+        opacityData = this.imageBitmapToImageData(await createImageBitmap(this._opacityFile));
+
+        if (!this._emissiveFile) {
             this._emissiveFile = await fileFromURL('./media/defaults/material/default_emissive.png');
         }
 
@@ -266,7 +269,7 @@ export class Material {
         this._normalTexture = $WGPU.device.createTexture(normalTextureDescriptor);
         this._emissiveTexture = $WGPU.device.createTexture(emissiveTextureDescriptor);
         this._roughnessMetallicAOTexture = $WGPU.device.createTexture(roughnessMetallicAOTextureDescriptor);
-        if(albedoImageBitmap === undefined || normalImageBitmap === undefined ) {
+        if (albedoImageBitmap === undefined || normalImageBitmap === undefined) {
             throw new Error('Failed to create textures. Please check the texture descriptors and ensure the GPU supports the required formats.');
         }
         this.loadImageBitmap(albedoImageBitmap, this._albedoTexture);
@@ -333,7 +336,7 @@ export class Material {
             {width: imageBitmap.width, height: imageBitmap.height}
         )
 
-        if(texture.mipLevelCount > 1){
+        if (texture.mipLevelCount > 1) {
             generateMips($WGPU.device, texture);
         }
     }

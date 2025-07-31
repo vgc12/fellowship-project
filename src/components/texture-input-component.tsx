@@ -3,7 +3,14 @@ import {InputComponent} from "@/components/input-component.tsx";
 import type {RenderableObject} from "@/scene/renderable-object.ts";
 import {Material} from "@/graphics/3d/material.ts";
 
-export type imageFileType = 'albedoFile' | 'metallicFile' | 'roughnessFile' | 'normalFile' | 'aoFile' | 'opacityFile' | 'emissiveFile';
+export type imageFileType =
+    'albedoFile'
+    | 'metallicFile'
+    | 'roughnessFile'
+    | 'normalFile'
+    | 'aoFile'
+    | 'opacityFile'
+    | 'emissiveFile';
 
 export const ImageFileTypes: imageFileType[] = [
     'albedoFile',
@@ -22,9 +29,12 @@ export function TextureInputComponent(props: { object: RenderableObject, texture
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const setImage = (material: Material, textureType: imageFileType) => {
+        if (!material[textureType]) {
+            return;
+        }
         const fileReader = new FileReader();
         fileReader.readAsDataURL(material[textureType]);
-
+        ``
         fileReader.onload = () => {
             setTexture(fileReader.result as string)
         }
@@ -64,6 +74,7 @@ export function TextureInputComponent(props: { object: RenderableObject, texture
 
         }
     }
+
     return (
         <div className={"text-left"}>
             <label className={"t"}>{props.textureType.slice(0, props.textureType.length - 4) + " Texture "}</label>
