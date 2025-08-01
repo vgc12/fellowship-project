@@ -8,6 +8,8 @@ import type {SpotLight} from "@/scene/spot-light.ts";
 import PointLightComponent from "./point-light-component.tsx";
 import type {PointLight} from "@/scene/point-light.ts";
 
+import {ScrollArea} from "@/components/ui/scroll-area.tsx";
+
 
 const createObjectComponent = (selectedObject: IObject): JSX.Element => {
     const componentMap: Record<string, () => JSX.Element> = {
@@ -50,7 +52,6 @@ export function SceneObjectListComponent({objects}: SceneObjectListComponentProp
 
     const [selectedObject, setSelectedObject] = useState<IObject | null>(null);
 
-    // Filter out main camera once instead of on every render
     const filteredObjects = useMemo(
         () => objects.filter(obj => obj.guid !== $WGPU.mainCamera.guid
             && obj.guid !== $WGPU.cameraController.guid),
@@ -66,40 +67,44 @@ export function SceneObjectListComponent({objects}: SceneObjectListComponentProp
     return (
         <div className="bg-gray-800 text-white p-4 mb-8 rounded-md">
             <div className="space-y-2">
-                {filteredObjects.map(obj => (
-                    <div key={obj.guid}>
-                        <button
-                            className={`
+
+                <ScrollArea className={'h-232'}>
+                    {filteredObjects.map((obj) => (
+                        <div className={`px-4 mt-1`} key={obj.guid}>
+                            <button
+                                className={`
                 w-full text-left px-4 py-2 rounded-lg font-medium text-sm
                 transition-colors duration-200
                 ${isSelected(obj)
-                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
-                            }
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                                }
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                 focus:ring-offset-gray-800
               `}
-                            onClick={() => handleObjectSelect(obj)}
-                            aria-expanded={isSelected(obj)}
-                            aria-controls={`object-details-${obj.guid}`}
-                        >
+                                onClick={() => handleObjectSelect(obj)}
+                                aria-expanded={isSelected(obj)}
+                                aria-controls={`object-details-${obj.guid}`}
+                            >
               <span className="flex items-center justify-between">
                 {obj.name}
 
               </span>
-                        </button>
+                            </button>
 
-                        {isSelected(obj) && (
-                            <div
-                                id={`object-details-${obj.guid}`}
-                                className="  p-3 bg-gray-700 rounded-lg border-4 border-blue-500"
-                            >
-                                {createObjectComponent(obj)}
-                            </div>
-                        )}
-                    </div>
-                ))}
+                            {isSelected(obj) && (
+                                <div
+                                    id={`object-details-${obj.guid}`}
+                                    className="  p-3 bg-gray-700 rounded-lg border-4 border-blue-500"
+                                >
+                                    {createObjectComponent(obj)}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </ScrollArea>
             </div>
         </div>
+
     );
 }

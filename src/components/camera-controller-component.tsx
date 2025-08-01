@@ -29,30 +29,23 @@ function SceneObjectComponent(props: { object: CameraController }) {
 
     type Axis = 'x' | 'y' | 'z';
     return (
-        <li className={" border-neutral-600 border-4 rounded-md  mt-2"}>
+        <li className={" border-4 rounded-md  mt-2"}>
             <div className={"bg-transparent p-4 text-center"}>
                 <div className={"text-center"}>
-                    <h1>Camera Controller</h1>
+                    <h1 className={'text-white'}>Camera Controller</h1>
                 </div>
                 <div className={"text-center justify-items-center"}>
-
                     {
-
                         ['x', 'y'].map((val) => {
 
                             return <>
-                                <h1>{val == 'x' ? 'Vertical Rotation' : 'Horizontal Rotation'}</h1>
-                                <Slider className={cn(["w-2/3"])} step={0.1} min={0} max={361}
+                                <h1 className={'text-white'}>{val == 'x' ? 'Vertical Rotation' : 'Horizontal Rotation'}</h1>
+                                <Slider className={cn(["w-2/3"])} step={0.1} min={0} max={360}
                                         value={[props.object.orbitRotation[val as Axis] % 360]} onValueCommit={() => {
-
                                     props.object.changedBySlider = false;
                                 }} defaultValue={[props.object.orbitRotation[val as Axis]]} onValueChange={(e) => {
-
-
                                     props.object.changedBySlider = true;
-
                                     props.object.setOrbitRotation(val === 'x' ? e[0] : 0, val === 'y' ? e[0] : 0);
-
                                 }}></Slider>
                             </>
                         })

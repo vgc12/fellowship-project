@@ -34,13 +34,12 @@ const App: React.FC = () => {
                 />
             </LoadingDialog>
 
-            <div className="m-4 flex">
+            <div className=" flex">
                 <div className="text-center mt-12 justify-center">
                     {currentScene && (
                         <SceneNavigator
                             vertical={true}
-                            onClick={() => {
-                            }}
+                         
                             activeScene={currentScene}
                             isLoading={isLoading}
                             setActiveScene={handleSceneSwitch}

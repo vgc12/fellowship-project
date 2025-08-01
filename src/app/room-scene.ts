@@ -13,7 +13,7 @@ export class RoomScene extends Scene {
 
     constructor() {
         super();
-        this.name = 'Bedroom Scene';
+        this.name = 'Apartment Scene';
 
     }
 
