@@ -119,6 +119,23 @@ export class Input {
 
     }
 
+    lockPointerToElement(element: HTMLElement) {
+        if (!this._pointerLocked) {
+            element.requestPointerLock().then(() => {
+                this._pointerLocked = true;
+            }).catch((err) => {
+                console.error("Failed to lock pointer: ", err);
+            })
+        }
+    }
+
+    unlockPointerFromElement(element: HTMLElement) {
+        if (this._pointerLocked) {
+            document.exitPointerLock();
+            this._pointerLocked = false;
+        }
+    }
+
     lockPointerToCanvas() {
         if (!this._pointerLocked) {
             this._canvas.requestPointerLock().then(() => {

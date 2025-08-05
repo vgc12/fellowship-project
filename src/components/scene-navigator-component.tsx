@@ -8,7 +8,7 @@ import {BsDoorOpenFill} from "react-icons/bs";
 import {RiRobot2Line} from "react-icons/ri";
 
 interface SceneNavigatorProps {
-    activeScene: Scene;
+    activeScene: Scene | null;
     isLoading: boolean;
     setActiveScene: (id: string) => void;
     vertical?: boolean;
@@ -35,7 +35,7 @@ export const SceneNavigator = (props: SceneNavigatorProps) => {
                                           vertical={props.vertical ?? false} onClick={props.onClick}
                                           key={scn.guid} sceneName={scn.name}
                                           sceneGUID={scn.guid}
-                                          activeSceneName={props.activeScene.name}
+                                          activeSceneName={props.activeScene != null ? props.activeScene.name : ''}
                                           setActiveScene={props.setActiveScene}>
 
                     </SceneButtonComponent>

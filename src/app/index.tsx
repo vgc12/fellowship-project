@@ -8,18 +8,20 @@ import {FileUploader} from "@/components/file-uploader.tsx";
 import {LoadingDialog} from "@/components/loading-dialog.tsx";
 import {useFileLoader} from "@/components/use-file-loader.tsx";
 import {useAppInitialization} from "@/components/use-app-initialization.tsx";
-import CameraControllerComponent from "@/components/camera-controller-component.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+import {MinimalController} from "@/components/minimal-controller.tsx";
 
 
-const App: React.FC = () => {
+const App: React.FC = () =>
+{
     const [shouldBeOpen, setShouldBeOpen] = useState(true);
 
     const {isLoading, setIsLoading, canvasRef} = useAppInitialization();
     const {handleFileLoad} = useFileLoader();
     const {currentScene, switchScene} = useSceneManager(setIsLoading);
 
-    const handleSceneSwitch = async (id: string) => {
+    const handleSceneSwitch = async (id: string) =>
+    {
         await switchScene(id);
     };
 
@@ -39,7 +41,7 @@ const App: React.FC = () => {
                     {currentScene && (
                         <SceneNavigator
                             vertical={true}
-                         
+
                             activeScene={currentScene}
                             isLoading={isLoading}
                             setActiveScene={handleSceneSwitch}
@@ -53,12 +55,12 @@ const App: React.FC = () => {
 
 
                 <div className="flex-1/3 mt-12 flex flex-col">
-                    {$WGPU.cameraController && <CameraControllerComponent object={$WGPU.cameraController}/>}
+                    {$WGPU.cameraController && <MinimalController/>}
                     {currentScene && (
                         <SceneObjectListComponent objects={currentScene.objects}/>
                     )}
 
-                    {currentScene.name === 'Sandbox Scene' && <FileUploader onFileChange={handleFileLoad}/>}
+                    {currentScene?.name === 'Sandbox Scene' && <FileUploader onFileChange={handleFileLoad}/>}
                 </div>
             </div>
         </div>

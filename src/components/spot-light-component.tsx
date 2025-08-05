@@ -17,8 +17,6 @@ function SpotLightComponent(props: { object: SpotLight }) {
                     <h1>{props.object.name}</h1>
                 </div>
                 <div className={"text-center"}>
-
-
                     <LightComponent object={props.object}></LightComponent>
                     {(() =>
                     {
@@ -42,8 +40,6 @@ function SpotLightComponent(props: { object: SpotLight }) {
 
 
                 </div>
-
-
             </div>
         </li>
     )

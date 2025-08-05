@@ -7,7 +7,7 @@ const sceneManager = $SCENE_MANAGER;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const useSceneManager = (onLoadingChange?: (loading: boolean) => void) => {
-    const [currentScene, setCurrentScene] = useState<Scene>(sceneManager.currentScene);
+    const [currentScene, setCurrentScene] = useState<Scene | null>(sceneManager.currentScene);
 
 
     const switchScene = useCallback(async (scene: string) => {
