@@ -6,6 +6,7 @@ import {FaSpaceShuttle} from "react-icons/fa";
 import type {ReactElement} from "react";
 import {BsDoorOpenFill} from "react-icons/bs";
 import {RiRobot2Line} from "react-icons/ri";
+import {UseCssClass} from "@/components/use-css-class.tsx";
 
 interface SceneNavigatorProps {
     activeScene: Scene | null;
@@ -17,17 +18,19 @@ interface SceneNavigatorProps {
 
 const sceneIconMap: { [key: string]: ReactElement } = {}
 
-export const SceneNavigator = (props: SceneNavigatorProps) => {
+export const SceneNavigator = (props: SceneNavigatorProps) =>
+{
 
     const iconSize = '3vh'
-    const classes = ''
+    const classes = 'dark:text-white text-black'
 
     sceneIconMap['SandBoxScene'] = <TbSandbox className={classes} size={iconSize}/>
     sceneIconMap['SpaceScene'] = <FaSpaceShuttle className={classes} size={iconSize}/>
     sceneIconMap['RoomScene'] = <BsDoorOpenFill className={classes} size={iconSize}/>
     sceneIconMap['RobotScene'] = <RiRobot2Line className={classes} size={iconSize}/>
     const components =
-        $SCENE_MANAGER.scenes.map((scn) => {
+        $SCENE_MANAGER.scenes.map((scn) =>
+        {
             return (
                 <>
 
@@ -62,21 +65,21 @@ type SceneButtonComponentProps = {
     onClick?: () => void;
 }
 
-const SceneButtonComponent = (props: SceneButtonComponentProps) => {
+const SceneButtonComponent = (props: SceneButtonComponentProps) =>
+{
     const {sceneName, activeSceneName, sceneGUID, icon, vertical, setActiveScene, onClick} = props;
+
+    const {buttonLightSquare} = UseCssClass();
 
     return (
         <button
             key={sceneName}
-            onClick={() => {
+            onClick={() =>
+            {
                 onClick?.();
                 setActiveScene(sceneGUID)
             }}
-            className={`m-2 ${vertical ? 'self-start' : ''} p-3 rounded-lg transition-all duration-200 ${
-                activeSceneName === sceneName
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-            }`}
+            className={buttonLightSquare}
             title={sceneName}
         >
 

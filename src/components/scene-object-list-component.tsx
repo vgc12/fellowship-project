@@ -1,6 +1,6 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import SceneObjectComponent from "./scene-object-component.tsx";
-import {type JSX, useState, useMemo} from "react";
+import {type JSX, useMemo, useState} from "react";
 import {RenderableObject} from "@/scene/renderable-object.ts";
 import type {IObject} from "@/scene/IObject.ts";
 import SpotLightComponent from "@/components/spot-light-component.tsx";
@@ -11,7 +11,8 @@ import type {PointLight} from "@/scene/point-light.ts";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 
 
-const createObjectComponent = (selectedObject: IObject): JSX.Element => {
+const createObjectComponent = (selectedObject: IObject): JSX.Element =>
+{
     const componentMap: Record<string, () => JSX.Element> = {
 
         SpotLight: () => (
@@ -58,17 +59,18 @@ export function SceneObjectListComponent({objects}: SceneObjectListComponentProp
         [objects]
     );
 
-    const handleObjectSelect = (obj: IObject) => {
+    const handleObjectSelect = (obj: IObject) =>
+    {
         setSelectedObject(prev => prev?.guid === obj.guid ? null : obj);
     };
 
     const isSelected = (obj: IObject) => selectedObject?.guid === obj.guid;
 
     return (
-        <div className="bg-gray-800 text-white p-4 mb-8 rounded-md">
+        <div className="dark:bg-gray-800 bg-gray-200 text-white mt-auto p-4  rounded-md">
             <div className="space-y-2">
 
-                <ScrollArea className={'h-232'}>
+                <ScrollArea className={'h-125'}>
                     {filteredObjects.map((obj) => (
                         <div className={`px-4 mt-1`} key={obj.guid}>
                             <button

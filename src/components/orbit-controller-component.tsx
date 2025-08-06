@@ -3,10 +3,12 @@ import {useOrbitControl} from "@/components/use-orbit-control.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import Joystick, {DirectionCount, type IJoystickChangeValue} from "rc-joystick";
 import {ZoomIn, ZoomOut} from "lucide-react";
+import {UseCssClass} from "@/components/use-css-class.tsx";
 
 export const OrbitControllerComponent = () =>
 {
 
+    const {buttonLightRectangle} = UseCssClass();
 
     const {onJoystickChange, setRunning} = useOrbitControl({
         azimuth: 0,
@@ -14,7 +16,7 @@ export const OrbitControllerComponent = () =>
 
     });
 
-    const [distance, setDistance] = useState(10)
+    const [distance, setDistance] = useState($WGPU.cameraController.orbitRadius)
 
     useEffect(() =>
     {
@@ -49,22 +51,23 @@ export const OrbitControllerComponent = () =>
         [onJoystickChange]);
 
     return (<div className="flex items-center justify-center">
-        <div className="relative">
-            <Joystick controllerClassName={'bg-gray-800 rounded-lg shadow-lg'}
+        <div className="items-center justify-center flex-1 flex flex-col gap-4">
+            <Joystick className={' dark:!bg-gray-800 !bg-gray-100'}
                       onActiveChange={activeChanged} directionCount={DirectionCount.Five}
                       onChange={changed}>
             </Joystick>
             <div className="flex items-center justify-center mt-4 gap-2">
                 <button onClick={() => setDistance(distance + 1)}
-                        className="p-2 bg-gray-900 rounded-lg shadow hover:shadow-md transition-shadow">
-                    <ZoomOut className="w-4 h-4 text-gray-100"/>
+                        className={buttonLightRectangle}>
+                    <ZoomOut className="w-4 h-4"/>
                 </button>
-                <div className="bg-gray-900 rounded-lg shadow px-3 py-2 text-sm text-gray-100">
+                <div
+                    className=" dark:text-white dark:bg-gray-800 bg-white rounded-lg shadow px-3 py-2 text-sm ">
                     Zoom: {distance}
                 </div>
                 <button onClick={() => setDistance(distance - 1)}
-                        className="p-2 bg-gray-900 rounded-lg shadow hover:shadow-md transition-shadow">
-                    <ZoomIn className="w-4 h-4 text-gray-100"/>
+                        className={buttonLightRectangle + ' ' + (distance <= 1 ? 'opacity-50' : '')}>
+                    <ZoomIn className="w-4 h-4 "/>
                 </button>
             </div>
         </div>

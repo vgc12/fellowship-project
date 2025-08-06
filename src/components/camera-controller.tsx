@@ -1,11 +1,13 @@
 ﻿import React, {useState} from "react";
 import {ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Eye, Move, RotateCcw} from "lucide-react";
 import {OrbitControllerComponent} from "@/components/orbit-controller-component.tsx";
+import {UseCssClass} from "@/components/use-css-class.tsx";
 
 
-export const MinimalController: React.FC = () =>
+export const CameraController: React.FC = () =>
 {
     const [mode, setMode] = useState('orbit');
+    const {buttonLightSquare} = UseCssClass();
 
 
     const [fpValues, setFpValues] = useState({yaw: 0, pitch: 0});
@@ -14,14 +16,15 @@ export const MinimalController: React.FC = () =>
 
     return (
 
-        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-200 shadow-lg">
-            <h3 className="text-white text-lg font-semibold mb-4 flex items-center gap-2">
+        <div
+            className=" dark:text-white text-black dark:bg-gray-900 bg-gray-100 rounded-2xl p-6 border border-gray-200 shadow-lg">
+            <h3 className=" text-lg font-semibold mb-4 flex items-center gap-2">
                 Camera Controller
             </h3>
 
             <div className="space-y-6">
 
-                <div className="flex bg-gray-800 rounded-xl p-1">
+                <div className="flex bg-gray-300 dark:bg-gray-900 rounded-xl p-1">
                     {[
                         {key: 'orbit', icon: RotateCcw, label: 'Orbit'},
                         {key: 'fps', icon: Eye, label: 'FPS'},
@@ -30,10 +33,10 @@ export const MinimalController: React.FC = () =>
                         <button
                             key={key}
                             onClick={() => setMode(key)}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all ${
+                            className={`  flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium  ${
                                 mode === key
-                                    ? 'bg-gray-600 text-white shadow-sm'
-                                    : ' bg-gray-900 text-white hover:text-gray-900'
+                                    ? 'dark:bg-gray-600 bg-gray-100 shadow-sm'
+                                    : ' dark:bg-gray-900 bg-gray-300 hover:text-gray-100 dark:hover:text-gray-900'
                             }`}
                         >
                             <Icon className="w-4 h-4"/>
@@ -43,7 +46,7 @@ export const MinimalController: React.FC = () =>
                 </div>
 
 
-                <div className="bg-gray-700 rounded-xl p-6">
+                <div className="dark:bg-gray-700 bg-gray-300 rounded-xl p-6">
                     {mode === 'orbit' && (
                         <OrbitControllerComponent/>
                     )}
@@ -120,7 +123,7 @@ export const MinimalController: React.FC = () =>
                 </div>
 
                 <button
-                    className="w-full bg-gray-700 hover:bg-gray-800 text-white py-3 rounded-xl font-medium transition-colors">
+                    className="w-full dark:bg-gray-700 bg-gray-300 hover:bg-gray-200  dark:hover:bg-gray-800 py-3 rounded-xl font-medium ">
                     Reset Camera
                 </button>
             </div>

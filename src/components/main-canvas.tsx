@@ -13,7 +13,7 @@ export const MainCanvas: React.FC<MainCanvasProps> = ({
                                                           height = 1080,
                                                           children
                                                       }) => (
-    <div className="mx-4">
+    <div className="mx-4 ">
         {children}
         <canvas
             ref={canvasRef}
