@@ -9,7 +9,16 @@ import type {IObject} from "@/scene/IObject.ts";
 import {CameraController} from "@/Controls/camera-controller.ts";
 import {Light} from "@/scene/point-light.ts";
 
+
 class WebGPUSingleton {
+    get skyBindGroupLayout(): GPUBindGroupLayout {
+        return this._skyBindGroupLayout;
+    }
+
+    get gBufferBindGroupLayout(): GPUBindGroupLayout {
+        return this._gBufferBindGroupLayout;
+    }
+
     get lightBindGroupLayout(): GPUBindGroupLayout {
         return this._lightBindGroupLayout;
     }
@@ -17,13 +26,13 @@ class WebGPUSingleton {
 
     private _lightBindGroupLayout: GPUBindGroupLayout;
 
-    private _lights :  Light[];
+    private _lights: Light[];
 
     get lights() {
         return this._lights;
     }
 
-    addLight (light: Light) {
+    addLight(light: Light) {
         this._lights.push(light);
     }
 
@@ -61,6 +70,10 @@ class WebGPUSingleton {
         put this one here.
      */
     private _frameBindGroupLayout: GPUBindGroupLayout;
+    // I hate this
+    private _gBufferBindGroupLayout: GPUBindGroupLayout;
+    // and this
+    private _skyBindGroupLayout: GPUBindGroupLayout;
 
 
     static get Instance(): WebGPUSingleton {
@@ -126,6 +139,163 @@ class WebGPUSingleton {
 
     async initialize(): Promise<void> {
         if (this._device) return;
+        await this.createWebGPURequirements();
+
+        this.createSceneObjects();
+
+
+        this.createVertexBufferLayout();
+
+        this.initializeBindGroupLayouts();
+
+    }
+
+    private initializeBindGroupLayouts() {
+        this.createTextureBindGroupLayout();
+        this.createFrameBindGroupLayout();
+        this.createLightBindGroupLayout();
+        this.createGBufferBindGroupLayout();
+        this.createSkyBindGroupLayout();
+    }
+
+    private createLightBindGroupLayout() {
+        this._lightBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            label: 'Light Bind Group Layout',
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'read-only-storage',
+                        hasDynamicOffset: false
+                    }
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: false
+                    }
+                }
+            ]
+
+        });
+    }
+
+    private createFrameBindGroupLayout() {
+        this._frameBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            label: 'Frame Bind Group Layout',
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                buffer: {}
+            },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'read-only-storage',
+                        hasDynamicOffset: false
+                    }
+                }
+
+            ]
+        })
+    }
+
+    private createTextureBindGroupLayout() {
+        this._textureBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            label: 'Texture Bind Group Layout',
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: {}
+            },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {}
+                },
+                {
+                    binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {}
+                },
+                {
+                    binding: 3,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: {}
+                }
+            ]
+        })
+    }
+
+    private createGBufferBindGroupLayout() {
+        this._gBufferBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            label: "G-Buffer Bind Group Layout",
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.FRAGMENT, // albedo
+                    texture: {sampleType: 'float'}
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT, // normal
+                    texture: {sampleType: 'float'}
+                },
+                {
+                    binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT, // metallicRoughnessAO
+                    texture: {sampleType: 'float'}
+                },
+                {
+                    binding: 3,
+                    visibility: GPUShaderStage.FRAGMENT, // position
+                    texture: {sampleType: 'unfilterable-float'}
+                },
+                {
+                    binding: 4,
+                    visibility: GPUShaderStage.FRAGMENT,  // depth
+                    texture: {sampleType: 'depth'}
+                }
+
+            ]
+        });
+
+    }
+
+    private createSkyBindGroupLayout() {
+        this._skyBindGroupLayout = $WGPU.device.createBindGroupLayout({
+            label: "Sky Bind Group Layout",
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {
+                        type: 'uniform',
+                        hasDynamicOffset: false
+                    }
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {
+                        sampleType: 'float',
+                        viewDimension: 'cube'
+                    }
+                },
+                {
+                    binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: {}
+                }
+            ]
+        })
+    }
+
+    private async createWebGPURequirements() {
         // Request a GPU adapter and device
         // An adapter is a link between the browser and the GPU hardware.
         // Allows for getting information about the GPU and creating a device to interact with it.
@@ -140,26 +310,30 @@ class WebGPUSingleton {
         this._lights = [];
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
         this._device = await this._adapter.requestDevice({
-            requiredLimits : {
-                maxColorAttachmentBytesPerSample : 64
+            requiredLimits: {
+                maxColorAttachmentBytesPerSample: 64
             }
         });
-        this._mainCamera = new Camera();
-        this._mainCamera.name = "Camera";
-        this._mainCamera.transform.position.set(0, 0, -5)
         this._context = this.canvas.getContext('webgpu') as GPUCanvasContext;
-
-        this._cameraController = new CameraController(this._mainCamera);
-
         this._format = navigator.gpu.getPreferredCanvasFormat();
 
-        this.context.configure({
+        this._context.configure({
             format: this.format,
             device: $WGPU.device,
             alphaMode: 'premultiplied',
         });
+    }
+
+    private createSceneObjects() {
+        this._mainCamera = new Camera();
+        this._mainCamera.name = "Camera";
+        this._mainCamera.transform.position.set(0, 0, -5)
 
 
+        this._cameraController = new CameraController(this._mainCamera);
+    }
+
+    private createVertexBufferLayout() {
         this._vertexBufferLayout = {
             arrayStride: 56,
             attributes: [
@@ -190,74 +364,6 @@ class WebGPUSingleton {
                 }
             ]
         }
-
-        this._textureBindGroupLayout = $WGPU.device.createBindGroupLayout({
-            label : 'Texture Bind Group Layout',
-            entries: [{
-                binding: 0,
-                visibility: GPUShaderStage.FRAGMENT,
-                texture: {}
-            },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: {}
-                },
-                {
-                    binding: 2,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: {}
-                },
-                {
-                    binding: 3,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    sampler: {}
-                }
-            ]
-        })
-
-        this._frameBindGroupLayout = $WGPU.device.createBindGroupLayout({
-            label: 'Frame Bind Group Layout',
-            entries: [{
-                binding: 0,
-                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                buffer: {}
-            },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: {
-                        type: 'read-only-storage',
-                        hasDynamicOffset: false
-                    }
-                }
-
-            ]
-        })
-
-        this._lightBindGroupLayout = $WGPU.device.createBindGroupLayout({
-            label : 'Light Bind Group Layout',
-            entries: [
-                {
-                    binding: 0,
-                    visibility:  GPUShaderStage.FRAGMENT,
-                    buffer: {
-                        type: 'read-only-storage',
-                        hasDynamicOffset: false
-                    }
-                },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: {
-                        type: 'uniform',
-                        hasDynamicOffset: false
-                    }
-                }
-                ]
-
-        });
-
     }
 
     addRenderableObject(object: RenderableObject) {
