@@ -7,7 +7,7 @@ interface PanelProps {
     maxHeight?: number
     label?: string
     grow?: boolean
-    flex?: number
+    flex?: string
 }
 
 export const Panel: React.FC<PanelProps> = ({children, maxHeight, className, label, grow, flex}) => {

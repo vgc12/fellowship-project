@@ -13,6 +13,7 @@ import {IdleState} from "@/Controls/states/idle-state.ts";
 import {CameraPanState} from "@/Controls/states/camera-pan-state.ts";
 import {CameraOrbitState} from "@/Controls/states/camera-orbit-state.ts";
 
+
 export class ZoomState implements IState {
     private readonly _cameraController: CameraController;
 
@@ -29,6 +30,22 @@ export class ZoomState implements IState {
 
 
 export class CameraController implements IObject {
+    get yMovementThisFrame(): number {
+        return this._yMovementThisFrame;
+    }
+
+    set yMovementThisFrame(value: number) {
+        this._yMovementThisFrame = value;
+    }
+
+    get xMovementThisFrame(): number {
+        return this._xMovementThisFrame;
+    }
+
+    set xMovementThisFrame(value: number) {
+        this._xMovementThisFrame = value;
+    }
+
     private readonly _name: string;
     private readonly _transform: Transform;
     private readonly _camera: Camera;
@@ -105,6 +122,15 @@ export class CameraController implements IObject {
 
     private _fpsExternallyChanged: boolean = false;
 
+    private _panExternallyChanged: boolean = false;
+
+    get panExternallyChanged() {
+        return this._panExternallyChanged
+    }
+
+    set panExternallyChanged(value: boolean) {
+        this._panExternallyChanged = value;
+    }
 
     get orbitExternallyChanged(): boolean {
         return this._orbitExternallyChanged;
@@ -129,7 +155,7 @@ export class CameraController implements IObject {
         });
         this.at(idleState, panState, {
             evaluate: () => {
-                return $INPUT.middleMouseButtonPressed && $INPUT.shiftKeyPressed
+                return ($INPUT.middleMouseButtonPressed && $INPUT.shiftKeyPressed) || this._panExternallyChanged
             }
         });
         this.at(idleState, firstPersonState, {
@@ -168,7 +194,7 @@ export class CameraController implements IObject {
         // Away from Pan
         this.at(panState, orbitState, {
             evaluate: () => {
-                return !$INPUT.shiftKeyPressed && $INPUT.middleMouseButtonPressed
+                return !$INPUT.shiftKeyPressed && $INPUT.middleMouseButtonPressed && !this._panExternallyChanged
             }
         });
         this.at(panState, firstPersonState, {
@@ -221,8 +247,11 @@ export class CameraController implements IObject {
     }
 
     update(): void {
-        this._yMovementThisFrame = $INPUT.movementY * $INPUT.sensitivity * $TIME.deltaTime;
-        this._xMovementThisFrame = $INPUT.movementX * $INPUT.sensitivity * $TIME.deltaTime;
+        if (!this._panExternallyChanged && !this._fpsExternallyChanged && !this._orbitExternallyChanged) {
+            this._yMovementThisFrame = $INPUT.movementY * $INPUT.sensitivity * $TIME.deltaTime;
+            this._xMovementThisFrame = $INPUT.movementX * $INPUT.sensitivity * $TIME.deltaTime;
+        }
+
 
         this._stateMachine.update();
     }
@@ -262,21 +291,21 @@ export class CameraController implements IObject {
 
     rotateFirstPerson() {
 
-        if (!this._fpsExternallyChanged) {
-            this._orbitRotation.x += this._yMovementThisFrame;
-            this._orbitRotation.y += this._xMovementThisFrame;
 
-            this._orbitRotation.x = clamp(this._orbitRotation.x, -90, 90);
-        }
+        this._orbitRotation.x += this._yMovementThisFrame;
+        this._orbitRotation.y += this._xMovementThisFrame;
+
+        this._orbitRotation.x = clamp(this._orbitRotation.x, -90, 90);
+
         this._camera.transform.rotation.setFromEuler(this._orbitRotation.x, this._orbitRotation.y, 0);
     }
 
     rotateAroundTarget() {
 
-        if (!this._orbitExternallyChanged) {
-            this._orbitRotation.x += this._yMovementThisFrame;
-            this._orbitRotation.y += this._xMovementThisFrame;
-        }
+
+        this._orbitRotation.x += this._yMovementThisFrame;
+        this._orbitRotation.y += this._xMovementThisFrame;
+
         this._cameraTarget.rotation.setFromEuler(this._orbitRotation.x, this._orbitRotation.y, 0);
 
         Vector3.subtract(this._cameraTarget.position,
@@ -291,19 +320,22 @@ export class CameraController implements IObject {
 
         const panMultiplier = 0.1;
 
-        this._camera.transform.position = Vector3.add(this._camera.transform.position, Vector3.multiplyScalar(this._camera.transform.right, -this._xMovementThisFrame * panMultiplier));
-        this._camera.transform.position = Vector3.add(this._camera.transform.position, Vector3.multiplyScalar(this._camera.transform.up, this._yMovementThisFrame * panMultiplier));
+        const movementX = this._xMovementThisFrame;
+        const movementY = this._yMovementThisFrame;
+
+        this._camera.transform.position = Vector3.add(this._camera.transform.position, Vector3.multiplyScalar(this._camera.transform.right, -movementX * panMultiplier));
+        this._camera.transform.position = Vector3.add(this._camera.transform.position, Vector3.multiplyScalar(this._camera.transform.up, movementY * panMultiplier));
 
         this._cameraTarget.position = Vector3.add(
             this._cameraTarget.position,
             Vector3.multiplyScalar(
                 this._camera.transform.right,
-                -this._xMovementThisFrame * panMultiplier
+                -movementX * panMultiplier
             )
         );
         this._cameraTarget.position = Vector3.add(
             this._cameraTarget.position,
-            Vector3.multiplyScalar(this._camera.transform.up, this._yMovementThisFrame * panMultiplier)
+            Vector3.multiplyScalar(this._camera.transform.up, movementY * panMultiplier)
         );
 
     }

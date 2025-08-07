@@ -5,15 +5,10 @@ import {$TIME} from "@/utils/time.ts";
 import {$INPUT} from "@/Controls/input.ts";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-interface OrbitValues {
-    azimuth: number,
-    elevation: number,
-}
 
 
-export const useOrbitControl = (initialValues: OrbitValues) => {
-    const orbitValues = useRef(initialValues);
-    const prev = useRef(initialValues);
+export const useOrbitControl = () => {
+
 
     const direction = useRef(Direction.Center);
     const distance = useRef(0);
@@ -24,12 +19,9 @@ export const useOrbitControl = (initialValues: OrbitValues) => {
 
     const run = () => {
 
-        console.log(direction.current)
+
         updateDirection(direction.current, distance.current * $TIME.deltaTime * $INPUT.sensitivity);
 
-        $WGPU.cameraController.orbitExternallyChanged = true;
-
-        $WGPU.cameraController.setOrbitRotation(orbitValues.current.elevation, orbitValues.current.azimuth);
 
         animationFrameId.current = requestAnimationFrame(run);
 
@@ -46,8 +38,8 @@ export const useOrbitControl = (initialValues: OrbitValues) => {
 
     useEffect(() => {
         if (running) {
-            orbitValues.current.azimuth = $WGPU.cameraController.orbitRotation.y;
-            orbitValues.current.elevation = $WGPU.cameraController.orbitRotation.x;
+
+            $WGPU.cameraController.orbitExternallyChanged = true;
             animationFrameId.current = requestAnimationFrame(run);
 
         } else {
@@ -63,8 +55,6 @@ export const useOrbitControl = (initialValues: OrbitValues) => {
     }, [running]);
 
     const updateDirection = useCallback((direction: Direction, distance = 1) => {
-
-        if (direction === Direction.Center) return;
 
 
         const directionDeltas = {
@@ -82,16 +72,12 @@ export const useOrbitControl = (initialValues: OrbitValues) => {
 
         const delta = directionDeltas[direction];
 
-        orbitValues.current = {
-            azimuth: prev.current.azimuth + delta.azimuth,
-            elevation: prev.current.elevation + delta.elevation,
+        $WGPU.cameraController.xMovementThisFrame = delta.azimuth
+        $WGPU.cameraController.yMovementThisFrame = delta.elevation
 
-        };
-
-        prev.current = orbitValues.current;
 
     }, []);
 
 
-    return {orbitValues, onJoystickChange, setRunning};
+    return {onJoystickChange, setRunning};
 };

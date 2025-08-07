@@ -5,8 +5,7 @@ import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {$INPUT} from "@/Controls/input.ts";
 
 
-export const useFpsControl = () => {
-
+export const usePanControl = () => {
 
     const sensitivity = $INPUT.sensitivity / 4;
 
@@ -37,7 +36,7 @@ export const useFpsControl = () => {
     useEffect(() => {
         if (running) {
 
-            $WGPU.cameraController.fpsExternallyChanged = true;
+            $WGPU.cameraController.panExternallyChanged = true;
             animationFrameId.current = requestAnimationFrame(run);
 
         } else {
@@ -54,14 +53,12 @@ export const useFpsControl = () => {
 
     const updateDirection = useCallback((direction: Direction, distance = 1) => {
 
-        if (direction === Direction.Center) return;
-
 
         const directionDeltas = {
             [Direction.Top]: {x: 0, y: -distance},
             [Direction.Bottom]: {x: 0, y: distance},
-            [Direction.Left]: {x: -distance, y: 0},
-            [Direction.Right]: {x: distance, y: 0},
+            [Direction.Left]: {x: distance, y: 0},
+            [Direction.Right]: {x: -distance, y: 0},
             [Direction.TopLeft]: {x: -distance, y: distance},
             [Direction.RightTop]: {x: distance, y: distance},
             [Direction.BottomRight]: {x: distance, y: -distance},

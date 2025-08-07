@@ -49,7 +49,7 @@ const App: React.FC = () => {
         } else {
             document.documentElement.classList.remove('dark');
         }
-    
+
         localStorage.setItem('darkMode', isDarkMode.toString());
     }, [isDarkMode]);
 
@@ -67,7 +67,7 @@ const App: React.FC = () => {
 
     return (
         <div id="app"
-             className={`dark:bg-gray-900 dark:text-white bg-gray-200 transition-all transition-discrete duration-500 text-black`}>
+             className={`h-[100vh] dark:bg-gray-900 dark:text-white bg-gray-200 transition-all transition-discrete duration-500 text-black`}>
             <div className="p-4">
 
                 <LoadingDialog isOpen={shouldBeOpen} isLoading={isLoading}>

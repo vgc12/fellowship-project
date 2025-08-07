@@ -1,10 +1,12 @@
 ﻿import React, {useEffect, useState} from "react";
-import {ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Eye, Move, RotateCcw} from "lucide-react";
-import {FPSController, OrbitController} from "@/components/orbit-controller.tsx";
+import {Eye, Move, RotateCcw} from "lucide-react";
+import {OrbitController} from "@/components/orbit-controller.tsx";
 import {Panel} from "@/components/panel.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {Slider} from "@/components/slider.tsx";
 import {$INPUT} from "@/Controls/input.ts";
+import {PanController} from "@/components/pan-controller.tsx";
+import {FPSController} from "@/components/f-p-s-controller.tsx";
 
 
 export const CameraController: React.FC = () => {
@@ -19,7 +21,7 @@ export const CameraController: React.FC = () => {
 
     return (
 
-        <Panel className={'shrink'} label='Camera Controller'>
+        <Panel label='Camera Controller'>
 
             <div className="space-y-6">
 
@@ -55,30 +57,7 @@ export const CameraController: React.FC = () => {
                     )}
 
                     {mode === 'pan' && (
-                        <div className="flex justify-center">
-                            <div className="grid grid-cols-3 gap-2">
-                                <div></div>
-                                <button className="bg-white hover:bg-gray-50 p-4 rounded-lg shadow">
-                                    <ArrowUp className="w-5 h-5 text-gray-700"/>
-                                </button>
-                                <div></div>
-                                <button className="bg-white hover:bg-gray-50 p-4 rounded-lg shadow">
-                                    <ArrowLeft className="w-5 h-5 text-gray-700"/>
-                                </button>
-                                <button
-                                    className="bg-white hover:bg-gray-50 p-4 rounded-lg shadow text-gray-700 font-medium">
-                                    ⌂
-                                </button>
-                                <button className="bg-white hover:bg-gray-50 p-4 rounded-lg shadow">
-                                    <ArrowRight className="w-5 h-5 text-gray-700"/>
-                                </button>
-                                <div></div>
-                                <button className="bg-white hover:bg-gray-50 p-4 rounded-lg shadow">
-                                    <ArrowDown className="w-5 h-5 text-gray-700"/>
-                                </button>
-                                <div></div>
-                            </div>
-                        </div>
+                        <PanController/>
                     )}
                 </div>
                 <h3>Sensitivity</h3>
