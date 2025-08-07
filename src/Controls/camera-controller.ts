@@ -95,6 +95,17 @@ export class CameraController implements IObject {
 
     private _orbitExternallyChanged: boolean = false;
 
+    get fpsExternallyChanged() {
+        return this._fpsExternallyChanged
+    }
+
+    set fpsExternallyChanged(value) {
+        this._fpsExternallyChanged = value;
+    }
+
+    private _fpsExternallyChanged: boolean = false;
+
+
     get orbitExternallyChanged(): boolean {
         return this._orbitExternallyChanged;
     }
@@ -112,112 +123,95 @@ export class CameraController implements IObject {
 
         // Away from Idle
         this.at(idleState, orbitState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.middleMouseButtonPressed || this._orbitExternallyChanged
             }
         });
         this.at(idleState, panState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.middleMouseButtonPressed && $INPUT.shiftKeyPressed
             }
         });
         this.at(idleState, firstPersonState, {
-            evaluate: () =>
-            {
-                return $INPUT.altKeyPressed
+            evaluate: () => {
+                return $INPUT.altKeyPressed || this._fpsExternallyChanged
             }
         });
         this.at(idleState, zoomState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.scrollMovementY != 0
             }
         })
 
         // Away from Orbit
         this.at(orbitState, panState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.shiftKeyPressed
             }
         });
         this.at(orbitState, firstPersonState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.altKeyPressed
             }
         });
         this.at(orbitState, idleState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return !$INPUT.middleMouseButtonPressed && !this._orbitExternallyChanged
             }
         });
         this.at(orbitState, zoomState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.scrollMovementY != 0
             }
         })
 
         // Away from Pan
         this.at(panState, orbitState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return !$INPUT.shiftKeyPressed && $INPUT.middleMouseButtonPressed
             }
         });
         this.at(panState, firstPersonState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.altKeyPressed
             }
         });
         this.at(panState, idleState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return !$INPUT.middleMouseButtonPressed && !$INPUT.shiftKeyPressed
             }
         });
         this.at(panState, zoomState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.scrollMovementY != 0
             }
         })
 
         // Away from First Person
         this.at(firstPersonState, orbitState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.middleMouseButtonPressed && !$INPUT.altKeyPressed
             }
         });
         this.at(firstPersonState, panState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.middleMouseButtonPressed && $INPUT.shiftKeyPressed && !$INPUT.altKeyPressed
             }
         });
         this.at(firstPersonState, idleState, {
-            evaluate: () =>
-            {
-                return !$INPUT.altKeyPressed
+            evaluate: () => {
+                return !$INPUT.altKeyPressed && !this._fpsExternallyChanged
             }
         });
         this.at(firstPersonState, zoomState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.scrollMovementY != 0
             }
         })
 
         // Away from zoom
         this.at(zoomState, idleState, {
-            evaluate: () =>
-            {
+            evaluate: () => {
                 return $INPUT.scrollMovementY == 0
             }
         });
@@ -233,11 +227,11 @@ export class CameraController implements IObject {
         this._stateMachine.update();
     }
 
-    setOrbitRotation(x: number = 0, y: number = 0) {
-        if (x == 0) {
+    setOrbitRotation(x: number | null = null, y: number | null = null) {
+        if (!x) {
             x = this._orbitRotation.x;
         }
-        if (y == 0) {
+        if (!y) {
             y = this._orbitRotation.y;
         }
         this._orbitRotation.set(x, y, 0);
@@ -268,21 +262,21 @@ export class CameraController implements IObject {
 
     rotateFirstPerson() {
 
-        if (!this._orbitExternallyChanged) {
+        if (!this._fpsExternallyChanged) {
             this._orbitRotation.x += this._yMovementThisFrame;
             this._orbitRotation.y += this._xMovementThisFrame;
-        }
-        this._orbitRotation.x = clamp(this._orbitRotation.x, -90, 90);
 
+            this._orbitRotation.x = clamp(this._orbitRotation.x, -90, 90);
+        }
         this._camera.transform.rotation.setFromEuler(this._orbitRotation.x, this._orbitRotation.y, 0);
     }
 
     rotateAroundTarget() {
 
-
-        this._orbitRotation.x += this._yMovementThisFrame;
-        this._orbitRotation.y += this._xMovementThisFrame;
-
+        if (!this._orbitExternallyChanged) {
+            this._orbitRotation.x += this._yMovementThisFrame;
+            this._orbitRotation.y += this._xMovementThisFrame;
+        }
         this._cameraTarget.rotation.setFromEuler(this._orbitRotation.x, this._orbitRotation.y, 0);
 
         Vector3.subtract(this._cameraTarget.position,
@@ -318,4 +312,8 @@ export class CameraController implements IObject {
         this._stateMachine.addTransition(from, to, condition);
     }
 
+    resetPosition = () => {
+        this._cameraTarget.position = Vector3.ZERO;
+
+    }
 }

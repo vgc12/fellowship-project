@@ -1,26 +1,25 @@
-﻿import React, {useState} from "react";
+﻿import React, {useEffect, useState} from "react";
 import {ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Eye, Move, RotateCcw} from "lucide-react";
-import {OrbitControllerComponent} from "@/components/orbit-controller-component.tsx";
-import {UseCssClass} from "@/components/use-css-class.tsx";
+import {FPSController, OrbitController} from "@/components/orbit-controller.tsx";
+import {Panel} from "@/components/panel.tsx";
+import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
+import {Slider} from "@/components/slider.tsx";
+import {$INPUT} from "@/Controls/input.ts";
 
 
-export const CameraController: React.FC = () =>
-{
+export const CameraController: React.FC = () => {
     const [mode, setMode] = useState('orbit');
-    const {buttonLightSquare} = UseCssClass();
 
+    const [sensitivity, setSensitivity] = useState($INPUT.sensitivity);
 
-    const [fpValues, setFpValues] = useState({yaw: 0, pitch: 0});
-    const [panValues, setPanValues] = useState({x: 0, y: 0});
+    useEffect(() => {
+        $INPUT.sensitivity = sensitivity;
+    }, [sensitivity]);
 
 
     return (
 
-        <div
-            className=" dark:text-white text-black dark:bg-gray-900 bg-gray-100 rounded-2xl p-6 border border-gray-200 shadow-lg">
-            <h3 className=" text-lg font-semibold mb-4 flex items-center gap-2">
-                Camera Controller
-            </h3>
+        <Panel className={'shrink'} label='Camera Controller'>
 
             <div className="space-y-6">
 
@@ -46,52 +45,13 @@ export const CameraController: React.FC = () =>
                 </div>
 
 
-                <div className="dark:bg-gray-700 bg-gray-300 rounded-xl p-6">
+                <div className="dark:bg-gray-700 bg-gray-300 rounded-xl p-4">
                     {mode === 'orbit' && (
-                        <OrbitControllerComponent/>
+                        <OrbitController/>
                     )}
 
                     {mode === 'fps' && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
-                                <div></div>
-                                <button
-                                    className="bg-white hover:bg-gray-50 p-3 rounded-lg shadow text-gray-700 font-medium">
-                                    W
-                                </button>
-                                <div></div>
-                                <button
-                                    className="bg-white hover:bg-gray-50 p-3 rounded-lg shadow text-gray-700 font-medium">
-                                    A
-                                </button>
-                                <button
-                                    className="bg-white hover:bg-gray-50 p-3 rounded-lg shadow text-gray-700 font-medium">
-                                    S
-                                </button>
-                                <button
-                                    className="bg-white hover:bg-gray-50 p-3 rounded-lg shadow text-gray-700 font-medium">
-                                    D
-                                </button>
-                            </div>
-                            <div className="flex justify-center gap-2">
-                                <button
-                                    className="bg-white hover:bg-gray-50 p-2 rounded-lg shadow text-gray-700 font-medium text-sm">
-                                    Q (Up)
-                                </button>
-                                <button
-                                    className="bg-white hover:bg-gray-50 p-2 rounded-lg shadow text-gray-700 font-medium text-sm">
-                                    E (Down)
-                                </button>
-                            </div>
-                            <div className="text-center">
-                                <div className="bg-white rounded-lg shadow p-3 inline-block">
-                                    <div className="text-xs text-gray-500 mb-1">Look Direction</div>
-                                    <div className="text-sm text-gray-700">Yaw: {fpValues.yaw}° |
-                                        Pitch: {fpValues.pitch}°
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <FPSController/>
                     )}
 
                     {mode === 'pan' && (
@@ -121,12 +81,15 @@ export const CameraController: React.FC = () =>
                         </div>
                     )}
                 </div>
-
-                <button
-                    className="w-full dark:bg-gray-700 bg-gray-300 hover:bg-gray-200  dark:hover:bg-gray-800 py-3 rounded-xl font-medium ">
-                    Reset Camera
+                <h3>Sensitivity</h3>
+                <Slider min={0} max={100} defaultValue={[sensitivity]}
+                        onValueCommit={val => setSensitivity(val[0])}></Slider>
+                <button onClick={$WGPU.cameraController.resetPosition}
+                        className="w-full dark:bg-gray-700 bg-gray-300 hover:bg-gray-200  dark:hover:bg-gray-800 py-2 rounded-xl font-medium ">
+                    Reset Camera Position
                 </button>
             </div>
-        </div>
+        </Panel>
+
     );
 }

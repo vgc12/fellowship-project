@@ -17,9 +17,8 @@ function SpotLightComponent(props: { object: PointLight }) {
                     <LightComponent object={props.object}></LightComponent>
 
                     <VectorInputComponent label={'Intensity'} numberLabels={['']} values={[props.object.intensity]}
-                                          step={1}  onChange={
-                        (value) =>
-                        {
+                                          step={1} onChange={
+                        (value) => {
                             props.object.intensity = value;
                         }
                     }>
@@ -34,7 +33,6 @@ function SpotLightComponent(props: { object: PointLight }) {
         </li>
     )
 }
-
 
 
 export default SpotLightComponent;

@@ -356,6 +356,7 @@ export class Renderer {
     }
 
     private createModelMatrixArray() {
+
         for (let renderableIndex = 0; renderableIndex < $SCENE_MANAGER.currentScene.renderableObjects.length; renderableIndex++) {
             const renderable = $SCENE_MANAGER.currentScene.renderableObjects[renderableIndex];
             for (let MATRIX_POSITION = 0; MATRIX_POSITION < renderable.modelMatrix.length; MATRIX_POSITION++) {
@@ -417,6 +418,8 @@ export class Renderer {
     }
 
     update() {
+
+
         this.writeFrameGroupBuffers();
         this.writeCameraBuffer()
         this.writeLightBuffer();

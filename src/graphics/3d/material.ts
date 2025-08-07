@@ -1,6 +1,6 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {fileFromURL, imageExists} from "@/lib/utils.ts";
-import {type imageFileType} from "@/components/texture-input-component.tsx";
+import {type imageFileType} from "@/components/texture-input.tsx";
 import {generateMips, numMipLevels} from "@/graphics/shader-utils/mipmap-generator.ts";
 
 

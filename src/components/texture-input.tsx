@@ -1,5 +1,5 @@
 import {type ChangeEvent, useRef, useState} from "react";
-import {InputComponent} from "@/components/input-component.tsx";
+import {Input} from "@/components/input.tsx";
 import type {RenderableObject} from "@/scene/renderable-object.ts";
 import {Material} from "@/graphics/3d/material.ts";
 
@@ -23,7 +23,7 @@ export const ImageFileTypes: imageFileType[] = [
 ];
 
 
-export function TextureInputComponent(props: { object: RenderableObject, textureType: imageFileType }) {
+export function TextureInput(props: { object: RenderableObject, textureType: imageFileType }) {
 
     const [texture, setTexture] = useState<string>(`./img/default_${props.textureType.slice(0, props.textureType.length - 4)}.png`);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,8 +78,8 @@ export function TextureInputComponent(props: { object: RenderableObject, texture
     return (
         <div className={"text-left"}>
             <label className={"t"}>{props.textureType.slice(0, props.textureType.length - 4) + " Texture "}</label>
-            <InputComponent ref={fileInputRef} hidden={true} type={"file"} id="file-input" multiple
-                            onChange={(e) => handleOnChange(e)}/>
+            <Input ref={fileInputRef} hidden={true} type={"file"} id="file-input" multiple
+                   onChange={(e) => handleOnChange(e)}/>
             <img className={"w-1/5"} onClick={handleOnClick} src={texture}
                  alt={props.textureType.slice(0, props.textureType.length - 4) + " Texture " + props.object.name}></img>
         </div>

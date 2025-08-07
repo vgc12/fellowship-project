@@ -1,11 +1,11 @@
 import {VectorInputComponent} from "./vector-input-component.tsx";
 
 
-import {ImageFileTypes, TextureInputComponent} from "@/components/texture-input-component.tsx";
+import {ImageFileTypes, TextureInput} from "@/components/texture-input.tsx";
 import type {RenderableObject} from "@/scene/renderable-object.ts";
 
 
-function SceneObjectComponent(props: { object: RenderableObject }) {
+function SceneObject(props: { object: RenderableObject }) {
 
 
     type TransformType = 'position' | 'rotation' | 'scale';
@@ -40,7 +40,7 @@ function SceneObjectComponent(props: { object: RenderableObject }) {
 
                 {
                     ImageFileTypes.map((type) => {
-                        return <TextureInputComponent object={props.object} textureType={type}/>
+                        return <TextureInput object={props.object} textureType={type}/>
                     })
                 }
 
@@ -50,4 +50,4 @@ function SceneObjectComponent(props: { object: RenderableObject }) {
     )
 }
 
-export default SceneObjectComponent;
+export default SceneObject;

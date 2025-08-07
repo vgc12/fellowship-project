@@ -4,22 +4,44 @@ import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import Joystick, {DirectionCount, type IJoystickChangeValue} from "rc-joystick";
 import {ZoomIn, ZoomOut} from "lucide-react";
 import {UseCssClass} from "@/components/use-css-class.tsx";
+import {useFpsControl} from "@/components/use-fps-control.tsx";
 
-export const OrbitControllerComponent = () =>
-{
+
+export const FPSController = () => {
+
+    const {onJoystickChange, setRunning} = useFpsControl({x: 0, y: 0});
+
+
+    const activeChanged = useCallback((c: boolean) => setRunning(c), [setRunning]);
+
+    const changed = (jv: IJoystickChangeValue) => onJoystickChange(jv);
+
+
+    return (<div className=" flex justify-center items-center ">
+        <div className="items-center flex flex-col gap-4">
+            <Joystick baseRadius={40} controllerRadius={20} autoReset={true}
+                      className={'!box-content dark:!bg-gray-800 !bg-gray-100'}
+                      onActiveChange={activeChanged} directionCount={DirectionCount.Five}
+                      onChange={changed}>
+            </Joystick>
+
+        </div>
+    </div>)
+}
+
+export const OrbitController = () => {
 
     const {buttonLightRectangle} = UseCssClass();
 
     const {onJoystickChange, setRunning} = useOrbitControl({
-        azimuth: 0,
-        elevation: 0,
-
+        azimuth: $WGPU.cameraController.orbitRotation.x,
+        elevation: $WGPU.cameraController.orbitRotation.y,
     });
 
     const [distance, setDistance] = useState($WGPU.cameraController.orbitRadius)
 
-    useEffect(() =>
-    {
+
+    useEffect(() => {
         $WGPU.cameraController.orbitRadius = distance;
 
     }, [distance]);
@@ -27,18 +49,15 @@ export const OrbitControllerComponent = () =>
 
     const intervalRef = useRef(0);
 
-    useEffect(() =>
-    {
+    useEffect(() => {
 
-        intervalRef.current = setInterval(() =>
-        {
+        intervalRef.current = setInterval(() => {
             if ($WGPU?.cameraController?.orbitRadius !== undefined) {
                 setDistance($WGPU.cameraController.orbitRadius);
             }
-        }, 16);
+        }, 1000);
 
-        return () =>
-        {
+        return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
             }
@@ -47,16 +66,17 @@ export const OrbitControllerComponent = () =>
 
     const activeChanged = useCallback((c: boolean) => setRunning(c), [setRunning]);
 
-    const changed = useCallback((jv: IJoystickChangeValue) => onJoystickChange(jv),
-        [onJoystickChange]);
+    const changed = (jv: IJoystickChangeValue) => onJoystickChange(jv);
 
-    return (<div className="flex items-center justify-center">
-        <div className="items-center justify-center flex-1 flex flex-col gap-4">
-            <Joystick className={' dark:!bg-gray-800 !bg-gray-100'}
+
+    return (<div className=" flex justify-center items-center ">
+        <div className="items-center flex flex-col gap-4">
+            <Joystick baseRadius={40} controllerRadius={20} autoReset={true}
+                      className={'!box-content dark:!bg-gray-800 !bg-gray-100'}
                       onActiveChange={activeChanged} directionCount={DirectionCount.Five}
                       onChange={changed}>
             </Joystick>
-            <div className="flex items-center justify-center mt-4 gap-2">
+            <div className="flex items-center justify-center gap-2">
                 <button onClick={() => setDistance(distance + 1)}
                         className={buttonLightRectangle}>
                     <ZoomOut className="w-4 h-4"/>

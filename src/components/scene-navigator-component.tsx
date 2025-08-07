@@ -18,8 +18,7 @@ interface SceneNavigatorProps {
 
 const sceneIconMap: { [key: string]: ReactElement } = {}
 
-export const SceneNavigator = (props: SceneNavigatorProps) =>
-{
+export const SceneNavigator = (props: SceneNavigatorProps) => {
 
     const iconSize = '3vh'
     const classes = 'dark:text-white text-black'
@@ -29,8 +28,7 @@ export const SceneNavigator = (props: SceneNavigatorProps) =>
     sceneIconMap['RoomScene'] = <BsDoorOpenFill className={classes} size={iconSize}/>
     sceneIconMap['RobotScene'] = <RiRobot2Line className={classes} size={iconSize}/>
     const components =
-        $SCENE_MANAGER.scenes.map((scn) =>
-        {
+        $SCENE_MANAGER.scenes.map((scn) => {
             return (
                 <>
 
@@ -65,8 +63,7 @@ type SceneButtonComponentProps = {
     onClick?: () => void;
 }
 
-const SceneButtonComponent = (props: SceneButtonComponentProps) =>
-{
+const SceneButtonComponent = (props: SceneButtonComponentProps) => {
     const {sceneName, activeSceneName, sceneGUID, icon, vertical, setActiveScene, onClick} = props;
 
     const {buttonLightSquare} = UseCssClass();
@@ -74,12 +71,11 @@ const SceneButtonComponent = (props: SceneButtonComponentProps) =>
     return (
         <button
             key={sceneName}
-            onClick={() =>
-            {
+            onClick={() => {
                 onClick?.();
                 setActiveScene(sceneGUID)
             }}
-            className={buttonLightSquare}
+            className={buttonLightSquare + ' transition-all transition-discrete duration-500'}
             title={sceneName}
         >
 

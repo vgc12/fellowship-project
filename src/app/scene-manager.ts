@@ -19,7 +19,7 @@ export class SceneManager {
 
     private static _instance: SceneManager;
 
-    private _currentScene: Scene | null = null;
+    private _currentScene: Scene;
 
 
     private readonly _scenes: Scene[];
@@ -52,7 +52,7 @@ export class SceneManager {
             await Promise.all(initPromises);
 
             console.log('All scenes initialized');
-            this._currentScene = null;
+
         } catch (error) {
             console.error('Failed to initialize all scenes:', error);
         }

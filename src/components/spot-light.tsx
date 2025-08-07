@@ -5,9 +5,7 @@ import LightComponent from "@/components/light-component.tsx";
 import {toCamelCase} from "@/lib/utils.ts";
 
 
-
-function SpotLightComponent(props: { object: SpotLight }) {
-
+export function SpotLightComponent(props: { object: SpotLight }) {
 
 
     return (
@@ -18,8 +16,7 @@ function SpotLightComponent(props: { object: SpotLight }) {
                 </div>
                 <div className={"text-center"}>
                     <LightComponent object={props.object}></LightComponent>
-                    {(() =>
-                    {
+                    {(() => {
                         type propName = 'outerAngle' | 'innerAngle' | 'intensity';
                         return (
 
@@ -27,8 +24,7 @@ function SpotLightComponent(props: { object: SpotLight }) {
                                 label={'Light '}
                                 numberLabels={['Outer Angle', 'Inner Angle', 'Intensity']}
                                 values={[props.object.outerAngle, props.object.innerAngle, props.object.intensity]}
-                                onChange={(e, label) =>
-                                {
+                                onChange={(e, label) => {
                                     const prop = toCamelCase(label) as propName;
 
                                     props.object[prop] = e;
@@ -45,4 +41,3 @@ function SpotLightComponent(props: { object: SpotLight }) {
     )
 }
 
-export default SpotLightComponent;
