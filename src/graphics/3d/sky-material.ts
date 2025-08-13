@@ -5,9 +5,10 @@ export class SkyMaterial {
     texture: GPUTexture;
     view: GPUTextureView;
     sampler: GPUSampler;
+    bindGroup: GPUBindGroup;
 
     async initialize(urls: string[]) {
-        var imageData: ImageBitmap[] = new Array(6);
+        const imageData: ImageBitmap[] = new Array(6);
 
         for (let i = 0; i < urls.length; i++) {
             const response = await fetch(urls[i]);
@@ -37,6 +38,25 @@ export class SkyMaterial {
             maxAnisotropy: 1
         };
         this.sampler = $WGPU.device.createSampler(samplerDescriptor);
+
+
+        this.bindGroup = $WGPU.device.createBindGroup({
+            layout: $WGPU.skyBindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: {buffer: $WGPU.renderer.cameraBuffer}
+                },
+                {
+                    binding: 1,
+                    resource: this.view,
+                },
+                {
+                    binding: 2,
+                    resource: this.sampler
+                }
+            ]
+        })
 
     }
 

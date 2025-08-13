@@ -3,14 +3,18 @@ import {InputComponent} from "@/components/input-component.tsx";
 import type {RenderableObject} from "@/scene/renderable-object.ts";
 import {Material} from "@/graphics/3d/material.ts";
 
-export type imageFileType = 'albedoFile' | 'metallicFile' | 'roughnessFile' | 'normalFile';
+export type imageFileType = 'albedoFile' | 'metallicFile' | 'roughnessFile' | 'normalFile' | 'aoFile' | 'opacityFile' | 'emissiveFile';
 
 export const ImageFileTypes: imageFileType[] = [
     'albedoFile',
     'metallicFile',
     'roughnessFile',
-    'normalFile'
+    'normalFile',
+    'aoFile',
+    'opacityFile',
+    'emissiveFile'
 ];
+
 
 export function TextureInputComponent(props: { object: RenderableObject, textureType: imageFileType }) {
 

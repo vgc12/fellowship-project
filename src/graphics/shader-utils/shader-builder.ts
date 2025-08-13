@@ -19,6 +19,7 @@ export class ShaderBuilder {
     private _colorTargetStates: GPUColorTargetState[];
 
     private _bufferLayouts: GPUVertexBufferLayout[];
+    private _label: string;
 
     constructor() {
 
@@ -30,6 +31,7 @@ export class ShaderBuilder {
         this._vertexCode = '';
         this._fragmentCode = '';
         this._colorTargetStates = [];
+        this._label = '';
     }
 
     addVertexBufferLayout(vertexBuffer: GPUVertexBufferLayout) {
@@ -49,20 +51,44 @@ export class ShaderBuilder {
         return this;
     }
 
-    addColorFormat(format: GPUTextureFormat) {
-        this._colorTargetStates.push({
-            format: format,
-        });
+    addColorFormat(format: GPUTextureFormat, withAlpha : boolean = false) {
+
+        if (withAlpha) {
+
+            this._colorTargetStates.push({
+                format: format,
+                blend: {
+                    color: {
+                        operation: 'add',
+                        srcFactor: 'src-alpha',
+                        dstFactor: 'one-minus-src-alpha',
+                    },
+                    alpha: {
+                        operation: 'add',
+                        srcFactor: 'one',
+                        dstFactor: 'zero',
+                    },
+                },
+            });
+        }
+        else
+        {
+            this._colorTargetStates.push({
+                format: format,
+            });
+        }
         return this;
     }
 
 
     build(): Shader {
         this._fragmentModule = $WGPU.device.createShaderModule({
+            label: this._label,
             code: this._fragmentCode,
         });
 
         this._vertexModule = $WGPU.device.createShaderModule({
+            label: this._label,
             code: this._vertexCode,
         });
 
@@ -75,7 +101,8 @@ export class ShaderBuilder {
         this._fragmentState = {
             entryPoint: this._fragmentEntryPoint,
             module: this._fragmentModule,
-            targets: this._colorTargetStates,
+            targets:  this._colorTargetStates,
+
         };
 
         const shader: Shader = {
@@ -92,5 +119,10 @@ export class ShaderBuilder {
         return shader;
 
 
+    }
+
+    addLabel(label: string) {
+        this._label = label;
+        return this;
     }
 }

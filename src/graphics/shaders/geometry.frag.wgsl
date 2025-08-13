@@ -12,12 +12,14 @@ struct GBufferOutput {
     @location(1) normal: vec4<f32>,
     @location(2) metallicRoughnessAo: vec4<f32>,
     @location(3) position: vec4<f32>,
+    @location(4) emissive: vec4<f32>,
 };
 
 @binding(0) @group(1) var albedoTexture : texture_2d<f32>;
 @binding(1) @group(1) var normalTexture : texture_2d<f32>;
 @binding(2) @group(1) var metallicRoughnessAo : texture_2d<f32>;
 @binding(3) @group(1) var texSampler : sampler;
+@binding(4) @group(1) var emissiveTexture : texture_2d<f32>; // Emissive texture, if needed
 
 @fragment
 fn main(fragment: FragmentInput) -> GBufferOutput {
@@ -26,7 +28,9 @@ fn main(fragment: FragmentInput) -> GBufferOutput {
     let metallic = textureSample(metallicRoughnessAo, texSampler, fragment.texCoord).r; // Sample the metallic texture
     let roughness = textureSample(metallicRoughnessAo, texSampler, fragment.texCoord).g; // Sample the roughness texture
     let ao = textureSample(metallicRoughnessAo, texSampler, fragment.texCoord).b; // Sample the ambient occlusion texture
+    let opacity = textureSample(metallicRoughnessAo, texSampler, fragment.texCoord).a; // Sample the opacity texture
     let normal = textureSample(normalTexture, texSampler, fragment.texCoord); // Sample the normal texture
+    let emissive = textureSample(emissiveTexture, texSampler, fragment.texCoord); // Sample the emissive texture
 
    let t = normalize(fragment.tangent);
    let b = normalize(fragment.bitangent);
@@ -38,9 +42,10 @@ fn main(fragment: FragmentInput) -> GBufferOutput {
 
    var worldNormal : vec3f = normalize(tbn * tangentNormal);
 
-    output.albedo = vec4<f32>(albedo.xyz, 1.0);
+    output.albedo = vec4<f32>(albedo.xyz, 0);
     output.normal = vec4f(worldNormal,1.0);
-    output.metallicRoughnessAo = vec4<f32>(metallic, roughness, ao, 1.0);
+    output.metallicRoughnessAo = vec4<f32>(metallic, roughness, ao, opacity);
+    output.emissive = vec4<f32>(emissive.xyz, 1.0);
 
     output.position = vec4<f32>(fragment.worldPosition, 1.0);
 

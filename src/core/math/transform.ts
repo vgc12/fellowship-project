@@ -1,5 +1,6 @@
 import {Vector3} from "./vector3.ts";
 import {Quaternion} from "@/core/math/quaternion.ts";
+import {vec3} from "wgpu-matrix";
 
 
 
@@ -78,16 +79,16 @@ export class Transform {
 
         const rm = this.rotation.rotationMatrix;
 
-        this._forward.set(
-            rm.r1c3,-rm.r2c3, rm.r3c3
+        this._forward.setFromArray(
+            vec3.normalize([rm.r1c3,-rm.r2c3, rm.r3c3])
         )
 
-        this._right.set(
-            -rm.r1c1, rm.r2c1, -rm.r3c1
+        this._right.setFromArray(
+            vec3.normalize([-rm.r1c1, rm.r2c1, -rm.r3c1])
         )
 
-        this._up.set(
-            -rm.r1c2, rm.r2c2, -rm.r3c2
+        this._up.setFromArray(
+            vec3.normalize([-rm.r1c2, rm.r2c2, -rm.r3c2])
         )
 
 

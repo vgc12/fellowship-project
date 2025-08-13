@@ -37,7 +37,7 @@ export class SpotLight extends Light{
     constructor(color: Vector3, intensity: number, innerAngle: number, outerAngle: number) {
         super(color, intensity);
         this.name = 'Area Light';
-        this.lightType = lightType.AREA;
+        this.lightType = lightType.SPOT;
         this._innerAngle = innerAngle;
         this._outerAngle = outerAngle;
         this._innerAngleRadians = convertToRadians(innerAngle);
