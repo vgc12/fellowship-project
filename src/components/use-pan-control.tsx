@@ -5,7 +5,8 @@ import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {$INPUT} from "@/Controls/input.ts";
 
 
-export const usePanControl = () => {
+export const usePanControl = () =>
+{
 
     const sensitivity = $INPUT.sensitivity / 4;
 
@@ -16,7 +17,8 @@ export const usePanControl = () => {
     const [running, setRunning] = useState(false);
 
 
-    const run = () => {
+    const run = () =>
+    {
 
 
         updateDirection(direction.current, distance.current * $TIME.deltaTime * sensitivity);
@@ -27,13 +29,15 @@ export const usePanControl = () => {
     }
 
 
-    const onJoystickChange = useCallback((jv: { direction: Direction, distance: number }) => {
+    const onJoystickChange = useCallback((jv: { direction: Direction, distance: number }) =>
+    {
         direction.current = jv.direction;
         distance.current = jv.distance;
     }, [])
 
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         if (running) {
 
             $WGPU.cameraController.panExternallyChanged = true;
@@ -41,17 +45,20 @@ export const usePanControl = () => {
 
         } else {
             cancelAnimationFrame(animationFrameId.current);
-            $WGPU.cameraController.fpsExternallyChanged = false;
+       
+            $WGPU.cameraController.panExternallyChanged = false;
         }
 
-        return () => {
+        return () =>
+        {
             cancelAnimationFrame(animationFrameId.current);
-            $WGPU.cameraController.fpsExternallyChanged = false;
+            $WGPU.cameraController.panExternallyChanged = false;
         };
 
     }, [running]);
 
-    const updateDirection = useCallback((direction: Direction, distance = 1) => {
+    const updateDirection = useCallback((direction: Direction, distance = 1) =>
+    {
 
 
         const directionDeltas = {
@@ -69,8 +76,10 @@ export const usePanControl = () => {
 
         const delta = directionDeltas[direction];
 
+
         $WGPU.cameraController.xMovementThisFrame = delta.x;
         $WGPU.cameraController.yMovementThisFrame = delta.y;
+
 
     }, []);
 

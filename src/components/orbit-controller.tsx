@@ -3,18 +3,19 @@ import {useOrbitControl} from "@/components/use-orbit-control.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import Joystick, {DirectionCount, type IJoystickChangeValue} from "rc-joystick";
 import {ZoomIn, ZoomOut} from "lucide-react";
-import {UseCssClass} from "@/components/use-css-class.tsx";
+import {ButtonLightRectangle} from "@/components/use-css-class.tsx";
 
-export const OrbitController = () => {
+export const OrbitController = () =>
+{
 
-    const {buttonLightRectangle} = UseCssClass();
 
     const {onJoystickChange, setRunning} = useOrbitControl();
 
     const [distance, setDistance] = useState($WGPU.cameraController.orbitRadius)
 
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         $WGPU.cameraController.orbitRadius = distance;
 
     }, [distance]);
@@ -22,15 +23,18 @@ export const OrbitController = () => {
 
     const intervalRef = useRef(0);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
 
-        intervalRef.current = setInterval(() => {
+        intervalRef.current = setInterval(() =>
+        {
             if ($WGPU?.cameraController?.orbitRadius !== undefined) {
                 setDistance($WGPU.cameraController.orbitRadius);
             }
         }, 1000);
 
-        return () => {
+        return () =>
+        {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
             }
@@ -50,18 +54,17 @@ export const OrbitController = () => {
                       onChange={changed}>
             </Joystick>
             <div className="flex items-center justify-center gap-2">
-                <button onClick={() => setDistance(distance + 1)}
-                        className={buttonLightRectangle}>
+                <ButtonLightRectangle onClick={() => setDistance(distance + 1)}>
                     <ZoomOut className="w-4 h-4"/>
-                </button>
+                </ButtonLightRectangle>
                 <div
                     className=" dark:text-white dark:bg-gray-800 bg-white rounded-lg shadow px-3 py-2 text-sm ">
                     Zoom: {distance}
                 </div>
-                <button onClick={() => setDistance(distance - 1)}
-                        className={buttonLightRectangle + ' ' + (distance <= 1 ? 'opacity-50' : '')}>
+                <ButtonLightRectangle onClick={() => setDistance(distance - 1)}
+                                      className={(distance <= 1 ? 'opacity-50' : '')}>
                     <ZoomIn className="w-4 h-4 "/>
-                </button>
+                </ButtonLightRectangle>
             </div>
         </div>
     </div>)

@@ -1,27 +1,29 @@
 ﻿import React, {useEffect, useState} from "react";
 import {Eye, Move, RotateCcw} from "lucide-react";
 import {OrbitController} from "@/components/orbit-controller.tsx";
-import {Panel} from "@/components/panel.tsx";
+import {DropdownPanel} from "@/components/dropdownPanel.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {Slider} from "@/components/slider.tsx";
 import {$INPUT} from "@/Controls/input.ts";
 import {PanController} from "@/components/pan-controller.tsx";
-import {FPSController} from "@/components/f-p-s-controller.tsx";
+import {FpsController} from "@/components/fps-controller.tsx";
 
 
-export const CameraController: React.FC = () => {
+export const CameraController: React.FC = () =>
+{
     const [mode, setMode] = useState('orbit');
 
     const [sensitivity, setSensitivity] = useState($INPUT.sensitivity);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         $INPUT.sensitivity = sensitivity;
     }, [sensitivity]);
 
 
     return (
 
-        <Panel label='Camera Controller'>
+        <DropdownPanel label='Camera Controller'>
 
             <div className="space-y-6">
 
@@ -53,7 +55,7 @@ export const CameraController: React.FC = () => {
                     )}
 
                     {mode === 'fps' && (
-                        <FPSController/>
+                        <FpsController/>
                     )}
 
                     {mode === 'pan' && (
@@ -68,7 +70,7 @@ export const CameraController: React.FC = () => {
                     Reset Camera Position
                 </button>
             </div>
-        </Panel>
+        </DropdownPanel>
 
     );
 }

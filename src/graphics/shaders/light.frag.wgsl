@@ -5,8 +5,6 @@ struct Transform{
     view: mat4x4<f32>,
     projection: mat4x4<f32>,
     cameraPosition: vec4f,
-
-
 }
 
 struct Light{
@@ -186,14 +184,14 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
         discard;
       }
 
-    let albedo = textureLoad(gBufferAlbedo, c, 0); // Sample the albedo texture
-    let metallic = textureLoad(gBufferMetallicRoughnessAO, c, 0).g; // Sample the metallic texture
-    let roughness = max(textureLoad(gBufferMetallicRoughnessAO, c, 0).r, 0.04); // Sample the roughness texture
-    let ao = textureLoad(gBufferMetallicRoughnessAO, c, 0).b; // Sample the ambient occlusion texture
-    let opacity = textureLoad(gBufferMetallicRoughnessAO, c, 0).a; // Sample the opacity texture
-    let worldNormal = textureLoad(gBufferNormal, c, 0).xyz; // Sample the normal texture
-    let worldPosition = textureLoad(gBufferPosition, c, 0).xyz; // Sample the world position texture
-    let emissivity = textureLoad(gBufferEmissive, c, 0).xyz; // Sample the emissive texture
+    let albedo = textureLoad(gBufferAlbedo, c, 0);
+    let metallic = textureLoad(gBufferMetallicRoughnessAO, c, 0).g;
+    let roughness = max(textureLoad(gBufferMetallicRoughnessAO, c, 0).r, 0.04);
+    let ao = textureLoad(gBufferMetallicRoughnessAO, c, 0).b;
+    let opacity = textureLoad(gBufferMetallicRoughnessAO, c, 0).a;
+    let worldNormal = textureLoad(gBufferNormal, c, 0).xyz;
+    let worldPosition = textureLoad(gBufferPosition, c, 0).xyz;
+    let emissivity = textureLoad(gBufferEmissive, c, 0).xyz;
 
     let F0 : vec3f = mix(vec3(0.04), albedo.xyz, metallic);
     var L0 : vec3f = vec3f(0.0);
@@ -230,7 +228,8 @@ fn main(@builtin(position) coord: vec4f ) -> @location(0) vec4f {
 
     let reflect = textureSample(skyTexture,  skySampler, reflectionDir );
 
-    let ambient = mix(albedo.xyz *0.01, reflect.xyz, fresnel) ; // Ambient light contribution
+    //let ambient = mix(albedo.xyz *0.01, reflect.xyz, fresnel) ; // Ambient light contribution
+    let ambient = albedo.xyz * 0.1; // Ambient light contribution
     var color =  L0 + ambient; // Combine all contributions
     color = color / (color + vec3f(1.0)); // Simple tone mapping
 

@@ -2,7 +2,8 @@
 import {useCallback} from "react";
 import Joystick, {DirectionCount, type IJoystickChangeValue} from "rc-joystick";
 
-export const FPSController = () => {
+export const FpsController = () =>
+{
 
     const {onJoystickChange, setRunning} = useFpsControl();
 

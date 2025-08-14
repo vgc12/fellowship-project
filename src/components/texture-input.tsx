@@ -28,24 +28,28 @@ export function TextureInput(props: { object: RenderableObject, textureType: ima
     const [texture, setTexture] = useState<string>(`./img/default_${props.textureType.slice(0, props.textureType.length - 4)}.png`);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const setImage = (material: Material, textureType: imageFileType) => {
+    const setImage = (material: Material, textureType: imageFileType) =>
+    {
         if (!material[textureType]) {
             return;
         }
         const fileReader = new FileReader();
         fileReader.readAsDataURL(material[textureType]);
-        ``
-        fileReader.onload = () => {
+
+        fileReader.onload = () =>
+        {
             setTexture(fileReader.result as string)
         }
     }
     setImage(props.object.material, props.textureType);
-    const handleOnClick = () => {
+    const handleOnClick = () =>
+    {
         fileInputRef.current?.click();
     }
 
 
-    const handleOnChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const handleOnChange = async (e: ChangeEvent<HTMLInputElement>) =>
+    {
 
         if (!e.target.files) return;
         const file = e.target.files[0];
@@ -75,13 +79,18 @@ export function TextureInput(props: { object: RenderableObject, textureType: ima
         }
     }
 
+    let name = props.textureType.slice(0, props.textureType.length - 4);
+    name = name.charAt(0).toUpperCase() + name.slice(1);
     return (
-        <div className={"text-left"}>
-            <label className={"t"}>{props.textureType.slice(0, props.textureType.length - 4) + " Texture "}</label>
+        <div
+            className={"text-center border-none  flex flex-col items-center justify-center"}>
+            <label className={""}>{name + " Texture "}</label>
             <Input ref={fileInputRef} hidden={true} type={"file"} id="file-input" multiple
                    onChange={(e) => handleOnChange(e)}/>
-            <img className={"w-1/5"} onClick={handleOnClick} src={texture}
-                 alt={props.textureType.slice(0, props.textureType.length - 4) + " Texture " + props.object.name}></img>
+            <img
+                className={"w-1/2    transition-all transition-discrete duration-500 dark:text-white shadow-gray-800  text-black dark:bg-gray-900 bg-gray-100 shadow-[0_0_15px_-5px_rgba(0,0,0,0.1)] rounded-md "}
+                onClick={handleOnClick} src={texture}
+                alt={name + " Texture " + props.object.name}></img>
         </div>
     )
 }

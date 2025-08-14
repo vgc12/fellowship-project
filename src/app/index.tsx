@@ -4,23 +4,24 @@ import {SceneObjectList} from "../components/scene-object-list.tsx";
 import {useSceneManager} from "@/components/use-scene-manager.tsx";
 import {SceneNavigator} from "@/components/scene-navigator-component.tsx";
 import {MainCanvas} from "@/components/main-canvas.tsx";
-import {FileUploader} from "@/components/file-uploader.tsx";
 import {LoadingDialog} from "@/components/loading-dialog.tsx";
 import {useFileLoader} from "@/components/use-file-loader.tsx";
 import {useAppInitialization} from "@/components/use-app-initialization.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {CameraController} from "@/components/camera-controller.tsx";
 import {FaRegMoon, FaSun} from 'react-icons/fa';
-import {UseCssClass} from "@/components/use-css-class.tsx";
+import {ButtonLightSquare} from "@/components/use-css-class.tsx";
+import {Footer} from "@/app/footer.tsx";
 
 
-const DarkModeToggle: React.FC<{ isDark: boolean; onToggle: () => void }> = ({isDark, onToggle}) => {
-    const {buttonLightSquare} = UseCssClass();
+const DarkModeToggle: React.FC<{ isDark: boolean; onToggle: () => void }> = ({isDark, onToggle}) =>
+{
+
 
     return (
-        <button
+        <ButtonLightSquare
             onClick={onToggle}
-            className={buttonLightSquare + ' mt-auto transition-all transition-discrete duration-500'}
+            className={' !mt-auto transition-all transition-discrete duration-500'}
             aria-label="Toggle dark mode"
         >
             {isDark ? (
@@ -30,19 +31,22 @@ const DarkModeToggle: React.FC<{ isDark: boolean; onToggle: () => void }> = ({is
 
                 <FaRegMoon size={'3vh'}/>
             )}
-        </button>
+        </ButtonLightSquare>
     );
 };
 
-const App: React.FC = () => {
+const App: React.FC = () =>
+{
     const [shouldBeOpen, setShouldBeOpen] = useState(true);
-    const [isDarkMode, setIsDarkMode] = useState(() => {
+    const [isDarkMode, setIsDarkMode] = useState(() =>
+    {
 
         return localStorage.getItem('darkMode') !== 'false';
     });
 
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
 
@@ -53,7 +57,9 @@ const App: React.FC = () => {
         localStorage.setItem('darkMode', isDarkMode.toString());
     }, [isDarkMode]);
 
-    const toggleDarkMode = () => {
+
+    const toggleDarkMode = () =>
+    {
         setIsDarkMode(!isDarkMode);
     };
 
@@ -61,14 +67,16 @@ const App: React.FC = () => {
     const {handleFileLoad} = useFileLoader();
     const {currentScene, switchScene} = useSceneManager(setIsLoading);
 
-    const handleSceneSwitch = async (id: string) => {
+    const handleSceneSwitch = async (id: string) =>
+    {
         await switchScene(id);
     };
+
 
     return (
         <div id="app"
              className={`h-[100vh] dark:bg-gray-900 dark:text-white bg-gray-200 transition-all transition-discrete duration-500 text-black`}>
-            <div className="p-4">
+            <div className="p-4 flex  flex-col">
 
                 <LoadingDialog isOpen={shouldBeOpen} isLoading={isLoading}>
                     <SceneNavigator
@@ -91,10 +99,7 @@ const App: React.FC = () => {
                                 setActiveScene={handleSceneSwitch}
                             />
                         )}
-
-
                         <DarkModeToggle isDark={isDarkMode} onToggle={toggleDarkMode}></DarkModeToggle>
-
                     </div>
 
 
@@ -106,13 +111,17 @@ const App: React.FC = () => {
                                 <SceneObjectList objects={currentScene.objects}/>
                             )}
 
-                            {currentScene?.name === 'Sandbox Scene' &&
-                                <FileUploader onFileChange={handleFileLoad}/>}
+                     
                         </div>
                     </MainCanvas>
 
 
                 </div>
+
+
+                <Footer></Footer>
+
+
             </div>
         </div>
     );

@@ -6,9 +6,9 @@ import {FaSpaceShuttle} from "react-icons/fa";
 import type {ReactElement} from "react";
 import {BsDoorOpenFill} from "react-icons/bs";
 import {RiRobot2Line} from "react-icons/ri";
-import {UseCssClass} from "@/components/use-css-class.tsx";
+import {ButtonLightSquare} from "@/components/use-css-class.tsx";
 
-interface SceneNavigatorProps {
+interface ISceneNavigatorProps {
     activeScene: Scene | null;
     isLoading: boolean;
     setActiveScene: (id: string) => void;
@@ -18,7 +18,8 @@ interface SceneNavigatorProps {
 
 const sceneIconMap: { [key: string]: ReactElement } = {}
 
-export const SceneNavigator = (props: SceneNavigatorProps) => {
+export const SceneNavigator = (props: ISceneNavigatorProps) =>
+{
 
     const iconSize = '3vh'
     const classes = 'dark:text-white text-black'
@@ -28,7 +29,8 @@ export const SceneNavigator = (props: SceneNavigatorProps) => {
     sceneIconMap['RoomScene'] = <BsDoorOpenFill className={classes} size={iconSize}/>
     sceneIconMap['RobotScene'] = <RiRobot2Line className={classes} size={iconSize}/>
     const components =
-        $SCENE_MANAGER.scenes.map((scn) => {
+        $SCENE_MANAGER.scenes.map((scn) =>
+        {
             return (
                 <>
 
@@ -63,24 +65,25 @@ type SceneButtonComponentProps = {
     onClick?: () => void;
 }
 
-const SceneButtonComponent = (props: SceneButtonComponentProps) => {
-    const {sceneName, activeSceneName, sceneGUID, icon, vertical, setActiveScene, onClick} = props;
+const SceneButtonComponent = (props: SceneButtonComponentProps) =>
+{
+    const {sceneName, sceneGUID, icon, setActiveScene, onClick} = props;
 
-    const {buttonLightSquare} = UseCssClass();
 
     return (
-        <button
+        <ButtonLightSquare
             key={sceneName}
-            onClick={() => {
+            onClick={() =>
+            {
                 onClick?.();
                 setActiveScene(sceneGUID)
             }}
-            className={buttonLightSquare + ' transition-all transition-discrete duration-500'}
+            className={' transition-all transition-discrete duration-500'}
             title={sceneName}
         >
 
             {icon}
 
-        </button>
+        </ButtonLightSquare>
     )
 }

@@ -30,28 +30,10 @@ export class ZoomState implements IState {
 
 
 export class CameraController implements IObject {
-    get yMovementThisFrame(): number {
-        return this._yMovementThisFrame;
-    }
-
-    set yMovementThisFrame(value: number) {
-        this._yMovementThisFrame = value;
-    }
-
-    get xMovementThisFrame(): number {
-        return this._xMovementThisFrame;
-    }
-
-    set xMovementThisFrame(value: number) {
-        this._xMovementThisFrame = value;
-    }
-
     private readonly _name: string;
     private readonly _transform: Transform;
     private readonly _camera: Camera;
     private readonly _cameraTarget: Transform;
-    private _yMovementThisFrame: number = 0;
-    private _xMovementThisFrame: number = 0;
     private _stateMachine: StateMachine;
 
     constructor(camera: Camera) {
@@ -66,6 +48,26 @@ export class CameraController implements IObject {
 
         this.setUpStateMachine();
 
+    }
+
+    private _yMovementThisFrame: number = 0;
+
+    get yMovementThisFrame(): number {
+        return this._yMovementThisFrame;
+    }
+
+    set yMovementThisFrame(value: number) {
+        this._yMovementThisFrame = value;
+    }
+
+    private _xMovementThisFrame: number = 0;
+
+    get xMovementThisFrame(): number {
+        return this._xMovementThisFrame;
+    }
+
+    set xMovementThisFrame(value: number) {
+        this._xMovementThisFrame = value;
     }
 
     get name(): string {
@@ -94,7 +96,7 @@ export class CameraController implements IObject {
         this._guid = value;
     }
 
-    private _orbitRadius: number = 5;
+    private _orbitRadius: number = 3;
 
     get orbitRadius(): number {
         return this._orbitRadius;
@@ -112,6 +114,16 @@ export class CameraController implements IObject {
 
     private _orbitExternallyChanged: boolean = false;
 
+    get orbitExternallyChanged(): boolean {
+        return this._orbitExternallyChanged;
+    }
+
+    set orbitExternallyChanged(value: boolean) {
+        this._orbitExternallyChanged = value;
+    }
+
+    private _fpsExternallyChanged: boolean = false;
+
     get fpsExternallyChanged() {
         return this._fpsExternallyChanged
     }
@@ -119,8 +131,6 @@ export class CameraController implements IObject {
     set fpsExternallyChanged(value) {
         this._fpsExternallyChanged = value;
     }
-
-    private _fpsExternallyChanged: boolean = false;
 
     private _panExternallyChanged: boolean = false;
 
@@ -132,14 +142,6 @@ export class CameraController implements IObject {
         this._panExternallyChanged = value;
     }
 
-    get orbitExternallyChanged(): boolean {
-        return this._orbitExternallyChanged;
-    }
-
-    set orbitExternallyChanged(value: boolean) {
-        this._orbitExternallyChanged = value;
-    }
-
     setUpStateMachine() {
         const orbitState = new CameraOrbitState(this);
         const panState = new CameraPanState(this);
@@ -149,99 +151,120 @@ export class CameraController implements IObject {
 
         // Away from Idle
         this.at(idleState, orbitState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.middleMouseButtonPressed || this._orbitExternallyChanged
             }
         });
         this.at(idleState, panState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return ($INPUT.middleMouseButtonPressed && $INPUT.shiftKeyPressed) || this._panExternallyChanged
             }
         });
         this.at(idleState, firstPersonState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.altKeyPressed || this._fpsExternallyChanged
             }
         });
         this.at(idleState, zoomState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.scrollMovementY != 0
             }
         })
 
         // Away from Orbit
         this.at(orbitState, panState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.shiftKeyPressed
             }
         });
         this.at(orbitState, firstPersonState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.altKeyPressed
             }
         });
         this.at(orbitState, idleState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return !$INPUT.middleMouseButtonPressed && !this._orbitExternallyChanged
             }
         });
         this.at(orbitState, zoomState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.scrollMovementY != 0
             }
         })
 
         // Away from Pan
         this.at(panState, orbitState, {
-            evaluate: () => {
-                return !$INPUT.shiftKeyPressed && $INPUT.middleMouseButtonPressed && !this._panExternallyChanged
+            evaluate: () =>
+            {
+                return !$INPUT.shiftKeyPressed && $INPUT.middleMouseButtonPressed
             }
         });
         this.at(panState, firstPersonState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.altKeyPressed
             }
         });
         this.at(panState, idleState, {
-            evaluate: () => {
-                return !$INPUT.middleMouseButtonPressed && !$INPUT.shiftKeyPressed
+            evaluate: () =>
+            {
+                return !$INPUT.middleMouseButtonPressed && !$INPUT.shiftKeyPressed && !this._panExternallyChanged
             }
         });
         this.at(panState, zoomState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.scrollMovementY != 0
             }
         })
 
         // Away from First Person
         this.at(firstPersonState, orbitState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.middleMouseButtonPressed && !$INPUT.altKeyPressed
             }
         });
         this.at(firstPersonState, panState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.middleMouseButtonPressed && $INPUT.shiftKeyPressed && !$INPUT.altKeyPressed
             }
         });
         this.at(firstPersonState, idleState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return !$INPUT.altKeyPressed && !this._fpsExternallyChanged
             }
         });
         this.at(firstPersonState, zoomState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.scrollMovementY != 0
             }
         })
 
         // Away from zoom
         this.at(zoomState, idleState, {
-            evaluate: () => {
+            evaluate: () =>
+            {
                 return $INPUT.scrollMovementY == 0
             }
         });
 
+        this._orbitRotation.set(35, 0, 0);
+        this.cameraTarget.position.set(0, 2, 0);
+        this.adjustCameraPosition();
+        this.rotateAroundTarget();
 
         this._stateMachine.setState(idleState);
     }
@@ -340,12 +363,13 @@ export class CameraController implements IObject {
 
     }
 
-    private at(from: IState, to: IState, condition: IPredicate) {
-        this._stateMachine.addTransition(from, to, condition);
-    }
-
-    resetPosition = () => {
+    resetPosition = () =>
+    {
         this._cameraTarget.position = Vector3.ZERO;
 
+    }
+
+    private at(from: IState, to: IState, condition: IPredicate) {
+        this._stateMachine.addTransition(from, to, condition);
     }
 }

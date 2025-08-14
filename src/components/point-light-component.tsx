@@ -7,9 +7,9 @@ function SpotLightComponent(props: { object: PointLight }) {
 
 
     return (
-        <li className={" border-neutral-600 border-4 rounded-md  mt-2"}>
+        <li className={" rounded-md  mt-2"}>
             <div className={"bg-transparent p-4 text-center"}>
-                <div className={"text-center"}>
+                <div className={"text-left "}>
                     <h1>{props.object.name}</h1>
                 </div>
                 <div className={"text-center"}>
@@ -18,7 +18,8 @@ function SpotLightComponent(props: { object: PointLight }) {
 
                     <VectorInputComponent label={'Intensity'} numberLabels={['']} values={[props.object.intensity]}
                                           step={1} onChange={
-                        (value) => {
+                        (value) =>
+                        {
                             props.object.intensity = value;
                         }
                     }>

@@ -5,18 +5,18 @@ import {PointLight} from "@/scene/point-light.ts";
 import {Vector3} from "@/core/math/vector3.ts";
 import {Scene} from "@/app/scene.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
+import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
 export class RoomScene extends Scene {
-    cleanup(): void {
-
-    }
-
     constructor() {
         super();
         this.name = 'Apartment Scene';
 
     }
 
+    cleanup(): void {
+
+    }
 
     async initialize(): Promise<void> {
         await super.initialize();
@@ -66,7 +66,8 @@ export class RoomScene extends Scene {
         this.addLight(l1);
         this.addLight(l2);
 
-
+       
+        $WGPU.cameraController.orbitRadius = 2;
         this._initialized = true;
 
 

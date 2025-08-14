@@ -1,110 +1,155 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
-import SceneObject from "./scene-object.tsx";
-import {type JSX, useMemo, useState} from "react";
-import {RenderableObject} from "@/scene/renderable-object.ts";
+import {useEffect, useMemo, useRef, useState} from "react";
 import type {IObject} from "@/scene/IObject.ts";
-import {SpotLightComponent} from "@/components/spot-light.tsx";
-import PointLightComponent from "./point-light-component.tsx";
-import type {PointLight} from "@/scene/point-light.ts";
+import {Light, PointLight} from "@/scene/point-light.ts";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 
-import {Panel} from "@/components/panel.tsx";
-import type {SpotLight} from "@/scene/spot-light.ts";
+import {DropdownPanel} from "@/components/dropdownPanel.tsx";
+import {SpotLight} from "@/scene/spot-light.ts";
+import {Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger} from "./ui/menubar.tsx";
+import {useFileLoader} from "@/components/use-file-loader.tsx";
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
+import {Vector3} from "@/core/math/vector3.ts";
+import {CreateIcon, CreateObject} from "@/components/create-object.tsx";
 
 
-const createObject = (selectedObject: IObject): JSX.Element => {
-    const componentMap: Record<string, () => JSX.Element> = {
-
-        SpotLight: () => (
-            <SpotLightComponent
-                key={selectedObject.guid}
-                object={selectedObject as SpotLight}
-            />
-        ),
-        PointLight: () => (
-            <PointLightComponent
-                key={selectedObject.guid}
-                object={selectedObject as PointLight}
-            />
-        ),
-    };
-
-    const ComponentFactory = componentMap[selectedObject.constructor.name];
-
-    return ComponentFactory ? (
-        ComponentFactory()
-    ) : (
-        <SceneObject
-            key={selectedObject.guid}
-            object={selectedObject as RenderableObject}
-        />
-    );
-};
-
-interface SceneObjectListComponentProps {
+interface ISceneObjectListComponentProps {
     objects: IObject[];
 }
 
-export function SceneObjectList({objects}: SceneObjectListComponentProps) {
+export function SceneObjectList({objects}: ISceneObjectListComponentProps) {
+
 
     if (objects.length === 0) {
         return null;
     }
 
+
     const [selectedObject, setSelectedObject] = useState<IObject | null>(null);
+
+
+    const [o, setO] = useState<IObject[]>(objects);
+
+    useEffect(() =>
+    {
+        objects = o;
+    }, [o])
 
     const filteredObjects = useMemo(
         () => objects.filter(obj => obj.guid !== $WGPU.mainCamera.guid
-            && obj.guid !== $WGPU.cameraController.guid),
-        [objects]
+            && obj.guid !== $WGPU.cameraController.guid).sort(),
+        [o, objects]
     );
 
-    const handleObjectSelect = (obj: IObject) => {
+    const handleObjectSelect = (obj: IObject) =>
+    {
         setSelectedObject(prev => prev?.guid === obj.guid ? null : obj);
     };
 
     const isSelected = (obj: IObject) => selectedObject?.guid === obj.guid;
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const {handleFileLoad} = useFileLoader();
+
+    const triggerFileUpload = () =>
+    {
+        fileInputRef.current?.click();
+    };
+
+    const addLight = (light: Light) =>
+    {
+        $SCENE_MANAGER.currentScene.addLight(light);
+    }
+
+
+    for (const e of document.querySelectorAll('[style*="display: table"]')) {
+        if (e instanceof HTMLElement) {
+            e.style.display = 'block';
+        }
+    }
+
     return (
-        <Panel grow={true} label={'Objects'} className={'mt-5'}>
+        <DropdownPanel grow={true} label={'Objects'} className={'mt-1'}>
+            <input
+                style={{display: "none"}}
+                type="file"
+                id="file-input"
+                multiple
+                accept=".obj"
+                ref={fileInputRef}
+                onChange={(e) => handleFileLoad(e.target.files)}
+            />
+            <Menubar className={'bg-gray-300 dark:bg-gray-900 '}>
+                <MenubarMenu>
+                    <MenubarTrigger>File</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem onClick={triggerFileUpload}>
+                            Upload Model
+                        </MenubarItem>
 
 
-            <ScrollArea className={'grow h-15 '}>
+                    </MenubarContent>
+
+                </MenubarMenu>
+                <MenubarMenu>
+                    <MenubarTrigger>Add Light</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem onClick={() =>
+                        {
+                            const light = new PointLight(new Vector3(1, 1, 1), 1);
+                            addLight(light);
+                            setO(prev => [...prev, light]);
+
+                        }}>New Point Light</MenubarItem>
+                        <MenubarItem onClick={() =>
+                        {
+                            const light = new SpotLight(new Vector3(1, 1, 1), 1, 5, 10)
+                            addLight(light);
+                            setO(prev => [...prev, light]);
+
+                        }}>New Spot Light</MenubarItem>
+                    </MenubarContent>
+                </MenubarMenu>
+            </Menubar>
+
+
+            <ScrollArea className={' pt-5 grow h-15 !block'}>
                 {filteredObjects.map((obj) => (
-                    <div className={`px-4 mt-1`} key={obj.guid}>
-                        <button
-                            className={`
-                w-full text-left px-4 py-2 rounded-lg font-medium text-sm
-               
+                    <div className={`w-auto px-3 `}>
+                        <button key={obj.guid}
+                                className={`
+                            
+                            px-2 my-0 text-left indent-3 w-full h-10 rounded-md flex items-center 
                 ${isSelected(obj)
-                                ? 'bg-gray-500 dark:hover:bg-blue-700 dark:text-white'
-                                : 'dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200'
-                            }
+                                    ? 'dark:bg-gray-900 bg-gray-300 hover:bg-gray-200  dark:hover:bg-gray-800  dark:text-white'
+                                    : 'dark:bg-gray-800 dark:hover:bg-gray-900 dark:text-gray-200'
+                                }
                 
               `}
-                            onClick={() => handleObjectSelect(obj)}
-                            aria-expanded={isSelected(obj)}
-                            aria-controls={`object-details-${obj.guid}`}
+                                onClick={() => handleObjectSelect(obj)}
+                                aria-expanded={isSelected(obj)}
+                                aria-controls={`object-${obj.guid}`}
                         >
-              <span className="flex items-center justify-between">
-                {obj.name}
+                            {CreateIcon(obj)}
+                            {obj.name[0].toUpperCase() + obj.name.slice(1)}
 
-              </span>
+
                         </button>
 
                         {isSelected(obj) && (
                             <div
                                 id={`object-details-${obj.guid}`}
-                                className="  p-3 bg-gray-700 rounded-lg border-4 border-blue-500"
+                                className="  p-3 bg-gray-100 dark:bg-gray-800 rounded-lg  "
                             >
-                                {createObject(obj)}
+                                {CreateObject(obj)}
                             </div>
                         )}
                     </div>
                 ))}
             </ScrollArea>
 
-        </Panel>
+        </DropdownPanel>
 
     );
 }

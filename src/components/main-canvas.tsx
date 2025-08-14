@@ -1,6 +1,6 @@
 ﻿import React from "react";
 
-import {Panel} from "@/components/panel.tsx";
+import {Panel} from "@/components/dropdownPanel.tsx";
 
 interface MainCanvasProps {
     canvasRef: React.RefObject<HTMLCanvasElement | null>;
@@ -10,16 +10,17 @@ interface MainCanvasProps {
     children?: React.ReactNode;
 }
 
+
 export const MainCanvas: React.FC<MainCanvasProps> = ({
                                                           canvasRef,
                                                           width = 1920,
                                                           height = 1080,
                                                           children,
                                                       }) => (
-    <div className="mx-4 grow ">
-        <div className={'flex gap-5'}>
-            <Panel className={'w-auto w-[65vw] h-[85vh] grow pt-0'}>
-                <canvas className={'grow rounded-md w-[100%] h-[100%]'}
+    <div className=" grow ">
+        <div className={'flex gap-5 '}>
+            <Panel grow={true} className={' p-2 w-[65vw] h-[90vh]'}>
+                <canvas className={' rounded-md w-[100%] h-[100%]'}
                         ref={canvasRef}
                         width={width}
                         height={height}
