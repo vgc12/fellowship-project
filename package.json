@@ -5,7 +5,7 @@
   "type": "module",
   "homepage": "https://vgc12.github.io/webgpu-renderer/",
   "scripts": {
-    "deploy": "gh-pages -d build",
+    "deploy": "gh-pages -d dist",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",

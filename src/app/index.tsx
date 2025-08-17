@@ -5,7 +5,6 @@ import {useSceneManager} from "@/components/use-scene-manager.tsx";
 import {SceneNavigator} from "@/components/scene-navigator-component.tsx";
 import {MainCanvas} from "@/components/main-canvas.tsx";
 import {LoadingDialog} from "@/components/loading-dialog.tsx";
-import {useFileLoader} from "@/components/use-file-loader.tsx";
 import {useAppInitialization} from "@/components/use-app-initialization.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {CameraController} from "@/components/camera-controller.tsx";
@@ -64,7 +63,7 @@ const App: React.FC = () =>
     };
 
     const {isLoading, setIsLoading, canvasRef} = useAppInitialization();
-    const {handleFileLoad} = useFileLoader();
+
     const {currentScene, switchScene} = useSceneManager(setIsLoading);
 
     const handleSceneSwitch = async (id: string) =>
@@ -111,7 +110,7 @@ const App: React.FC = () =>
                                 <SceneObjectList objects={currentScene.objects}/>
                             )}
 
-                     
+
                         </div>
                     </MainCanvas>
 
