@@ -94,8 +94,8 @@ export abstract class Scene {
 
             const material = await Material.createFromFolderPath(m, texturePath, materialTypes);
 
-            // does not need to be awaited
-            material.initialize();
+            // does not need to be awaited?
+            await material.initialize();
 
             return {name: m, material};
         });

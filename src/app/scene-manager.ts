@@ -52,7 +52,7 @@ export class SceneManager {
             await Promise.all(initPromises);
 
             console.log('All scenes initialized');
-            this._currentScene = this._scenes[0];
+
         } catch (error) {
             console.error('Failed to initialize all scenes:', error);
         }
@@ -66,7 +66,8 @@ export class SceneManager {
                     return;
                 }
 
-                this._currentScene.cleanup();
+
+                this._currentScene?.cleanup();
                 this._currentScene = scn;
 
             });

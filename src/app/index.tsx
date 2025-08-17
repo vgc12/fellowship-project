@@ -1,97 +1,130 @@
+import React, {useEffect, useState} from 'react';
 import ReactDOM from 'react-dom/client';
-import {SceneObjectListComponent} from "../components/scene-object-list-component.tsx";
-import {type ChangeEvent, useState, useCallback, useEffect, useRef} from "react";
-import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
+import {SceneObjectList} from "../components/scene-object-list.tsx";
 import {useSceneManager} from "@/components/use-scene-manager.tsx";
 import {SceneNavigator} from "@/components/scene-navigator-component.tsx";
+import {MainCanvas} from "@/components/main-canvas.tsx";
+import {LoadingDialog} from "@/components/loading-dialog.tsx";
+import {useAppInitialization} from "@/components/use-app-initialization.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
-import {$INPUT} from "@/Controls/input.ts";
-import {$TIME} from "@/utils/time.ts";
-import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
+import {CameraController} from "@/components/camera-controller.tsx";
+import {FaRegMoon, FaSun} from 'react-icons/fa';
+import {ButtonLightSquare} from "@/components/use-css-class.tsx";
+import {Footer} from "@/app/footer.tsx";
 
 
-function App() {
+const DarkModeToggle: React.FC<{ isDark: boolean; onToggle: () => void }> = ({isDark, onToggle}) =>
+{
 
-    const [loadedFiles, setLoadedFiles] = useState<File[]>([]);
+
+    return (
+        <ButtonLightSquare
+            onClick={onToggle}
+            className={' !mt-auto transition-all transition-discrete duration-500'}
+            aria-label="Toggle dark mode"
+        >
+            {isDark ? (
+
+                <FaSun size={'3vh'}/>
+            ) : (
+
+                <FaRegMoon size={'3vh'}/>
+            )}
+        </ButtonLightSquare>
+    );
+};
+
+const App: React.FC = () =>
+{
+    const [shouldBeOpen, setShouldBeOpen] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(() =>
+    {
+
+        return localStorage.getItem('darkMode') !== 'false';
+    });
 
 
-    const handleOnChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            for (const file of e.target.files) {
-                if (loadedFiles.includes(file)) continue;
+    useEffect(() =>
+    {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
 
-                if (file.name.endsWith('.obj')) {
-                    await OBJLoader.loadMeshes(file);
-                    setLoadedFiles([...loadedFiles, file]);
-                }
-
-            }
+        } else {
+            document.documentElement.classList.remove('dark');
         }
-    }, [loadedFiles]);
+
+        localStorage.setItem('darkMode', isDarkMode.toString());
+    }, [isDarkMode]);
 
 
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const toggleDarkMode = () =>
+    {
+        setIsDarkMode(!isDarkMode);
+    };
+
+    const {isLoading, setIsLoading, canvasRef} = useAppInitialization();
+
+    const {currentScene, switchScene} = useSceneManager(setIsLoading);
+
+    const handleSceneSwitch = async (id: string) =>
+    {
+        await switchScene(id);
+    };
 
 
-    useEffect(() => {
+    return (
+        <div id="app"
+             className={`h-[100vh] dark:bg-gray-900 dark:text-white bg-gray-200 transition-all transition-discrete duration-500 text-black`}>
+            <div className="p-4 flex  flex-col">
 
-        const initializeAppCore = async () => {
-
-            if (canvasRef.current) {
-                await $WGPU.initialize();
-                $INPUT.initialize();
-                $TIME.initialize();
-
-                $SCENE_MANAGER.initializeAllScenes()
-            }
-        };
-
-        initializeAppCore();
-    }, []);
-
-    const {
-        currentScene,
-        isLoading,
-        switchScene
-    } = useSceneManager()
-
-
-    return (<div id='app' className={" bg-gray-900  "}>
-        <div className={"m-4 flex p-4"}>
-
-            <div className={"mr-4 "}>
-                <canvas className={""} ref={canvasRef} width={1920} height={1080} id="canvas-main"/>
-            </div>
-
-            <div className={"flex-1/2 "}>
-
-                {currentScene &&
-                    <SceneObjectListComponent objects={currentScene.objects}></SceneObjectListComponent>}
-                {currentScene &&
-                    <SceneNavigator activeScene={currentScene} isLoading={isLoading}
-                                    setActiveScene={async (id: string) => {
-                                        await switchScene(id);
-                                    }}></SceneNavigator>}
-                <div className={"text-center p-4"}>
-                    <label className={`
-                    text-white bg-gray-700 hover:bg-gray-500 focus:outline-none 
-                    focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm 
-                    px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 
-                    dark:focus:ring-gray-700 dark:border-gray-700 m-4
-                `} htmlFor="file-input">Load Model</label>
-                    <input
-                        style={{display: "none"}}
-                        type="file"
-                        id="file-input"
-                        multiple
-                        onChange={(e) => handleOnChange(e)}
+                <LoadingDialog isOpen={shouldBeOpen} isLoading={isLoading}>
+                    <SceneNavigator
+                        onClick={() => setShouldBeOpen(false)}
+                        activeScene={currentScene}
+                        isLoading={isLoading}
+                        setActiveScene={handleSceneSwitch}
                     />
+                </LoadingDialog>
+
+                <div className=" flex ">
+                    <div className="flex flex-col ">
+
+                        {currentScene && (
+                            <SceneNavigator
+                                vertical={true}
+
+                                activeScene={currentScene}
+                                isLoading={isLoading}
+                                setActiveScene={handleSceneSwitch}
+                            />
+                        )}
+                        <DarkModeToggle isDark={isDarkMode} onToggle={toggleDarkMode}></DarkModeToggle>
+                    </div>
+
+
+                    <MainCanvas label={currentScene ? currentScene.name : ""} canvasRef={canvasRef}>
+
+                        <div className=" flex flex-col ">
+                            {$WGPU.cameraController && <CameraController/>}
+                            {currentScene && (
+                                <SceneObjectList objects={currentScene.objects}/>
+                            )}
+
+
+                        </div>
+                    </MainCanvas>
+
+
                 </div>
+
+
+                <Footer></Footer>
+
+
             </div>
         </div>
-    </div>);
-}
-
+    );
+};
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
     <App/>

@@ -1,4 +1,4 @@
-import {NumericScrubber} from "@/components/number-scrubber-component.tsx";
+import {NumericScrubber} from "@/components/number-scrubber.tsx";
 
 interface IVector3InputProps {
     label: string;
@@ -22,13 +22,14 @@ VectorInputComponent({
                          max = Number.POSITIVE_INFINITY
                      }: IVector3InputProps) {
     return (
-        <div>
-            <label>{label}</label>
-            <div className={"flex justify-center mb-3"}>
+        <div className={'flex  rounded-xl m-3 w-auto  items-center'}>
+            <h3 className={'font-regular w-30  '}>{label}</h3>
+            <div className={"flex items-center justify-center w-full mt-3"}>
                 {numberLabels.map((axis, index) => (
                     <span key={index}>
-                        <label>{axis}</label>
+                        {axis != '' && <label className={''}>{axis[0].toUpperCase() + axis.slice(1)}</label>}
                         <NumericScrubber
+                            className={'border-none  w-10 my-1 mx-2 transition-all transition-discrete duration-500 dark:text-white shadow-gray-800  text-black dark:bg-gray-900 bg-gray-100 shadow-[0_0_15px_-5px_rgba(0,0,0,0.1)]  '}
                             step={step}
                             min={min}
                             max={max}

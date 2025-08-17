@@ -36,6 +36,8 @@ fn main(fragment: FragmentInput) -> GBufferOutput {
    let b = normalize(fragment.bitangent);
    let n = normalize(fragment.normal);
 
+
+
    let tbn : mat3x3<f32> = mat3x3<f32>(t, b, n);
 
    var tangentNormal : vec3f = normal.xyz * 2.0 - 1.0 ;

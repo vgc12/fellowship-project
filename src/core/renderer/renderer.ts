@@ -276,12 +276,26 @@ export class Renderer {
             ]
         });
 
+
+        const canvasTexture = $WGPU.context.getCurrentTexture();
+
+
+        this.multiSampleTexture = $WGPU.device.createTexture({
+            format: canvasTexture.format,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+            size: [canvasTexture.width, canvasTexture.height],
+            sampleCount: 4,
+        });
+
         this.lightingPipeline = await $WGPU.device.createRenderPipelineAsync({
             label: "Lighting Pipeline",
             vertex: lightingShader.vertexState,
             fragment: lightingShader.fragmentState,
             layout: lightingPipelineLayout,
-            primitive: {topology: 'triangle-list'}
+            primitive: {topology: 'triangle-list'},
+            multisample: {
+                count: 4
+            }
         });
 
         const skyShader = shaderBuilder
@@ -342,6 +356,7 @@ export class Renderer {
     }
 
     private createModelMatrixArray() {
+
         for (let renderableIndex = 0; renderableIndex < $SCENE_MANAGER.currentScene.renderableObjects.length; renderableIndex++) {
             const renderable = $SCENE_MANAGER.currentScene.renderableObjects[renderableIndex];
             for (let MATRIX_POSITION = 0; MATRIX_POSITION < renderable.modelMatrix.length; MATRIX_POSITION++) {
@@ -403,6 +418,8 @@ export class Renderer {
     }
 
     update() {
+
+
         this.writeFrameGroupBuffers();
         this.writeCameraBuffer()
         this.writeLightBuffer();
@@ -428,7 +445,7 @@ export class Renderer {
                 view: textureView,
                 clearValue: [0.0, 0.0, 0.0, 0.0],
                 loadOp: 'load',
-                storeOp: 'store'
+                storeOp: 'store',
             }],
             depthStencilAttachment: {
                 view: this.gBufferViews.depth,
@@ -497,7 +514,8 @@ export class Renderer {
         this.geometryPassEncoder.setBindGroup(0, this.frameBindGroup);
 
         let objectsDrawn = 0;
-        $SCENE_MANAGER.currentScene.renderableObjects.forEach((renderable) => {
+        for (const renderable of $SCENE_MANAGER.currentScene.renderableObjects) {
+
             this.geometryPassEncoder.setBindGroup(1, renderable.material.bindGroup);
 
             if (renderable.mesh.indexBuffer && renderable.mesh.indices?.length !== 0) {
@@ -509,17 +527,20 @@ export class Renderer {
                 this.geometryPassEncoder.draw(renderable.mesh.vertexCount, 1, 0, objectsDrawn);
             }
             objectsDrawn++;
-        });
+        }
 
         this.geometryPassEncoder.end();
     }
+
+    multiSampleTexture: GPUTexture
 
     private renderLightingPass() {
         const textureView = $WGPU.context.getCurrentTexture().createView();
 
         const lightingPassDescriptor: GPURenderPassDescriptor = {
             colorAttachments: [{
-                view: textureView,
+                view: this.multiSampleTexture.createView(),
+                resolveTarget: textureView,
                 clearValue: [0.6, 0.3, 0.3, 1.0],
                 loadOp: 'clear',
                 storeOp: 'store'
