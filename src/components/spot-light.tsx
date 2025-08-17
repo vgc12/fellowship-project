@@ -3,6 +3,7 @@ import {VectorInputComponent} from "./vector-input-component.tsx";
 import type {SpotLight} from "@/scene/spot-light.ts";
 import LightComponent from "@/components/light-component.tsx";
 import {toCamelCase} from "@/lib/utils.ts";
+import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 
 
 export function SpotLightComponent(props: { object: SpotLight }) {
@@ -27,6 +28,7 @@ export function SpotLightComponent(props: { object: SpotLight }) {
                                 values={[props.object.outerAngle, props.object.innerAngle, props.object.intensity]}
                                 onChange={(e, label) =>
                                 {
+                                    console.log($WGPU.device.limits);
                                     const camelLabel = toCamelCase(label);
                                     const prop = (camelLabel + (camelLabel == 'intensity' ? '' : 'Angle')).replace(' ', '') as propName;
                                     console.log((camelLabel + (camelLabel == 'intensity' ? '' : 'Angle')).replace(' ', ''), prop);
