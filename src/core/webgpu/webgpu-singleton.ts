@@ -9,7 +9,7 @@ import {Renderer} from "@/core/renderer/renderer.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
 import {Material} from "@/graphics/3d/material.ts";
 import {fileFromURL} from "@/lib/utils.ts";
-
+import defaultAlbedo from '/media/defaults/material/default_albedo.png';
 
 class WebGPUSingleton {
     private static _instance: WebGPUSingleton;
@@ -147,7 +147,7 @@ class WebGPUSingleton {
     async initializeDefaultMaterial() {
         const path = '/media/defaults/material/'
         Material.default = new Material();
-        Material.default.albedoFile = await fileFromURL(path + 'default_albedo.png');
+        Material.default.albedoFile = await fileFromURL(defaultAlbedo);
         Material.default.roughnessFile = await fileFromURL(path + 'default_roughness.png');
         Material.default.metallicFile = await fileFromURL(path + 'default_metallic.png');
         Material.default.normalFile = await fileFromURL(path + 'default_normal.png');
