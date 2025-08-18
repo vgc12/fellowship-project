@@ -5,13 +5,44 @@ import {generateMips, numMipLevels} from "@/graphics/shader-utils/mipmap-generat
 
 
 export class Material {
-    get emissiveFile(): File {
-        return this._emissiveFile;
+    static default: Material;
+    private _roughnessMetallicAOView: GPUTextureView;
+    private _albedoTexture: GPUTexture;
+    private _normalTexture: GPUTexture;
+    private _emissiveTexture: GPUTexture;
+    private _roughnessMetallicAOTexture: GPUTexture;
+    private _normalView: GPUTextureView;
+    private _emissiveView: GPUTextureView;
+
+    private _albedoView: GPUTextureView;
+
+    get albedoView(): GPUTextureView {
+        return this._albedoView;
     }
 
-    set emissiveFile(value: File) {
-        this._emissiveFile = value;
+    private _sampler: GPUSampler;
+
+    get sampler(): GPUSampler {
+        return this._sampler;
     }
+
+    private _bindGroup: GPUBindGroup;
+
+    get bindGroup(): GPUBindGroup {
+        return this._bindGroup;
+    }
+
+    private _albedoFile: File;
+
+    get albedoFile(): File {
+        return this._albedoFile;
+    }
+
+    set albedoFile(value: File) {
+        this._albedoFile = value;
+    }
+
+    private _aoFile: File;
 
     get aoFile(): File {
         return this._aoFile;
@@ -21,16 +52,68 @@ export class Material {
         this._aoFile = value;
     }
 
+    private _metallicFile: File;
+
+    get metallicFile(): File {
+        return this._metallicFile;
+    }
+
+    set metallicFile(value: File) {
+        this._metallicFile = value;
+    }
+
+    private _roughnessFile: File;
+
+    get roughnessFile(): File {
+        return this._roughnessFile;
+    }
+
+    set roughnessFile(value: File) {
+        this._roughnessFile = value;
+    }
+
+    private _normalFile: File;
+
+    get normalFile(): File {
+        return this._normalFile;
+    }
+
+    set normalFile(value: File) {
+        this._normalFile = value;
+    }
+
+    private _opacityFile: File;
+
+    get opacityFile(): File {
+        return this._opacityFile;
+    }
+
+    set opacityFile(value: File) {
+        this._opacityFile = value;
+    }
+
+    private _emissiveFile: File;
+
+    get emissiveFile(): File {
+        return this._emissiveFile;
+    }
+
+    set emissiveFile(value: File) {
+        this._emissiveFile = value;
+    }
+
     // this may be the best im going to get this.
     static async getImageFiles(imageName: string, folderPath: string, materialTypes = ['albedo', 'roughness', 'metallic', 'normal', 'ao', 'opacity', 'emissive']) {
 
 
         return await Promise.all(
-            materialTypes.map(async (materialType) => {
+            materialTypes.map(async (materialType) =>
+            {
                 const fullPath = folderPath + imageName + '_' + materialType;
 
 
-                const extensionChecks = ['.png', '.jpeg', '.jpg'].map(async (ext) => {
+                const extensionChecks = ['.png', '.jpeg', '.jpg'].map(async (ext) =>
+                {
                     const exists = await imageExists(fullPath + ext);
                     return exists ? ext : null;
                 });
@@ -61,7 +144,8 @@ export class Material {
 
         const material = new Material();
 
-        files.forEach(f => {
+        files.forEach(f =>
+        {
             if (f) {
                 material[f.key] = f.file;
             }
@@ -69,86 +153,6 @@ export class Material {
 
         return material
     }
-
-
-    get sampler(): GPUSampler {
-        return this._sampler;
-    }
-
-
-    get normalFile(): File {
-        return this._normalFile;
-    }
-
-    set normalFile(value: File) {
-        this._normalFile = value;
-    }
-
-    get opacityFile(): File {
-        return this._opacityFile;
-    }
-
-    set opacityFile(value: File) {
-        this._opacityFile = value;
-    }
-
-
-    private _roughnessMetallicAOView: GPUTextureView;
-
-
-    get roughnessFile(): File {
-        return this._roughnessFile;
-    }
-
-    set roughnessFile(value: File) {
-        this._roughnessFile = value;
-    }
-
-    get metallicFile(): File {
-        return this._metallicFile;
-    }
-
-    set metallicFile(value: File) {
-        this._metallicFile = value;
-    }
-
-    static default: Material;
-
-    get bindGroup(): GPUBindGroup {
-        return this._bindGroup;
-    }
-
-    get albedoView(): GPUTextureView {
-        return this._albedoView;
-    }
-
-    get albedoFile(): File {
-        return this._albedoFile;
-    }
-
-    set albedoFile(value: File) {
-        this._albedoFile = value;
-    }
-
-
-    private _albedoTexture: GPUTexture;
-    private _normalTexture: GPUTexture;
-    private _emissiveTexture: GPUTexture;
-    private _roughnessMetallicAOTexture: GPUTexture;
-    private _albedoView: GPUTextureView;
-    private _normalView: GPUTextureView;
-    private _emissiveView: GPUTextureView;
-    private _sampler: GPUSampler;
-    private _bindGroup: GPUBindGroup;
-
-    private _albedoFile: File;
-    private _aoFile: File;
-    private _metallicFile: File;
-    private _roughnessFile: File;
-    private _normalFile: File;
-    private _opacityFile: File;
-    private _emissiveFile: File;
-
 
     imageBitmapToImageData(imageBitmap: ImageBitmap): ImageData {
         const offscreenCanvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
@@ -209,13 +213,13 @@ export class Material {
         }
 
         if (!this._opacityFile) {
-            this._opacityFile = await fileFromURL('./media/defaults/material/default_metallic.png');
+            this._opacityFile = await fileFromURL('/media/defaults/material/default_metallic.png');
         }
 
         opacityData = this.imageBitmapToImageData(await createImageBitmap(this._opacityFile));
 
         if (!this._emissiveFile) {
-            this._emissiveFile = await fileFromURL('./media/defaults/material/default_emissive.png');
+            this._emissiveFile = await fileFromURL('/media/defaults/material/default_emissive.png');
         }
 
         emissiveImageBitmap = await createImageBitmap(this._emissiveFile);

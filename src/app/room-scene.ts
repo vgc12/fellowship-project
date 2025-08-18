@@ -24,13 +24,13 @@ export class RoomScene extends Scene {
 
         const materialTypes = ['Albedo', 'Metallic', 'Roughness', 'Normal', 'Opacity', 'AO', 'Emissive']
 
-        const objFile = await fileFromURL('./media/models/room/room.obj');
+        const objFile = await fileFromURL('/media/models/room/room.obj');
         const ro = await OBJLoader.loadMeshes(objFile);
 
         this.addRenderableObjectArray(ro)
 
 
-        const roomTexturePath = './media/models/room/';
+        const roomTexturePath = '/media/models/room/';
         const materialNames = [
             'Bathroom',
             'Bedroom',
@@ -46,7 +46,7 @@ export class RoomScene extends Scene {
 
         this._skyMaterial = new SkyMaterial();
 
-        const path = './media/models/room/skybox/';
+        const path = '/media/models/room/skybox/';
         const urls = [
             path + "px.jpg",    //x+
             path + "nx.jpg",    //x-
@@ -66,7 +66,7 @@ export class RoomScene extends Scene {
         this.addLight(l1);
         this.addLight(l2);
 
-       
+
         $WGPU.cameraController.orbitRadius = 2;
         this._initialized = true;
 
