@@ -34,4 +34,4 @@ export async function imageExists(url: string) {
 
 }
 
-export const BUCKET_URL = '/s3-assets'
+export const BUCKET_URL = 'https://webgpu-renderer-data.s3.amazonaws.com'
