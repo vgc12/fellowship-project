@@ -1,4 +1,4 @@
-﻿import {fileFromURL} from "@/lib/utils.ts";
+﻿import {BUCKET_URL, fileFromURL} from "@/lib/utils.ts";
 
 import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
 import {PointLight} from "@/scene/point-light.ts";
@@ -24,13 +24,13 @@ export class RoomScene extends Scene {
 
         const materialTypes = ['Albedo', 'Metallic', 'Roughness', 'Normal', 'Opacity', 'AO', 'Emissive']
 
-        const objFile = await fileFromURL('/media/models/room/room.obj');
+        const objFile = await fileFromURL(BUCKET_URL + '/media/models/room/room.obj');
         const ro = await OBJLoader.loadMeshes(objFile);
 
         this.addRenderableObjectArray(ro)
 
 
-        const roomTexturePath = '/media/models/room/';
+        const roomTexturePath = BUCKET_URL + '/media/models/room/';
         const materialNames = [
             'Bathroom',
             'Bedroom',
@@ -46,7 +46,7 @@ export class RoomScene extends Scene {
 
         this._skyMaterial = new SkyMaterial();
 
-        const path = '/media/models/room/skybox/';
+        const path = BUCKET_URL + '/media/models/room/skybox/';
         const urls = [
             path + "px.jpg",    //x+
             path + "nx.jpg",    //x-

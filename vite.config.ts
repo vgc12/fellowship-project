@@ -31,21 +31,16 @@ export default defineConfig(({command}) =>
 
 
         },
+
         server: {
-            headers: {
-
-                'Cache-Control': 'no-cache',
-            },
-
-            middlewareMode: false,
-        },
-        preview: {
-            // Headers for preview mode (vite preview)
-            headers: {
-                'Cache-Control': 'public, max-age=600',
+            proxy: {
+                '/s3-assets': {
+                    target: 'https://webgpu-renderer-data.s3.amazonaws.com',
+                    changeOrigin: true,
+                    rewrite: (path) => path.replace(/^\/s3-assets/, ''),
+                }
             }
         },
-
         optimizeDeps: {
             include: ['react', 'react-dom', 'react-icons', 'react-icons/*'],
         }
