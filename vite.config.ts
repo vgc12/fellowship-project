@@ -31,7 +31,20 @@ export default defineConfig(({command}) =>
 
 
         },
+        server: {
+            headers: {
 
+                'Cache-Control': 'no-cache',
+            },
+
+            middlewareMode: false,
+        },
+        preview: {
+            // Headers for preview mode (vite preview)
+            headers: {
+                'Cache-Control': 'public, max-age=600',
+            }
+        },
 
         optimizeDeps: {
             include: ['react', 'react-dom', 'react-icons', 'react-icons/*'],
