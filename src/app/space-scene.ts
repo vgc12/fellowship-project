@@ -1,22 +1,27 @@
 ﻿import {Scene} from "@/app/scene.ts";
-import {fileFromURL} from "@/lib/utils.ts";
+import {BUCKET_URL, fileFromURL} from "@/lib/utils.ts";
 import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
 import {Vector3} from "@/core/math/vector3.ts";
 import {PointLight} from "@/scene/point-light.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
 
 export class SpaceScene extends Scene {
+    constructor() {
+        super();
+        this.name = 'Space Scene';
+    }
+
     cleanup(): void {
 
     }
 
     async initialize(): Promise<void> {
         await super.initialize();
-        const objFile = await fileFromURL('./media/models/spaceship/corridor.obj');
+        const objFile = await fileFromURL(BUCKET_URL + '/media/models/spaceship/corridor.obj');
         const ro = await OBJLoader.loadMeshes(objFile)
         this.addRenderableObjectArray(ro)
 
-        const texturePath = './media/models/spaceship/';
+        const texturePath = BUCKET_URL + '/media/models/spaceship/';
         const materialNames = [
             'Floor'
         ];
@@ -26,7 +31,7 @@ export class SpaceScene extends Scene {
 
         this._skyMaterial = new SkyMaterial();
 
-        const path = './media/models/spaceship/skybox/';
+        const path = BUCKET_URL + '/media/models/spaceship/skybox/';
         const urls = [
             path + "px.png",    //x+
             path + "nx.png",    //x-
@@ -44,11 +49,6 @@ export class SpaceScene extends Scene {
         this.addLight(p1);
 
         this._initialized = true;
-    }
-
-    constructor() {
-        super();
-        this.name = 'Space Scene';
     }
 
     protected updateScene(): void {

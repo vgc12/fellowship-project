@@ -8,67 +8,11 @@ import {CameraController} from "@/Controls/camera-controller.ts";
 import {Renderer} from "@/core/renderer/renderer.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
 import {Material} from "@/graphics/3d/material.ts";
-import {fileFromURL} from "@/lib/utils.ts";
+import {BUCKET_URL, fileFromURL} from "@/lib/utils.ts";
 
 
 class WebGPUSingleton {
-    get renderer(): Renderer {
-        return this._renderer;
-    }
-
-    get skyBindGroupLayout(): GPUBindGroupLayout {
-        return this._skyBindGroupLayout;
-    }
-
-    get gBufferBindGroupLayout(): GPUBindGroupLayout {
-        return this._gBufferBindGroupLayout;
-    }
-
-    get lightBindGroupLayout(): GPUBindGroupLayout {
-        return this._lightBindGroupLayout;
-    }
-
-
-    private _lightBindGroupLayout: GPUBindGroupLayout;
-
-
-    get cameraController(): CameraController {
-        return this._cameraController;
-    }
-
-    get textureBindGroupLayout(): GPUBindGroupLayout {
-        return this._textureBindGroupLayout;
-    }
-
-    get frameBindGroupLayout(): GPUBindGroupLayout {
-        return this._frameBindGroupLayout;
-    }
-
     private static _instance: WebGPUSingleton;
-    private _device: GPUDevice | null = null;
-    private _adapter: GPUAdapter | null = null;
-    private _canvas: HTMLCanvasElement;
-    private _windowDimensions = {width: 0, height: 0};
-
-    private _mainCamera: Camera | null = null;
-    private _cameraController: CameraController;
-    private _vertexBufferLayout: GPUVertexBufferLayout | null = null;
-    private _format: GPUTextureFormat;
-    private _context: GPUCanvasContext;
-    /* texture bind group layout is located here because then i dont have to supply the layout
-       while creating a material in the react texture-input-component.
-     */
-    private _textureBindGroupLayout: GPUBindGroupLayout;
-    /*
-        this is here now for consistency, if im going to have the other bind group layout here I might as well
-        put this one here.
-     */
-    private _frameBindGroupLayout: GPUBindGroupLayout;
-    // I hate this
-    private _gBufferBindGroupLayout: GPUBindGroupLayout;
-    // and this
-    private _skyBindGroupLayout: GPUBindGroupLayout;
-
 
     static get Instance(): WebGPUSingleton {
         if (!this._instance) {
@@ -78,24 +22,34 @@ class WebGPUSingleton {
         return this._instance;
     }
 
+    private _lightBindGroupLayout: GPUBindGroupLayout;
 
-    get format(): GPUTextureFormat {
-        return this._format;
+    get lightBindGroupLayout(): GPUBindGroupLayout {
+        return this._lightBindGroupLayout;
     }
 
-    get context(): GPUCanvasContext {
-        return this._context;
-    }
-
-    get vertexBufferLayout(): GPUVertexBufferLayout | null {
-        return this._vertexBufferLayout;
-    }
-
+    private _device: GPUDevice | null = null;
 
     get device(): GPUDevice {
         if (!this._device) throw new Error('Device not initialized');
         return this._device;
     }
+
+    private _adapter: GPUAdapter | null = null;
+
+    get adapter(): GPUAdapter {
+        if (!this._adapter) throw new Error('Adapter not initialized');
+        return this._adapter;
+    }
+
+    private _canvas: HTMLCanvasElement;
+
+    get canvas(): HTMLCanvasElement {
+        if (!this._canvas) throw new Error('Canvas not initialized');
+        return this._canvas;
+    }
+
+    private _windowDimensions = {width: 0, height: 0};
 
     get windowDimensions() {
         if (!this._windowDimensions) {
@@ -104,26 +58,80 @@ class WebGPUSingleton {
         return this._windowDimensions;
     }
 
+    private _mainCamera: Camera | null = null;
+
     get mainCamera(): Camera {
         if (!this._mainCamera) throw new Error('Camera not initialized');
         return this._mainCamera;
     }
 
-    get canvas(): HTMLCanvasElement {
-        if (!this._canvas) throw new Error('Canvas not initialized');
-        return this._canvas;
+    private _cameraController: CameraController;
+
+    get cameraController(): CameraController {
+        return this._cameraController;
     }
 
-    get adapter(): GPUAdapter {
-        if (!this._adapter) throw new Error('Adapter not initialized');
-        return this._adapter;
+    private _vertexBufferLayout: GPUVertexBufferLayout | null = null;
+
+    get vertexBufferLayout(): GPUVertexBufferLayout | null {
+        return this._vertexBufferLayout;
+    }
+
+    private _format: GPUTextureFormat;
+
+    get format(): GPUTextureFormat {
+        return this._format;
+    }
+
+    private _context: GPUCanvasContext;
+
+    get context(): GPUCanvasContext {
+        return this._context;
+    }
+
+    /* texture bind group layout is located here because then i dont have to supply the layout
+       while creating a material in the react texture-input-component.
+     */
+    private _textureBindGroupLayout: GPUBindGroupLayout;
+
+    get textureBindGroupLayout(): GPUBindGroupLayout {
+        return this._textureBindGroupLayout;
+    }
+
+    /*
+        this is here now for consistency, if im going to have the other bind group layout here I might as well
+        put this one here.
+     */
+    private _frameBindGroupLayout: GPUBindGroupLayout;
+
+    get frameBindGroupLayout(): GPUBindGroupLayout {
+        return this._frameBindGroupLayout;
+    }
+
+    // I hate this
+    private _gBufferBindGroupLayout: GPUBindGroupLayout;
+
+    get gBufferBindGroupLayout(): GPUBindGroupLayout {
+        return this._gBufferBindGroupLayout;
+    }
+
+    // and this
+    private _skyBindGroupLayout: GPUBindGroupLayout;
+
+    get skyBindGroupLayout(): GPUBindGroupLayout {
+        return this._skyBindGroupLayout;
     }
 
     private _renderer = new Renderer();
 
+    get renderer(): Renderer {
+        return this._renderer;
+    }
 
     async initializeDefaultSkyMaterial() {
-        const path = './media/defaults/sky-material/';
+
+
+        const path = BUCKET_URL + '/media/defaults/sky-material/';
         const urls = [
             path + "px.png",  //x+
             path + "nx.png",   //x-
@@ -139,7 +147,7 @@ class WebGPUSingleton {
     }
 
     async initializeDefaultMaterial() {
-        const path = './media/defaults/material/'
+        const path = BUCKET_URL + '/media/defaults/material/'
         Material.default = new Material();
         Material.default.albedoFile = await fileFromURL(path + 'default_albedo.png');
         Material.default.roughnessFile = await fileFromURL(path + 'default_roughness.png');
@@ -333,7 +341,7 @@ class WebGPUSingleton {
             height: this._canvas.height
         }
 
-      
+
         this._adapter = await navigator.gpu.requestAdapter() as GPUAdapter;
         this._device = await this._adapter.requestDevice({
             requiredLimits: {

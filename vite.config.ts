@@ -7,7 +7,7 @@ import path from "path";
 
 export default defineConfig(({command}) =>
 {
-    const base = command === 'build' ? '/webgpu-renderer/' : '/'
+    const base = '/'
 
     return {
         plugins: [
@@ -32,7 +32,7 @@ export default defineConfig(({command}) =>
 
         },
 
-
+  
         optimizeDeps: {
             include: ['react', 'react-dom', 'react-icons', 'react-icons/*'],
         }

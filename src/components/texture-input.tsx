@@ -25,7 +25,7 @@ export const ImageFileTypes: imageFileType[] = [
 
 export function TextureInput(props: { object: RenderableObject, textureType: imageFileType }) {
 
-    const [texture, setTexture] = useState<string>(`./img/default_${props.textureType.slice(0, props.textureType.length - 4)}.png`);
+    const [texture, setTexture] = useState<string>(`/img/default_${props.textureType.slice(0, props.textureType.length - 4)}.png`);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const setImage = (material: Material, textureType: imageFileType) =>
