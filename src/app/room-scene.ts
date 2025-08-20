@@ -24,6 +24,7 @@ export class RoomScene extends Scene {
 
         const materialTypes = ['Albedo', 'Metallic', 'Roughness', 'Normal', 'Opacity', 'AO', 'Emissive']
 
+
         const objFile = await fileFromURL(BUCKET_URL + '/media/models/room/room.obj');
         const ro = await OBJLoader.loadMeshes(objFile);
 

@@ -14,18 +14,32 @@ export function toCamelCase(str: string): string {
     });
 }
 
-export async function fileFromURL(url: string): Promise<File> {
+export async function imageFileFromURL(url: string): Promise<File> {
     const response = await fetch(url);
     const blob = await response.blob();
+
+    await new Promise<void>((resolve, reject) =>
+    {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = URL.createObjectURL(blob);
+    });
+
     return new File([blob], url.split('/').pop() || 'default_albedo.png');
 }
 
+export async function fileFromURL(url: string): Promise<File> {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new File([blob], url.split('/').pop() || 'default');
+}
 
 export async function imageExists(url: string) {
 
     try {
         const response = await fetch(url, {method: 'HEAD'});
-        console.clear();
+    
         return response.ok && response.headers.get('content-type')?.startsWith('image/');
     } catch {
 

@@ -1,5 +1,5 @@
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
-import {BUCKET_URL, fileFromURL, imageExists} from "@/lib/utils.ts";
+import {BUCKET_URL, imageExists, imageFileFromURL} from "@/lib/utils.ts";
 import {type imageFileType} from "@/components/texture-input.tsx";
 import {generateMips, numMipLevels} from "@/graphics/shader-utils/mipmap-generator.ts";
 
@@ -122,7 +122,7 @@ export class Material {
                 const foundExtension = extensions.find(ext => ext !== null);
 
                 if (foundExtension) {
-                    const file = await fileFromURL(fullPath + foundExtension);
+                    const file = await imageFileFromURL(fullPath + foundExtension);
                     return {
                         key: (materialType.toLowerCase() + 'File') as imageFileType,
                         file
@@ -213,13 +213,13 @@ export class Material {
         }
 
         if (!this._opacityFile) {
-            this._opacityFile = await fileFromURL(BUCKET_URL + '/media/defaults/material/default_metallic.png');
+            this._opacityFile = await imageFileFromURL(BUCKET_URL + '/media/defaults/material/default_metallic.png');
         }
 
         opacityData = this.imageBitmapToImageData(await createImageBitmap(this._opacityFile));
 
         if (!this._emissiveFile) {
-            this._emissiveFile = await fileFromURL(BUCKET_URL + '/media/defaults/material/default_emissive.png');
+            this._emissiveFile = await imageFileFromURL(BUCKET_URL + '/media/defaults/material/default_emissive.png');
         }
 
         emissiveImageBitmap = await createImageBitmap(this._emissiveFile);

@@ -8,7 +8,7 @@ import {CameraController} from "@/Controls/camera-controller.ts";
 import {Renderer} from "@/core/renderer/renderer.ts";
 import {SkyMaterial} from "@/graphics/3d/sky-material.ts";
 import {Material} from "@/graphics/3d/material.ts";
-import {BUCKET_URL, fileFromURL} from "@/lib/utils.ts";
+import {BUCKET_URL, imageFileFromURL} from "@/lib/utils.ts";
 
 
 class WebGPUSingleton {
@@ -149,11 +149,11 @@ class WebGPUSingleton {
     async initializeDefaultMaterial() {
         const path = BUCKET_URL + '/media/defaults/material/'
         Material.default = new Material();
-        Material.default.albedoFile = await fileFromURL(path + 'default_albedo.png');
-        Material.default.roughnessFile = await fileFromURL(path + 'default_roughness.png');
-        Material.default.metallicFile = await fileFromURL(path + 'default_metallic.png');
-        Material.default.normalFile = await fileFromURL(path + 'default_normal.png');
-        Material.default.emissiveFile = await fileFromURL(path + 'default_emissive.png');
+        Material.default.albedoFile = await imageFileFromURL(path + 'default_albedo.png');
+        Material.default.roughnessFile = await imageFileFromURL(path + 'default_roughness.png');
+        Material.default.metallicFile = await imageFileFromURL(path + 'default_metallic.png');
+        Material.default.normalFile = await imageFileFromURL(path + 'default_normal.png');
+        Material.default.emissiveFile = await imageFileFromURL(path + 'default_emissive.png');
         await Material.default.initialize();
     }
 
