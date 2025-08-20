@@ -11,7 +11,7 @@ export const Footer: React.FC = () =>
                 <div className={'w-[3vh] h-[3vh]'}></div>
             </div>
             <Drawer>
-                <TriggerLightRectangle className={'w-[4vw]'}>
+                <TriggerLightRectangle className={'!w-[10vh]'}>
                     Credits
                 </TriggerLightRectangle>
                 <DrawerContent className={'h-[50vh] '} aria-label="Content">
