@@ -1,7 +1,7 @@
 ﻿import React, {useEffect, useState} from "react";
 import {Eye, Move, RotateCcw} from "lucide-react";
 import {OrbitController} from "@/components/orbit-controller.tsx";
-import {DropdownPanel} from "@/components/dropdownPanel.tsx";
+import {DropdownPanel} from "@/components/dropdown-panel.tsx";
 import {$WGPU} from "@/core/webgpu/webgpu-singleton.ts";
 import {Slider} from "@/components/slider.tsx";
 import {$INPUT} from "@/Controls/input.ts";

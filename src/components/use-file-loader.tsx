@@ -1,10 +1,13 @@
-﻿import {useCallback, useState} from "react";
+﻿import {useState} from "react";
 import {OBJLoader} from "@/graphics/3d/obj-loader.ts";
+import {$SCENE_MANAGER} from "@/app/scene-manager.ts";
 
-export const useFileLoader = () => {
+export const useFileLoader = () =>
+{
     const [loadedFiles, setLoadedFiles] = useState<File[]>([]);
 
-    const handleFileLoad = useCallback(async (files: FileList | null) => {
+    const handleFileLoad = async (files: FileList | null) =>
+    {
         if (!files) return;
 
         const newFiles: File[] = [];
@@ -16,7 +19,7 @@ export const useFileLoader = () => {
 
             if (file.name.endsWith('.obj')) {
                 try {
-                    await OBJLoader.loadMeshes(file);
+                    $SCENE_MANAGER.currentScene.addRenderableObjectArray(await OBJLoader.loadMeshes(file));
                     newFiles.push(file);
                 } catch (error) {
                     console.error(`Failed to load ${file.name}:`, error);
@@ -27,7 +30,7 @@ export const useFileLoader = () => {
         if (newFiles.length > 0) {
             setLoadedFiles(prev => [...prev, ...newFiles]);
         }
-    }, [loadedFiles]);
+    }
 
     return {loadedFiles, handleFileLoad};
 };

@@ -6,22 +6,6 @@ import {RobotScene} from "@/app/robot-scene.ts";
 
 
 export class SceneManager {
-    get scenes() {
-        return this._scenes;
-    }
-
-    static get instance(): SceneManager {
-        if (!this._instance) {
-            this._instance = new SceneManager();
-        }
-        return this._instance;
-    }
-
-    private static _instance: SceneManager;
-
-    private _currentScene: Scene;
-
-
     private readonly _scenes: Scene[];
 
     constructor() {
@@ -36,6 +20,24 @@ export class SceneManager {
         this._currentScene = this._scenes[0];
     }
 
+    private static _instance: SceneManager;
+
+    static get instance(): SceneManager {
+        if (!this._instance) {
+            this._instance = new SceneManager();
+        }
+        return this._instance;
+    }
+
+    get scenes() {
+        return this._scenes;
+    }
+
+    private _currentScene: Scene;
+
+    get currentScene() {
+        return this._currentScene;
+    }
 
     // Okay now this is really the best im going to get it
     async initializeAllScenes() {
@@ -43,9 +45,9 @@ export class SceneManager {
 
             const initPromises: Promise<void>[] = [];
 
-            for (const _scene of this._scenes) {
-                if (!_scene.initialized) {
-                    initPromises.push(_scene.initialize());
+            for (const scene of this._scenes) {
+                if (!scene.initialized) {
+                    initPromises.push(scene.initialize());
                 }
             }
 
@@ -61,7 +63,8 @@ export class SceneManager {
     async switchToScene(sceneGUID: string, onLoadingChange?: (loading: boolean) => void) {
         try {
             onLoadingChange?.(true);
-            this._scenes.forEach(scn => {
+            this._scenes.forEach(scn =>
+            {
                 if (!(scn.guid == sceneGUID && scn.initialized)) {
                     return;
                 }
@@ -83,11 +86,6 @@ export class SceneManager {
             console.error('Failed to switch scene:', error);
             onLoadingChange?.(false);
         }
-    }
-
-
-    get currentScene() {
-        return this._currentScene;
     }
 
 
