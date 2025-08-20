@@ -4,7 +4,7 @@ import type {IObject} from "@/scene/IObject.ts";
 import {Light, PointLight} from "@/scene/point-light.ts";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 
-import {DropdownPanel} from "@/components/dropdownPanel.tsx";
+import {DropdownPanel} from "@/components/dropdown-panel.tsx";
 import {SpotLight} from "@/scene/spot-light.ts";
 import {Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger} from "./ui/menubar.tsx";
 import {useFileLoader} from "@/components/use-file-loader.tsx";
@@ -72,7 +72,7 @@ export function SceneObjectList({objects}: ISceneObjectListComponentProps) {
     return (
         <DropdownPanel grow={true} label={'Objects'} className={'mt-1'}>
             <input
-                style={{display: "none"}}
+                hidden={true}
                 type="file"
                 id="file-input"
                 multiple

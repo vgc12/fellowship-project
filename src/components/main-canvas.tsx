@@ -1,6 +1,6 @@
 ﻿import React from "react";
 
-import {Panel} from "@/components/dropdownPanel.tsx";
+import {Panel} from "@/components/dropdown-panel.tsx";
 
 interface MainCanvasProps {
     canvasRef: React.RefObject<HTMLCanvasElement | null>;

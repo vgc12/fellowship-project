@@ -28,11 +28,21 @@ export default defineConfig(({command}) =>
         build: {
             target: 'esnext',
             minify: false,
-
+            rollupOptions: {
+                input: {
+                    main: path.resolve(__dirname, './index.html'),
+                    'scene-object-list': path.resolve(__dirname, './src/components/scene-object-list.tsx'),
+                    'camera-controller': path.resolve(__dirname, './src/components/camera-controller.tsx'),
+                    renderer: path.resolve(__dirname, './src/core/renderer/renderer.ts')
+                },
+                output: {
+                    entryFileNames: '[name].js',
+                }
+            }
 
         },
 
-  
+
         optimizeDeps: {
             include: ['react', 'react-dom', 'react-icons', 'react-icons/*'],
         }

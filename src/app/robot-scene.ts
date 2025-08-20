@@ -28,7 +28,7 @@ export class RobotScene extends Scene {
         await this.initializeSceneMaterials(materialNames, texturePath, ['albedo', 'metallic', 'roughness', 'normal', 'emissive', 'ao']);
 
         const l2 = new PointLight(new Vector3(1, 1, 1), 50);
-        l2.transform.position.set(0, 3, 3);
+        l2.transform.position.set(0, 3, -3);
         this.addLight(l2);
 
         this._initialized = true;
